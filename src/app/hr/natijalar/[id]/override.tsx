@@ -27,56 +27,89 @@ export function OverrideButton({ responseId, current }: { responseId: string; cu
     });
   };
 
-  const chip = (on: boolean) =>
-    `min-h-10 rounded-full px-4 text-sm font-bold ${on ? "bg-brf text-onbr" : "bg-soft text-tx"}`;
+  const canSave = score !== null && reason !== null && !pending;
 
   return (
     <>
-      <button onClick={() => setOpen(true)} className="min-h-9 rounded-full bg-soft px-3 text-xs font-bold hover:brightness-95">
+      <button
+        onClick={() => setOpen(true)}
+        className="h-9 rounded-full bg-tint px-4 text-[15px] font-semibold text-brd"
+      >
         Qo'lda o'zgartirish
       </button>
       {done && (
-        <div role="status" className="glass fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-full px-4 py-2 text-sm font-bold md:bottom-6">
+        <div role="status" className="glass fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-full px-4 py-2 text-[15px] font-medium md:bottom-6">
           O'zgarish saqlandi ✓ · tarixda qayd etildi
         </div>
       )}
       {open && (
         <div
-          className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-4 sm:items-center"
+          className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 sm:items-center sm:p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby={`ov-${responseId}`}
           onClick={() => setOpen(false)}
         >
-          <div className="w-full max-w-md rounded-[24px] bg-card p-6 shadow-soft" onClick={(e) => e.stopPropagation()}>
-            <h3 id={`ov-${responseId}`} className="text-lg font-bold">Qo'lda o'zgartirish</h3>
-            <div className="mt-4 text-xs font-bold uppercase tracking-wide text-tx2">Yangi ball</div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {SCORES.map((s) => (
-                <button key={s} onClick={() => setScore(s)} className={chip(score === s)}>
-                  {Math.round(s * 100)}%
-                </button>
-              ))}
-            </div>
-            <div className="mt-4 text-xs font-bold uppercase tracking-wide text-tx2">Sabab (majburiy)</div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {REASONS.map((r) => (
-                <button key={r} onClick={() => setReason(r)} className={chip(reason === r)}>
-                  {r}
-                </button>
-              ))}
-            </div>
-            <div className="mt-6 flex gap-3">
-              <button onClick={() => setOpen(false)} className="h-12 flex-1 rounded-full bg-soft text-sm font-bold">
+          {/* iOS modal sheet: yuqorida Bekor qilish / sarlavha / Saqlash */}
+          <div
+            className="w-full max-w-md overflow-hidden rounded-t-[22px] bg-bg sm:rounded-[22px]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mt-2 h-1 w-9 rounded-full bg-tx2/30 sm:hidden" aria-hidden />
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center px-3 pb-2 pt-2">
+              <button onClick={() => setOpen(false)} className="justify-self-start px-2 py-2 text-[17px] text-brd">
                 Bekor qilish
               </button>
+              <h3 id={`ov-${responseId}`} className="text-[17px] font-semibold">
+                Qo'lda o'zgartirish
+              </h3>
               <button
                 onClick={save}
-                disabled={score === null || !reason || pending}
-                className="h-12 flex-1 rounded-full bg-br text-sm font-bold text-onbr disabled:opacity-50"
+                disabled={!canSave}
+                className="justify-self-end px-2 py-2 text-[17px] font-semibold text-brd disabled:opacity-35"
               >
                 {pending ? "Saqlanmoqda…" : "Saqlash"}
               </button>
+            </div>
+
+            <div className="flex flex-col gap-5 px-4 pb-6 pt-2">
+              <div>
+                <div className="mb-2 px-4 text-[13px] font-semibold uppercase tracking-wide text-tx2">Yangi ball</div>
+                <div className="grid grid-cols-5 rounded-[10px] bg-soft p-0.5" role="radiogroup" aria-label="Yangi ball">
+                  {SCORES.map((s) => (
+                    <button
+                      key={s}
+                      role="radio"
+                      aria-checked={score === s}
+                      onClick={() => setScore(s)}
+                      className={`rounded-lg py-1.5 text-[13px] font-semibold tabular-nums ${
+                        score === s ? "bg-card shadow-[0_1px_3px_rgba(0,0,0,0.18)]" : ""
+                      }`}
+                    >
+                      {Math.round(s * 100)}%
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="mb-2 px-4 text-[13px] font-semibold uppercase tracking-wide text-tx2">Sabab (majburiy)</div>
+                <ul className="overflow-hidden rounded-2xl bg-card" role="radiogroup" aria-label="Sabab">
+                  {REASONS.map((r, i) => (
+                    <li key={r} className={i < REASONS.length - 1 ? "border-b border-line" : ""}>
+                      <button
+                        role="radio"
+                        aria-checked={reason === r}
+                        onClick={() => setReason(r)}
+                        className="flex min-h-12 w-full items-center justify-between px-4 text-left text-[17px]"
+                      >
+                        {r}
+                        <span aria-hidden className={`text-lg font-bold text-brd ${reason === r ? "" : "opacity-0"}`}>✓</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
         </div>
