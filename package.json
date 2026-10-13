@@ -7,11 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx scripts/test-scoring.ts && tsx scripts/test-questions.ts",
+    "test": "tsx scripts/test-scoring.ts && tsx scripts/test-questions.ts && tsx --conditions=react-server scripts/test-ai.ts",
     "seed": "tsx prisma/seed.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "test:integration": "tsx --env-file=.env --conditions=react-server scripts/test-ai-integration.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0",
     "@neon/config": "^1.9.1",
     "@neon/env": "^1.6.1",
     "@prisma/client": "^6.19.3",

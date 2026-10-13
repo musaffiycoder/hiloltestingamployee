@@ -63,3 +63,66 @@ export async function addComment(form: FormData) {
   await db.comment.create({ data: { ...parsed.data, authorId: user.id } });
   revalidatePath(`/hr/natijalar/${parsed.data.attemptId}`);
 }
+
+// ---------------------------------------------------------------------------------------------
+// AI bosqichlari (PROMPT-TEST-TAHLIL.md): 1) ochiq javoblarni baholash, 3) chuqur tahlil.
+// Raqamlarni (ball, foiz, xulosa toifasi) formula hisoblaydi, AI faqat matn yozadi.
+
+import { allow } from "@/lib/rate-limit";
+import { AiError, aiConfigured } from "@/lib/ai/client";
+import { generateAnalysis, gradeOpenAnswers } from "@/lib/ai/review";
+
+export type AiActionResult = { ok: boolean; message: string };
+
+function describe(e: unknown): string {
+  if (e instanceof AiError) {
+    if (e.code === "not_configured") return "AI sozlanmagan: ANTHROPIC_API_KEY o'rnatilmagan.";
+    if (e.code === "refusal") return "Model so'rovni rad etdi. Qo'lda baholashdan foydalaning.";
+    return e.message;
+  }
+  return "Kutilmagan xato. Keyinroq urinib ko'ring.";
+}
+
+export async function runGrading(attemptId: string): Promise<AiActionResult> {
+  const user = await requireWriter();
+  if (!aiConfigured()) return { ok: false, message: describe(new AiError("not_configured", "")) };
+  if (!(await allow(`ai:${user.id}`, 40, 3600))) return { ok: false, message: "AI chaqiruvlari limiti oshdi. Bir soatdan keyin urinib ko'ring." };
+  try {
+    const s = await gradeOpenAnswers(attemptId);
+    await db.auditLog.create({
+      data: { actorId: user.id, action: "ai.grade", entity: "Attempt", entityId: attemptId, meta: { ...s } },
+    });
+    revalidatePath(`/hr/natijalar/${attemptId}`);
+    revalidatePath("/hr/natijalar");
+    const parts = [`${s.graded} ta ochiq javob AI bilan baholandi`];
+    if (s.tooShort) parts.push(`${s.tooShort} tasi juda qisqa (0 ball)`);
+    if (s.noRubric) parts.push(`${s.noRubric} tasida rubrika yo'q (baholanmadi)`);
+    if (s.lowConfidence) parts.push(`${s.lowConfidence} tasida ishonch past — ko'rib chiqing`);
+    if (s.injection) parts.push(`${s.injection} tasida baholovchiga ko'rsatma berishga urinish aniqlandi`);
+    return { ok: true, message: parts.join(" · ") };
+  } catch (e) {
+    return { ok: false, message: describe(e) };
+  }
+}
+
+export async function runAnalysis(attemptId: string): Promise<AiActionResult> {
+  const user = await requireWriter();
+  if (!aiConfigured()) return { ok: false, message: describe(new AiError("not_configured", "")) };
+  if (!(await allow(`ai:${user.id}`, 40, 3600))) return { ok: false, message: "AI chaqiruvlari limiti oshdi. Bir soatdan keyin urinib ko'ring." };
+  try {
+    const r = await generateAnalysis(attemptId);
+    await db.auditLog.create({
+      data: {
+        actorId: user.id,
+        action: "ai.analysis",
+        entity: "Attempt",
+        entityId: attemptId,
+        meta: { model: r.model, inputTokens: r.inputTokens, outputTokens: r.outputTokens },
+      },
+    });
+    revalidatePath(`/hr/natijalar/${attemptId}`);
+    return { ok: true, message: r.stored.warnings.length ? "Tahlil tayyor (ogohlantirish bilan)" : "Tahlil tayyor" };
+  } catch (e) {
+    return { ok: false, message: describe(e) };
+  }
+}

@@ -32,3 +32,13 @@ Migratsiya deploydan oldin qo'lda: `npx prisma migrate deploy` (`DATABASE_URL_UN
 ```bash
 vercel deploy --prod
 ```
+
+## AI tahlil (Claude)
+Manba qoidalar: `PROMPT-TEST-TAHLIL.md`. Uch bosqich — **raqamlarni formula hisoblaydi, AI faqat matn yozadi**:
+1. Ochiq javoblarni baholash (`src/lib/ai/review.ts → gradeOpenAnswers`): rubrika bo'yicha 0–1 ball, asos, ishonch;
+   15 belgidan qisqa javob API'siz 0 ball; ishonch < 0.6 bo'lsa natija «ko'rib chiqish kerak».
+2. Yakuniy raqamlar — `computeAttempt` (formula; AI ballari saqlanadi).
+3. Chuqur tahlil (`generateAnalysis`): profil, SWOT, javob naqshlari, kompetensiya tahlili, reja, `dataGaps`.
+
+Yoqish: `ANTHROPIC_API_KEY` (Vercel → Production env + lokal `.env`). Natija sahifasida «AI tahlil» tabi.
+Testlar: `npm test` (stub klient), `npm run test:integration` (bazaga ulangan, vaqtinchalik yozuv).

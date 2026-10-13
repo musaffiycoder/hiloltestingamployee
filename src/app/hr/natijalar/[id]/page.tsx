@@ -12,8 +12,13 @@ import type { VerdictKey } from "@/lib/scoring";
 import { addComment, setDecision } from "./actions";
 import { OverrideButton } from "./override";
 import { PrintButton } from "./print-button";
+import { AiPanel } from "./ai-panel";
+import { aiConfigured } from "@/lib/ai/client";
+import type { StoredAnalysis } from "@/lib/ai/schemas";
 
 export const metadata: Metadata = { title: "Nomzod natijasi" };
+// AI tahlil server action'i shu marshrutda ishlaydi (Hobby: maks 60 s)
+export const maxDuration = 60;
 
 type Opt = string | { text: string; points?: number };
 const optText = (o: Opt) => (typeof o === "string" ? o : o.text);
@@ -22,6 +27,7 @@ const TABS = [
   { key: "sum", label: "Xulosa" },
   { key: "ans", label: "Javoblar" },
   { key: "beh", label: "Xatti-harakat" },
+  { key: "ai", label: "AI tahlil" },
 ] as const;
 
 export default async function ResultPage({ params, searchParams }: PageProps<"/hr/natijalar/[id]">) {
@@ -108,6 +114,11 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
     (r) => `${r.c.name} — ${r.c.target - (r.level ?? 0) > 1 ? "4" : "2"} haftalik maqsadli mashq va mentor`,
   );
 
+  const analysis = (result.analysis ?? null) as StoredAnalysis | null;
+  const ungradedOpen = ordered.filter(
+    (r) => r.question.type === "OPEN" && r.scoreSource !== "human" && r.scoreSource !== "ai" && !r.reviewed,
+  ).length;
+
   const tabHref = (k: string) => `/hr/natijalar/${id}${k === "sum" ? "" : `?tab=${k}`}`;
   const now = new Date();
 
@@ -181,7 +192,7 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
       )}
 
       {/* iOS segmented control */}
-      <nav className="grid grid-cols-3 rounded-[10px] bg-soft p-0.5 print:hidden" aria-label="Bo'limlar" role="tablist">
+      <nav className="grid grid-cols-4 rounded-[10px] bg-soft p-0.5 print:hidden" aria-label="Bo'limlar" role="tablist">
         {TABS.map((t) => (
           <Link
             key={t.key}
@@ -321,6 +332,16 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
                               <div className="mt-1 whitespace-pre-wrap text-[15px]">{correctText(r)}</div>
                             </div>
                             {r.question.explanation && <p className="text-[13px] text-tx2">{r.question.explanation}</p>}
+                            {r.scoreSource === "ai" && r.rationale && (
+                              <div className="rounded-xl bg-card p-3 text-[15px]">
+                                <div className="text-[11px] font-semibold uppercase tracking-wide text-tx2">
+                                  AI asosi · ishonch {Math.round((r.confidence ?? 0) * 100)}%
+                                  {(r.confidence ?? 1) < 0.6 && <span className="ml-2 text-warn">ko'rib chiqing</span>}
+                                  {r.flagged && <span className="ml-2 text-bad">⚑ baholovchiga ko'rsatma urinishi</span>}
+                                </div>
+                                <p className="mt-1">{r.rationale}</p>
+                              </div>
+                            )}
                             <p className="text-[13px] text-tx2">
                               {score === null
                                 ? "Baholanmagan"
@@ -339,6 +360,153 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
                   </Card>
                 </section>
               ))}
+            </>
+          )}
+
+          {tab === "ai" && (
+            <>
+              <section>
+                <SectionTitle>Chuqur tahlil</SectionTitle>
+                <div className="print:hidden">
+                  <AiPanel
+                    attemptId={attempt.id}
+                    configured={aiConfigured() && canWrite}
+                    ungradedOpen={ungradedOpen}
+                    hasAnalysis={!!analysis}
+                  />
+                </div>
+                {!canWrite && (
+                  <p className="mt-2 px-1 text-[13px] text-tx2">Menejer sifatida tahlilni faqat ko'rishingiz mumkin.</p>
+                )}
+              </section>
+
+              {!analysis ? (
+                <Card className="p-5 text-[15px] text-tx2">
+                  Hali AI tahlili yaratilmagan. Raqamlar (ball, daraja, xulosa toifasi) formuladan olinadi; AI faqat
+                  javoblar mazmuniga tayanib matn yozadi.
+                </Card>
+              ) : (
+                <>
+                  {analysis.warnings.length > 0 && (
+                    <div role="alert" className="rounded-2xl bg-warn-t p-4 text-[15px] text-warn">
+                      {analysis.warnings.map((w) => (
+                        <p key={w}>⚠︎ {w}</p>
+                      ))}
+                    </div>
+                  )}
+                  <section>
+                    <SectionTitle>Umumiy profil</SectionTitle>
+                    <Card className="p-4 text-[15px] leading-relaxed">{analysis.overallNarrative}</Card>
+                  </section>
+
+                  <section>
+                    <SectionTitle>SWOT</SectionTitle>
+                    <div className="grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2">
+                      {(
+                        [
+                          ["Kuchli tomonlar", analysis.strengths, "text-ok"],
+                          ["Zaif tomonlar", analysis.weaknesses, "text-warn"],
+                          ["Imkoniyatlar", analysis.opportunities, "text-brd"],
+                          ["Xavflar", analysis.threats, "text-bad"],
+                        ] as const
+                      ).map(([title, items, tone]) => (
+                        <Card key={title} className="p-4">
+                          <div className={`text-[13px] font-semibold uppercase tracking-wide ${tone}`}>{title}</div>
+                          <ul className="mt-2 flex flex-col gap-1.5 text-[15px]">
+                            {items.length === 0 && <li className="text-tx2">—</li>}
+                            {items.map((t, i) => (
+                              <li key={i} className="flex gap-2">
+                                <span aria-hidden className="text-tx2">•</span>
+                                {t}
+                              </li>
+                            ))}
+                          </ul>
+                        </Card>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section>
+                    <SectionTitle>Javob naqshlari</SectionTitle>
+                    <Card>
+                      {(
+                        [
+                          ["Qiyinlik", analysis.answerPatterns.difficulty],
+                          ["Noto'g'ri variantlar", analysis.answerPatterns.distractors],
+                          ["Vaqt", analysis.answerPatterns.time],
+                          ["Qiyoslash", analysis.answerPatterns.comparison],
+                        ] as const
+                      ).map(([k, v], i, arr) => (
+                        <div key={k} className={`px-4 py-3 ${i < arr.length - 1 ? "border-b border-line" : ""}`}>
+                          <div className="text-[11px] font-semibold uppercase tracking-wide text-tx2">{k}</div>
+                          <p className="mt-1 text-[15px]">{v}</p>
+                        </div>
+                      ))}
+                    </Card>
+                  </section>
+
+                  {analysis.competencyInsights.length > 0 && (
+                    <section>
+                      <SectionTitle>Kompetensiyalar bo'yicha</SectionTitle>
+                      <Card>
+                        {analysis.competencyInsights.map((c, i) => (
+                          <details key={c.code} className={`group ${i < analysis.competencyInsights.length - 1 ? "border-b border-line" : ""}`} open={i === 0}>
+                            <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
+                              <span className="font-mono text-xs text-tx2">{c.code}</span>
+                              <span className="flex-1 text-[15px] font-medium">{c.name}</span>
+                              <span aria-hidden className="text-lg text-tx2 transition-transform group-open:rotate-90">›</span>
+                            </summary>
+                            <p className="bg-soft/50 px-4 py-3 text-[15px] leading-relaxed">{c.analysis}</p>
+                          </details>
+                        ))}
+                      </Card>
+                    </section>
+                  )}
+
+                  <section>
+                    <SectionTitle>Rivojlantirish rejasi</SectionTitle>
+                    <Card>
+                      {analysis.developmentPlan.map((d, i) => (
+                        <div key={i} className={`px-4 py-3 ${i < analysis.developmentPlan.length - 1 ? "border-b border-line" : ""}`}>
+                          <div className="flex items-center gap-2">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-tint text-[13px] font-bold text-brd">
+                              {d.priority}
+                            </span>
+                            <span className="text-[15px] font-semibold">{d.area}</span>
+                          </div>
+                          <p className="mt-1 text-[15px]">{d.recommendation}</p>
+                          <p className="mt-1 text-[13px] text-tx2">
+                            {d.format} · {d.courseSuggestion} · {d.estimatedDuration}
+                          </p>
+                        </div>
+                      ))}
+                    </Card>
+                  </section>
+
+                  <section>
+                    <SectionTitle>Yakuniy xulosa</SectionTitle>
+                    <Card className="p-4 text-[15px] leading-relaxed">{analysis.recommendation}</Card>
+                  </section>
+
+                  {analysis.dataGaps.length > 0 && (
+                    <section>
+                      <SectionTitle>Tahlil chegaralari (yetishmagan ma'lumot)</SectionTitle>
+                      <Card className="p-4">
+                        <ul className="flex flex-col gap-1 text-[15px] text-tx2">
+                          {analysis.dataGaps.map((g, i) => (
+                            <li key={i}>• {g}</li>
+                          ))}
+                        </ul>
+                      </Card>
+                    </section>
+                  )}
+
+                  <p className="px-4 text-[13px] text-tx2">
+                    AI matni — dalil va tavsiya, qaror HR da.{result.analysisModel ? ` Model: ${result.analysisModel}.` : ""}
+                    {result.analysisAt ? ` ${timeAgo(result.analysisAt, now)}.` : ""}
+                  </p>
+                </>
+              )}
             </>
           )}
 

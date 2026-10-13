@@ -62,6 +62,13 @@ export async function computeAttempt(attemptId: string) {
     if (res) {
       if (res.reviewed && res.score !== null) {
         score = res.score;
+      } else if (res.scoreSource === "ai" && res.score !== null) {
+        // AI baholagan ochiq javob: ball saqlanadi; ishonch past bo'lsa odam ko'rib chiqishi kerak
+        score = res.score;
+        if ((res.confidence ?? 1) < 0.6) needsReview = true;
+      } else if (res.scoreSource === "auto" && res.score !== null && q.type === "OPEN") {
+        // juda qisqa javob (AI'siz 0 ball)
+        score = res.score;
       } else {
         score = autoScore(q.type, q.answerKey, q.payload, res.payload);
         if (res.score !== score || res.scoreSource !== (score === null ? null : "auto")) {

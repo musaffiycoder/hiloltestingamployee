@@ -191,16 +191,19 @@ model CompetencyScore {
 }
 
 model AttemptResult {
-  id           String   @id @default(cuid())
-  attemptId    String   @unique
-  overallPct   Float
-  verdict      Verdict
-  criticalFail Boolean  @default(false)
-  redFlags     Json     @default("[]")
-  needsReview  Boolean  @default(false)
-  decision     String?
-  decisionNote String?
-  createdAt    DateTime @default(now())
+  id            String    @id @default(cuid())
+  attemptId     String    @unique
+  overallPct    Float
+  verdict       Verdict
+  criticalFail  Boolean   @default(false)
+  redFlags      Json      @default("[]")
+  needsReview   Boolean   @default(false)
+  decision      String?
+  decisionNote  String?
+  analysis      Json?
+  analysisAt    DateTime?
+  analysisModel String?
+  createdAt     DateTime  @default(now())
 
   attempt Attempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
 }
