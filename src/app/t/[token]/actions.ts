@@ -72,6 +72,11 @@ export async function finishAttempt(token: string) {
   if (!ctx) redirect(`/t/${token}/done`);
   await db.attempt.update({ where: { id: ctx.attempt.id }, data: { finishedAt: new Date() } });
   await db.assessment.update({ where: { id: ctx.assessment.id }, data: { status: "SUBMITTED" } });
-  await computeAttempt(ctx.attempt.id);
+  try {
+    await computeAttempt(ctx.attempt.id);
+  } catch (err) {
+    // Javoblar saqlangan; natija HR sahifasi ochilganda qayta hisoblanadi.
+    console.error("computeAttempt failed", err);
+  }
   redirect(`/t/${token}/done`);
 }

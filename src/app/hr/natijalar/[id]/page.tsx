@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import { computeAttempt } from "@/lib/attempt";
 import { Card, LevelChip, Pill, VerdictChip } from "@/components/ui";
 import { Radar, ScoreRing } from "@/components/svg-charts";
 import { QUESTION_TYPE_LABELS, VERDICTS } from "@/lib/labels";
@@ -28,6 +29,12 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
   const { id } = await params;
   const sp = await searchParams;
   const tab = TABS.some((t) => t.key === sp.tab) ? (sp.tab as (typeof TABS)[number]["key"]) : "sum";
+
+  const pending = await db.attempt.findUnique({
+    where: { id },
+    select: { finishedAt: true, result: { select: { id: true } } },
+  });
+  if (pending?.finishedAt && !pending.result) await computeAttempt(id);
 
   const attempt = await db.attempt.findUnique({
     where: { id },

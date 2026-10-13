@@ -3,8 +3,10 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Migratsiyalar uchun to'g'ridan-to'g'ri (pooler'siz) ulanish: Neon tavsiyasi
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 enum Role {

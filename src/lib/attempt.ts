@@ -1,4 +1,5 @@
 import "server-only";
+import type { Prisma } from "@prisma/client";
 import { db } from "./db";
 import {
   evaluate,
@@ -51,6 +52,7 @@ export async function computeAttempt(attemptId: string) {
   const resByQ = new Map(attempt.responses.map((r) => [r.questionId, r]));
 
   const items: Record<string, ScoredItem[]> = {};
+  const responseUpdates: Prisma.PrismaPromise<unknown>[] = [];
   const redFlags: { t: string; q: string; question: string }[] = [];
   let needsReview = false;
 
@@ -63,10 +65,12 @@ export async function computeAttempt(attemptId: string) {
       } else {
         score = autoScore(q.type, q.answerKey, q.payload, res.payload);
         if (res.score !== score || res.scoreSource !== (score === null ? null : "auto")) {
-          await db.response.update({
-            where: { id: res.id },
-            data: { score, scoreSource: score === null ? null : "auto" },
-          });
+          responseUpdates.push(
+            db.response.update({
+              where: { id: res.id },
+              data: { score, scoreSource: score === null ? null : "auto" },
+            }),
+          );
         }
       }
     } else {
@@ -93,32 +97,38 @@ export async function computeAttempt(attemptId: string) {
 
   const ev = evaluate(defs, items, { redFlags: redFlags.length });
 
-  await db.$transaction(async (tx) => {
-    await tx.competencyScore.deleteMany({ where: { attemptId } });
-    for (const c of ev.competencies) {
-      if (c.level === null) continue;
+  const scoreRows = ev.competencies
+    .filter((c) => c.level !== null)
+    .map((c) => {
       const arr = items[c.id] ?? [];
-      await tx.competencyScore.create({
-        data: {
-          attemptId,
-          competencyId: c.id,
-          level: c.level,
-          answered: arr.length,
-          correctRatio: arr.length ? arr.reduce((s, x) => s + x.score, 0) / arr.length : 0,
-        },
-      });
-    }
-    const existing = await tx.attemptResult.findUnique({ where: { attemptId } });
-    const data = {
-      overallPct: ev.overallPct,
-      verdict: ev.verdict,
-      criticalFail: ev.criticalFail,
-      redFlags,
-      needsReview: needsReview || ev.unscored.length > 0,
-    };
-    if (existing) await tx.attemptResult.update({ where: { attemptId }, data });
-    else await tx.attemptResult.create({ data: { attemptId, ...data } });
-  });
+      return {
+        attemptId,
+        competencyId: c.id,
+        level: c.level as number,
+        answered: arr.length,
+        correctRatio: arr.length ? arr.reduce((s, x) => s + x.score, 0) / arr.length : 0,
+      };
+    });
+  const resultData = {
+    overallPct: ev.overallPct,
+    verdict: ev.verdict,
+    criticalFail: ev.criticalFail,
+    redFlags,
+    needsReview: needsReview || ev.unscored.length > 0,
+  };
+
+  // Batch tranzaksiya: masofaviy bazada (Neon) har bir so'rov ~100–300 ms, shuning uchun
+  // interaktiv tranzaksiya (5 s timeout) emas, bitta batch ishlatiladi.
+  await db.$transaction([
+    ...responseUpdates,
+    db.competencyScore.deleteMany({ where: { attemptId } }),
+    db.competencyScore.createMany({ data: scoreRows }),
+    db.attemptResult.upsert({
+      where: { attemptId },
+      create: { attemptId, ...resultData },
+      update: resultData,
+    }),
+  ]);
 
   return ev;
 }
