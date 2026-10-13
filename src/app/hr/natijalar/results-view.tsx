@@ -18,6 +18,8 @@ export type Row = {
   needsReview: boolean;
   decision: string | null;
   date: string;
+  mode: "RECRUITING" | "EVALUATION";
+  criticalFail: boolean;
 };
 
 function SelectDot({ on, label, onClick }: { on: boolean; label: string; onClick: () => void }) {
@@ -77,7 +79,12 @@ export function ResultsView({ rows, view }: { rows: Row[]; view: "table" | "card
                     {r.initials}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[17px] font-semibold">{r.name}</span>
+                    <span className="block truncate text-[17px] font-semibold">
+                      {r.name}
+                      {r.mode === "EVALUATION" && (
+                        <span className="ml-2 rounded-full bg-soft px-2 py-0.5 align-middle text-[11px] font-semibold text-tx2">Xodim</span>
+                      )}
+                    </span>
                     <span className="block truncate text-[13px] text-tx2">
                       {r.position} · {r.date}
                       {r.flags > 0 && <span className="font-semibold text-bad"> · ⚑ {r.flags}</span>}
@@ -119,7 +126,12 @@ export function ResultsView({ rows, view }: { rows: Row[]; view: "table" | "card
                       {r.initials}
                     </span>
                     <div className="min-w-0">
-                      <div className="truncate text-[17px] font-semibold">{r.name}</div>
+                      <div className="truncate text-[17px] font-semibold">
+                        {r.name}
+                        {r.mode === "EVALUATION" && (
+                          <span className="ml-2 rounded-full bg-soft px-2 py-0.5 align-middle text-[11px] font-semibold text-tx2">Xodim</span>
+                        )}
+                      </div>
                       <div className="truncate text-[13px] text-tx2">{r.position}</div>
                     </div>
                   </div>

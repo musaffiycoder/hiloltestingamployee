@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { SignJWT, jwtVerify } from "jose";
@@ -32,7 +33,7 @@ export async function destroySession() {
   (await cookies()).delete(COOKIE);
 }
 
-export async function getUser() {
+export const getUser = cache(async function getUser() {
   const token = (await cookies()).get(COOKIE)?.value;
   if (!token) return null;
   try {
@@ -43,7 +44,7 @@ export async function getUser() {
   } catch {
     return null;
   }
-}
+});
 
 export async function requireUser() {
   const user = await getUser();

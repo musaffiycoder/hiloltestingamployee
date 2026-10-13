@@ -25,7 +25,7 @@ type NavItem = { href: string; label: string; short: string; icon: LucideIcon; s
 
 const NAV: NavItem[] = [
   { href: "/hr", label: "Bosh sahifa", short: "Bosh", icon: LayoutDashboard },
-  { href: "/hr/natijalar", label: "Nomzodlar", short: "Nomzodlar", icon: UserCheck },
+  { href: "/hr/natijalar", label: "Natijalar", short: "Natijalar", icon: UserCheck },
   { href: "/hr/xodimlar", label: "Xodimlar", short: "Xodimlar", icon: Users },
   { href: "/hr/lavozimlar", label: "Lavozim kartalari", short: "Lavozimlar", icon: ClipboardList },
   { href: "/hr/savollar", label: "Savollar banki", short: "Savollar", icon: BookOpenCheck },
@@ -40,7 +40,7 @@ const PHONE_TABS = [NAV[0], NAV[1], NAV[2], NAV[4], NAV[5]];
 
 const TITLES: [string, string][] = [
   ["/hr/natijalar/", "Nomzod natijasi"],
-  ["/hr/natijalar", "Nomzodlar"],
+  ["/hr/natijalar", "Natijalar"],
   ["/hr/taqqoslash", "Taqqoslash"],
   ["/hr/xodimlar", "Xodimlar"],
   ["/hr/lavozimlar", "Lavozim kartalari"],
@@ -199,7 +199,7 @@ export function HrShell({
         </header>
 
         <main className="px-4 pb-28 pt-5 md:px-8 md:pb-10">
-          <div className="mx-auto max-w-6xl">{children}</div>
+          <div className="w-full">{children}</div>
         </main>
       </div>
 

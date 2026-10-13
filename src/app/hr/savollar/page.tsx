@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { FilterLink as Link } from "@/components/filter-link";
 import { Search } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
