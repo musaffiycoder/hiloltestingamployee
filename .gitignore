@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# ichki ma'lumotlar (javob kalitlari, talablar matritsasi)
+/data/*
+!/data/README.md
+.claude/
+!.env.example

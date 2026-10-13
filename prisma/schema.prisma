@@ -1,0 +1,239 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  HR
+  MANAGER
+}
+
+enum CompetencyType {
+  SOFT
+  HARD
+}
+
+enum QuestionType {
+  MCQ_SINGLE
+  MCQ_MULTI
+  SITUATIONAL
+  OPEN
+  CODE
+  SQL
+  PROMPT
+  AI_REVIEW
+  SUBMISSION
+}
+
+enum QuestionStatus {
+  DRAFT
+  ACTIVE
+  RETIRED
+}
+
+enum AssessmentMode {
+  RECRUITING
+  EVALUATION
+}
+
+enum AssessmentStatus {
+  INVITED
+  STARTED
+  SUBMITTED
+  EXPIRED
+}
+
+enum Verdict {
+  MOS
+  SHARTLI_MOS
+  RIVOJLANTIRISH
+  MOS_EMAS
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(HR)
+  createdAt    DateTime @default(now())
+
+  assessments Assessment[]
+  auditLogs   AuditLog[]
+  comments    Comment[]
+}
+
+model Position {
+  id         String  @id @default(cuid())
+  code       String  @unique
+  title      String
+  department String  @default("Dasturlash bo'limi")
+  cardFile   String?
+
+  competencies Competency[]
+  assessments  Assessment[]
+}
+
+model Competency {
+  id         String         @id @default(cuid())
+  positionId String
+  code       String
+  name       String
+  type       CompetencyType
+  target     Int
+  weight     Int
+  critical   Boolean        @default(false)
+  derived    Boolean        @default(false)
+  sortOrder  Int            @default(0)
+
+  position  Position          @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  questions Question[]
+  scores    CompetencyScore[]
+
+  @@unique([positionId, code])
+}
+
+model Question {
+  id           String         @id @default(cuid())
+  competencyId String
+  level        Int
+  type         QuestionType
+  stem         String
+  payload      Json           @default("{}")
+  answerKey    Json?
+  rubric       Json?
+  explanation  String?
+  timeLimitSec Int            @default(120)
+  aiAllowed    Boolean        @default(false)
+  status       QuestionStatus @default(ACTIVE)
+  version      Int            @default(1)
+  createdAt    DateTime       @default(now())
+
+  competency Competency @relation(fields: [competencyId], references: [id], onDelete: Cascade)
+  responses  Response[]
+
+  @@index([competencyId, level])
+}
+
+model Assessment {
+  id          String           @id @default(cuid())
+  token       String           @unique
+  positionId  String
+  mode        AssessmentMode   @default(RECRUITING)
+  subjectName String
+  contact     String?
+  dueAt       DateTime?
+  status      AssessmentStatus @default(INVITED)
+  createdById String?
+  createdAt   DateTime         @default(now())
+
+  position  Position  @relation(fields: [positionId], references: [id])
+  createdBy User?     @relation(fields: [createdById], references: [id])
+  attempts  Attempt[]
+}
+
+model Attempt {
+  id           String    @id @default(cuid())
+  assessmentId String
+  startedAt    DateTime  @default(now())
+  finishedAt   DateTime?
+  consentAt    DateTime?
+  questionIds  Json      @default("[]")
+
+  assessment Assessment        @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  responses  Response[]
+  scores     CompetencyScore[]
+  result     AttemptResult?
+  signals    IntegritySignal[]
+  comments   Comment[]
+}
+
+model Response {
+  id             String   @id @default(cuid())
+  attemptId      String
+  questionId     String
+  payload        Json
+  timeMs         Int      @default(0)
+  flagged        Boolean  @default(false)
+  score          Float?
+  scoreSource    String?
+  rationale      String?
+  confidence     Float?
+  reviewed       Boolean  @default(false)
+  overrideReason String?
+  createdAt      DateTime @default(now())
+
+  attempt  Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([attemptId, questionId])
+}
+
+model CompetencyScore {
+  id           String @id @default(cuid())
+  attemptId    String
+  competencyId String
+  level        Float
+  answered     Int    @default(0)
+  correctRatio Float  @default(0)
+
+  attempt    Attempt    @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  competency Competency @relation(fields: [competencyId], references: [id], onDelete: Cascade)
+
+  @@unique([attemptId, competencyId])
+}
+
+model AttemptResult {
+  id           String   @id @default(cuid())
+  attemptId    String   @unique
+  overallPct   Float
+  verdict      Verdict
+  criticalFail Boolean  @default(false)
+  redFlags     Json     @default("[]")
+  needsReview  Boolean  @default(false)
+  decision     String?
+  decisionNote String?
+  createdAt    DateTime @default(now())
+
+  attempt Attempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+}
+
+model IntegritySignal {
+  id        String   @id @default(cuid())
+  attemptId String
+  type      String
+  meta      Json     @default("{}")
+  at        DateTime @default(now())
+
+  attempt Attempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id       String   @id @default(cuid())
+  actorId  String?
+  action   String
+  entity   String
+  entityId String?
+  meta     Json     @default("{}")
+  at       DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  attemptId String
+  authorId  String
+  text      String
+  at        DateTime @default(now())
+
+  attempt Attempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  author  User    @relation(fields: [authorId], references: [id])
+
+  @@index([attemptId])
+}
