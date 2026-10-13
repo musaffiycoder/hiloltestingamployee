@@ -25,7 +25,8 @@ const TABS = [
 ] as const;
 
 export default async function ResultPage({ params, searchParams }: PageProps<"/hr/natijalar/[id]">) {
-  await requireUser();
+  const viewer = await requireUser();
+  const canWrite = viewer.role !== "MANAGER";
   const { id } = await params;
   const sp = await searchParams;
   const tab = TABS.some((t) => t.key === sp.tab) ? (sp.tab as (typeof TABS)[number]["key"]) : "sum";
@@ -142,6 +143,7 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
           {result.decision === "REJECT" && <Pill tone="bad">Rad etildi</Pill>}
         </div>
 
+        {canWrite ? (
         <div className="flex w-full max-w-md flex-col gap-2 print:hidden">
           <form action={setDecision.bind(null, attempt.id, "ADVANCE")}>
             <button className="h-[50px] w-full rounded-full bg-brf text-[17px] font-semibold text-onbr">
@@ -160,6 +162,9 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
             </form>
           )}
         </div>
+        ) : (
+          <p className="text-[13px] text-tx2">Menejer sifatida natijani faqat ko'rishingiz mumkin. Qarorni HR qabul qiladi.</p>
+        )}
       </section>
 
       {result.criticalFail && (
@@ -322,9 +327,11 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
                                 : `${r.scoreSource === "human" ? "Qo'lda" : "Avto"}: ${Math.round(score * 100)}%`}
                               {r.overrideReason ? ` · sabab: ${r.overrideReason}` : ""}
                             </p>
-                            <div className="print:hidden">
-                              <OverrideButton responseId={r.id} current={score} />
-                            </div>
+                            {canWrite && (
+                              <div className="print:hidden">
+                                <OverrideButton responseId={r.id} current={score} />
+                              </div>
+                            )}
                           </div>
                         </details>
                       );

@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { Card, Pill, SectionTitle } from "@/components/ui";
 import { InviteForm } from "./form";
+import { InviteActions } from "./invite-actions";
 
 export const metadata: Metadata = { title: "Takliflar" };
 
@@ -15,7 +16,8 @@ const STATUS: Record<string, { label: string; tone: "soft" | "brand" | "ok" | "w
 };
 
 export default async function InvitesPage() {
-  await requireUser();
+  const viewer = await requireUser();
+  const canWrite = viewer.role !== "MANAGER";
   const [positions, invites] = await Promise.all([
     db.position.findMany({
       orderBy: { title: "asc" },
@@ -34,7 +36,7 @@ export default async function InvitesPage() {
         <p className="mt-1 text-sm text-tx2">Nomzod yoki xodimga shaxsiy havola yuboring.</p>
       </header>
       <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-5">
-        <section className="lg:col-span-2">
+        {canWrite && <section className="lg:col-span-2">
           <SectionTitle>Yangi taklif</SectionTitle>
           <div>
             <InviteForm
@@ -45,8 +47,8 @@ export default async function InvitesPage() {
               }))}
             />
           </div>
-        </section>
-        <section className="lg:col-span-3">
+        </section>}
+        <section className={canWrite ? "lg:col-span-3" : "lg:col-span-5"}>
           <SectionTitle>So'nggi takliflar</SectionTitle>
           <Card>
             {invites.length === 0 && <p className="px-4 py-3.5 text-[15px] text-tx2">Hozircha bo'sh.</p>}
@@ -62,7 +64,10 @@ export default async function InvitesPage() {
                       </div>
                       <code className="mt-0.5 block truncate font-mono text-[11px] text-tx2">{base}/t/{i.token}</code>
                     </div>
-                    <Pill tone={s.tone}>{s.label}</Pill>
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      <Pill tone={s.tone}>{s.label}</Pill>
+                      {canWrite && <InviteActions id={i.id} link={`${base}/t/${i.token}`} status={i.status} />}
+                    </div>
                   </li>
                 );
               })}

@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireWriter } from "@/lib/auth";
 
 const schema = z.object({
   subjectName: z.string().trim().min(2, "Ismni kiriting").max(120),
@@ -18,7 +18,7 @@ const schema = z.object({
 export type InviteState = { error?: string; link?: string };
 
 export async function createInvite(_: InviteState, form: FormData): Promise<InviteState> {
-  const user = await requireUser();
+  const user = await requireWriter();
   const parsed = schema.safeParse({
     subjectName: form.get("subjectName"),
     contact: form.get("contact") || undefined,
@@ -61,4 +61,17 @@ async function baseUrl() {
   if (!host) return process.env.NEXT_PUBLIC_APP_URL ?? "";
   const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   return `${proto}://${host}`;
+}
+
+/** Taklifni bekor qiladi: boshlanmagan bo'lsa o'chiriladi, jarayonda bo'lsa muddati tugatiladi. */
+export async function cancelInvite(id: string) {
+  const user = await requireWriter();
+  const a = await db.assessment.findUnique({ where: { id }, select: { status: true } });
+  if (!a) return { ok: false as const, error: "Taklif topilmadi" };
+  if (a.status === "SUBMITTED") return { ok: false as const, error: "Topshirilgan taklifni bekor qilib bo'lmaydi" };
+  if (a.status === "INVITED") await db.assessment.delete({ where: { id } });
+  else await db.assessment.update({ where: { id }, data: { status: "EXPIRED" } });
+  await db.auditLog.create({ data: { actorId: user.id, action: "invite.cancel", entity: "Assessment", entityId: id } });
+  revalidatePath("/hr/takliflar");
+  return { ok: true as const };
 }

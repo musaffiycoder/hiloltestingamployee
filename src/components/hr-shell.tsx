@@ -31,7 +31,7 @@ const NAV: NavItem[] = [
   { href: "/hr/takliflar", label: "Takliflar", short: "Takliflar", icon: Plus },
   { href: "/hr/konstruktor", label: "Test konstruktori", short: "Konstruktor", icon: SlidersHorizontal, soon: true },
   { href: "/hr/analitika", label: "Analitika", short: "Analitika", icon: BarChart3, soon: true },
-  { href: "/hr/sozlamalar", label: "Sozlamalar", short: "Sozlamalar", icon: Settings, soon: true },
+  { href: "/hr/sozlamalar", label: "Sozlamalar", short: "Sozlamalar", icon: Settings },
 ];
 
 const PHONE_TABS = [NAV[0], NAV[1], NAV[2], NAV[4], NAV[5]];
@@ -44,6 +44,7 @@ const TITLES: [string, string][] = [
   ["/hr/lavozimlar", "Lavozim kartalari"],
   ["/hr/savollar", "Savollar banki"],
   ["/hr/takliflar", "Takliflar"],
+  ["/hr/sozlamalar", "Sozlamalar"],
   ["/hr", "Bosh sahifa"],
 ];
 

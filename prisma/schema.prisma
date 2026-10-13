@@ -239,3 +239,10 @@ model Comment {
 
   @@index([attemptId])
 }
+
+/// Oddiy, serverless uchun mos rate limit hisoblagichi (login, token endpointlari).
+model RateLimit {
+  key     String   @id
+  count   Int      @default(0)
+  resetAt DateTime
+}

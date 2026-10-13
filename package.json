@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx scripts/test-scoring.ts",
+    "test": "tsx scripts/test-scoring.ts && tsx scripts/test-questions.ts",
     "seed": "tsx prisma/seed.ts",
     "postinstall": "prisma generate"
   },

@@ -4,6 +4,7 @@ import { Search } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { Card, LevelChip, Pill, SectionTitle } from "@/components/ui";
+import { ActivateDrafts } from "./activate-drafts";
 import { QUESTION_TYPE_LABELS } from "@/lib/labels";
 import type { Prisma } from "@prisma/client";
 
@@ -13,19 +14,22 @@ type Opt = string | { text: string; points?: number; flag?: boolean };
 const text = (o: Opt) => (typeof o === "string" ? o : o.text);
 
 export default async function QuestionBankPage({ searchParams }: PageProps<"/hr/savollar">) {
-  await requireUser();
+  const viewer = await requireUser();
+  const canWrite = viewer.role !== "MANAGER";
   const sp = await searchParams;
   const pos = typeof sp.p === "string" ? sp.p : "";
   const lvl = typeof sp.l === "string" ? Number(sp.l) : 0;
   const q = typeof sp.q === "string" ? sp.q.trim().slice(0, 80) : "";
+  const st = sp.status === "ACTIVE" || sp.status === "DRAFT" || sp.status === "RETIRED" ? sp.status : "";
 
   const where: Prisma.QuestionWhereInput = {
     ...(pos ? { competency: { position: { code: pos } } } : {}),
     ...(lvl >= 1 && lvl <= 5 ? { level: lvl } : {}),
     ...(q ? { stem: { contains: q, mode: "insensitive" } } : {}),
+    ...(st ? { status: st } : {}),
   };
 
-  const [positions, questions, total] = await Promise.all([
+  const [positions, questions, total, draftCount] = await Promise.all([
     db.position.findMany({
       orderBy: { title: "asc" },
       select: { code: true, title: true, competencies: { select: { _count: { select: { questions: true } } } } },
@@ -37,11 +41,12 @@ export default async function QuestionBankPage({ searchParams }: PageProps<"/hr/
       include: { competency: { include: { position: { select: { title: true } } } } },
     }),
     db.question.count({ where }),
+    db.question.count({ where: { status: "DRAFT", ...(pos ? { competency: { position: { code: pos } } } : {}) } }),
   ]);
 
   const href = (patch: Record<string, string | undefined>) => {
     const p = new URLSearchParams();
-    const m = { p: pos, l: lvl ? String(lvl) : "", q, ...patch };
+    const m = { p: pos, l: lvl ? String(lvl) : "", q, status: st, ...patch };
     for (const [k, v] of Object.entries(m)) if (v) p.set(k, v);
     const s = p.toString();
     return `/hr/savollar${s ? `?${s}` : ""}`;
@@ -66,6 +71,7 @@ export default async function QuestionBankPage({ searchParams }: PageProps<"/hr/
       <form action="/hr/savollar" className="relative">
         {pos && <input type="hidden" name="p" value={pos} />}
         {lvl ? <input type="hidden" name="l" value={lvl} /> : null}
+        {st && <input type="hidden" name="status" value={st} />}
         <Search size={17} aria-hidden className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-tx2" />
         <input
           name="q"
@@ -86,6 +92,39 @@ export default async function QuestionBankPage({ searchParams }: PageProps<"/hr/
             </Link>
           );
         })}
+      </div>
+
+      {canWrite && <div className="flex flex-wrap items-center gap-2">
+        <Link
+          href={`/hr/savollar/yangi${pos ? `?p=${pos}` : ""}`}
+          className="inline-flex h-10 items-center rounded-full bg-brf px-4 text-[15px] font-semibold text-onbr"
+        >
+          + Savol
+        </Link>
+        <Link href="/hr/savollar/import" className="inline-flex h-10 items-center rounded-full bg-tint px-4 text-[15px] font-semibold text-brd">
+          Import (JSON)
+        </Link>
+        {draftCount > 0 && <ActivateDrafts position={pos} count={draftCount} />}
+      </div>}
+
+      <div className="grid grid-cols-4 rounded-[10px] bg-soft p-0.5" role="group" aria-label="Holat">
+        {(
+          [
+            ["", "Hammasi"],
+            ["ACTIVE", "Faol"],
+            ["DRAFT", `Qoralama${draftCount ? ` ${draftCount}` : ""}`],
+            ["RETIRED", "Arxiv"],
+          ] as const
+        ).map(([k, l]) => (
+          <Link
+            key={k}
+            href={href({ status: k })}
+            className={`rounded-lg py-1.5 text-center text-[13px] font-semibold ${st === k ? "bg-card shadow-[0_1px_3px_rgba(0,0,0,0.18)]" : ""}`}
+            aria-current={st === k ? "true" : undefined}
+          >
+            {l}
+          </Link>
+        ))}
       </div>
 
       <div className="flex items-center gap-3">
@@ -135,6 +174,9 @@ export default async function QuestionBankPage({ searchParams }: PageProps<"/hr/
                           <LevelChip level={x.level} />
                           <Pill tone="soft">{QUESTION_TYPE_LABELS[x.type]}</Pill>
                           <Pill tone="soft">{x.timeLimitSec}s</Pill>
+                          {x.status !== "ACTIVE" && (
+                            <Pill tone={x.status === "DRAFT" ? "warn" : "bad"}>{x.status === "DRAFT" ? "Qoralama" : "Arxiv"}</Pill>
+                          )}
                         </span>
                       </span>
                       <span aria-hidden className="text-lg text-tx2 transition-transform group-open:rotate-90">›</span>
@@ -167,6 +209,11 @@ export default async function QuestionBankPage({ searchParams }: PageProps<"/hr/
                         </ul>
                       )}
                       {x.explanation && <p className="mt-2 text-[13px] text-tx2">{x.explanation}</p>}
+                      {canWrite && (
+                        <Link href={`/hr/savollar/${x.id}`} className="mt-3 inline-flex h-9 items-center rounded-full bg-tint px-4 text-[15px] font-semibold text-brd">
+                          Tahrirlash
+                        </Link>
+                      )}
                     </div>
                   </details>
                 );

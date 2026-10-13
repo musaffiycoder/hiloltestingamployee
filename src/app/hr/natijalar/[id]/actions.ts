@@ -3,11 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireUser, requireWriter } from "@/lib/auth";
 import { computeAttempt } from "@/lib/attempt";
 
 export async function setDecision(attemptId: string, decision: "ADVANCE" | "REJECT" | null) {
-  const user = await requireUser();
+  const user = await requireWriter();
   await db.attemptResult.update({ where: { attemptId }, data: { decision } });
   await db.auditLog.create({
     data: { actorId: user.id, action: "result.decision", entity: "Attempt", entityId: attemptId, meta: { decision } },
@@ -26,7 +26,7 @@ const overrideSchema = z.object({
 
 /** Javob ballini qo'lda o'zgartirish: sabab majburiy, tarixda qayd etiladi. */
 export async function overrideResponse(form: FormData) {
-  const user = await requireUser();
+  const user = await requireWriter();
   const parsed = overrideSchema.safeParse({
     responseId: form.get("responseId"),
     score: form.get("score"),

@@ -50,3 +50,10 @@ export async function requireUser() {
   if (!user) redirect("/login");
   return user;
 }
+
+/** O'zgartirish huquqi: MANAGER roli faqat ko'ra oladi. */
+export async function requireWriter() {
+  const user = await requireUser();
+  if (user.role === "MANAGER") throw new Error("Bu amal uchun ruxsat yo'q (faqat ko'rish huquqi)");
+  return user;
+}

@@ -6,8 +6,10 @@ import { db } from "@/lib/db";
 import { getAssessmentByToken, isExpired } from "@/lib/attempt-access";
 import { computeAttempt } from "@/lib/attempt";
 import { SUPPORTED_TYPES } from "@/lib/labels";
+import { allow } from "@/lib/rate-limit";
 
 export async function startAttempt(token: string, form: FormData) {
+  if (!(await allow(`start:${token}`, 30, 3600))) redirect(`/t/${token}`);
   const a = await getAssessmentByToken(token);
   if (!a || isExpired(a)) redirect(`/t/${token}`);
   if (form.get("consent") !== "on") redirect(`/t/${token}?consent=required`);
@@ -47,6 +49,7 @@ async function activeAttempt(token: string) {
 }
 
 export async function saveResponse(token: string, input: unknown) {
+  if (!(await allow(`save:${token}`, 400, 3600))) return { ok: false as const };
   const ctx = await activeAttempt(token);
   if (!ctx) return { ok: false as const };
   const data = answerSchema.parse(input);
