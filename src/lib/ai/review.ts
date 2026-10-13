@@ -4,7 +4,16 @@ import { computeAttempt } from "@/lib/attempt";
 import { VERDICTS } from "@/lib/labels";
 import type { VerdictKey } from "@/lib/scoring";
 import { aiEffort, aiModels, callJson, type AiClient } from "./client";
-import { analysisJsonSchema, analysisSchema, gradeJsonSchema, gradeSchema, type StoredAnalysis } from "./schemas";
+import {
+  analysisPart1JsonSchema,
+  analysisPart1Schema,
+  analysisPart2JsonSchema,
+  analysisPart2Schema,
+  analysisSchema,
+  gradeJsonSchema,
+  gradeSchema,
+  type StoredAnalysis,
+} from "./schemas";
 import { analysisPrompt, findUnknownPercents, gradePrompt, MIN_OPEN_ANSWER_CHARS, type AnalysisInput } from "./prompts";
 import { combineGrades } from "./combine";
 import { validateAnalysis } from "./quality";
@@ -285,20 +294,34 @@ export async function generateAnalysis(attemptId: string, clientOrOpts?: AiClien
   const p = analysisPrompt(input);
   const effort = opts.effort ?? aiEffort().analysis;
 
-  const run = (eff: typeof effort, user: string, timeoutMs: number) =>
-    callJson({
+  const P1 = "xulosa (executiveSummary), overallNarrative, SWOT (strengths, weaknesses, opportunities, threats, swotStrategy), answerPatterns, competencyInsights, keyConcerns, recommendation va recommendationReasons";
+  const P2 = "errorDiagnostics, interviewQuestions, roleRisks, developmentPlan va dataGaps";
+  const part = (n: 1 | 2, eff: typeof effort, user: string, timeoutMs: number) => {
+    const common = {
       model: aiModels().analysis,
       system: p.system,
-      user,
-      jsonSchema: analysisJsonSchema,
-      parse: (x) => analysisSchema.parse(x),
-      maxTokens: 40000,
+      user: `${user}\n\n(Bu so'rovda FAQAT shu maydonlarni to'ldir: ${n === 1 ? P1 : P2}. Qolgan bo'limlar alohida so'rovda yoziladi.)`,
+      maxTokens: 32000,
       stream: true,
       effort: eff,
       timeoutMs,
       retries: 0,
       client: opts.client,
-    });
+    };
+    return n === 1
+      ? callJson({ ...common, jsonSchema: analysisPart1JsonSchema, parse: (x) => analysisPart1Schema.parse(x) })
+      : callJson({ ...common, jsonSchema: analysisPart2JsonSchema, parse: (x) => analysisPart2Schema.parse(x) });
+  };
+  // Ikki qism parallel yoziladi (tezroq va har biri strukturali chiqish chegarasiga sig'adi)
+  const run = async (eff: typeof effort, user: string, timeoutMs: number) => {
+    const [r1, r2] = await Promise.all([part(1, eff, user, timeoutMs), part(2, eff, user, timeoutMs)]);
+    return {
+      data: analysisSchema.parse({ ...r1.data, ...r2.data }),
+      inputTokens: r1.inputTokens + r2.inputTokens,
+      outputTokens: r1.outputTokens + r2.outputTokens,
+      model: r1.model,
+    };
+  };
 
   let res = await run(effort, p.user, Math.max(30_000, Math.min(200_000, deadline - Date.now() - 2_000)));
   let issues = validateAnalysis(res.data, input);

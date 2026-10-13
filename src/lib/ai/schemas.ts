@@ -23,14 +23,19 @@ export const gradeJsonSchema = {
   additionalProperties: false,
 } as const;
 
-/** 3-bosqich: chuqur tahlil (faqat MATN; raqamlar formuladan). */
-export const analysisSchema = z.object({
+/**
+ * 3-bosqich: chuqur tahlil (faqat MATN; raqamlar formuladan).
+ * Tuzilmali chiqish grammatikasi katta sxemada «too large» xatosini beradi, shu sabab tahlil ikki
+ * mustaqil so'rovga bo'lingan (parallel): 1-qism — xulosa, SWOT, kompetensiyalar; 2-qism — diagnostika, reja.
+ */
+const part1Shape = {
   executiveSummary: z.string().min(40),
   overallNarrative: z.string().min(20),
   strengths: z.array(z.string()),
   weaknesses: z.array(z.string()),
   opportunities: z.array(z.string()),
   threats: z.array(z.string()),
+  swotStrategy: z.string(),
   answerPatterns: z.object({
     difficulty: z.string(),
     distractors: z.string(),
@@ -48,6 +53,12 @@ export const analysisSchema = z.object({
       nextStep: z.string(),
     }),
   ),
+  keyConcerns: z.array(z.object({ question: z.number().int(), concern: z.string() })),
+  recommendation: z.string().min(10),
+  recommendationReasons: z.array(z.string()),
+};
+
+const part2Shape = {
   errorDiagnostics: z.array(
     z.object({ question: z.number().int(), competency: z.string(), chose: z.string(), shows: z.string(), fix: z.string() }),
   ),
@@ -67,11 +78,11 @@ export const analysisSchema = z.object({
     }),
   ),
   dataGaps: z.array(z.object({ gap: z.string(), why: z.string(), howToClose: z.string() })),
-  swotStrategy: z.string(),
-  keyConcerns: z.array(z.object({ question: z.number().int(), concern: z.string() })),
-  recommendation: z.string().min(10),
-  recommendationReasons: z.array(z.string()),
-});
+};
+
+export const analysisPart1Schema = z.object(part1Shape);
+export const analysisPart2Schema = z.object(part2Shape);
+export const analysisSchema = z.object({ ...part1Shape, ...part2Shape });
 export type Analysis = z.infer<typeof analysisSchema>;
 
 /** Saqlanadigan shakl: AI matni + tekshiruv belgilari. */
@@ -85,51 +96,40 @@ const obj = (props: Record<string, unknown>) => ({
   required: Object.keys(props),
   additionalProperties: false,
 });
+const root = (props: Record<string, unknown>) => ({ ...obj(props) });
 
-export const analysisJsonSchema = {
-  type: "object",
-  properties: {
-    executiveSummary: str,
-    overallNarrative: str,
-    strengths: strArr,
-    weaknesses: strArr,
-    opportunities: strArr,
-    threats: strArr,
-    answerPatterns: obj({ difficulty: str, distractors: str, time: str, comparison: str, reliability: str }),
-    competencyInsights: {
-      type: "array",
-      items: obj({ code: str, name: str, analysis: str, evidence: str, reliability: str, nextStep: str }),
-    },
-    errorDiagnostics: {
-      type: "array",
-      items: obj({ question: { type: "integer" }, competency: str, chose: str, shows: str, fix: str }),
-    },
-    interviewQuestions: { type: "array", items: obj({ question: str, verifies: str, lookFor: str }) },
-    roleRisks: strArr,
-    developmentPlan: {
-      type: "array",
-      items: obj({
-        area: str,
-        recommendation: str,
-        format: str,
-        courseSuggestion: str,
-        resources: { type: "array", items: obj({ kind: str, title: str, provider: str, why: str }) },
-        estimatedDuration: str,
-        horizon: str,
-        successMetric: str,
-        priority: { type: "integer" },
-      }),
-    },
-    dataGaps: { type: "array", items: obj({ gap: str, why: str, howToClose: str }) },
-    swotStrategy: str,
-    keyConcerns: { type: "array", items: obj({ question: { type: "integer" }, concern: str }) },
-    recommendation: str,
-    recommendationReasons: strArr,
+export const analysisPart1JsonSchema = root({
+  executiveSummary: str,
+  overallNarrative: str,
+  strengths: strArr,
+  weaknesses: strArr,
+  opportunities: strArr,
+  threats: strArr,
+  swotStrategy: str,
+  answerPatterns: obj({ difficulty: str, distractors: str, time: str, comparison: str, reliability: str }),
+  competencyInsights: { type: "array", items: obj({ code: str, name: str, analysis: str, evidence: str, reliability: str, nextStep: str }) },
+  keyConcerns: { type: "array", items: obj({ question: { type: "integer" }, concern: str }) },
+  recommendation: str,
+  recommendationReasons: strArr,
+});
+
+export const analysisPart2JsonSchema = root({
+  errorDiagnostics: { type: "array", items: obj({ question: { type: "integer" }, competency: str, chose: str, shows: str, fix: str }) },
+  interviewQuestions: { type: "array", items: obj({ question: str, verifies: str, lookFor: str }) },
+  roleRisks: strArr,
+  developmentPlan: {
+    type: "array",
+    items: obj({
+      area: str,
+      recommendation: str,
+      format: str,
+      courseSuggestion: str,
+      resources: { type: "array", items: obj({ kind: str, title: str, provider: str, why: str }) },
+      estimatedDuration: str,
+      horizon: str,
+      successMetric: str,
+      priority: { type: "integer" },
+    }),
   },
-  required: [
-    "executiveSummary", "overallNarrative", "strengths", "weaknesses", "opportunities", "threats", "answerPatterns",
-    "competencyInsights", "errorDiagnostics", "interviewQuestions", "roleRisks", "developmentPlan", "dataGaps",
-    "swotStrategy", "keyConcerns", "recommendation", "recommendationReasons",
-  ],
-  additionalProperties: false,
-} as const;
+  dataGaps: { type: "array", items: obj({ gap: str, why: str, howToClose: str }) },
+});

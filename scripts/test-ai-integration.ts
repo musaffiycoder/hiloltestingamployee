@@ -145,7 +145,7 @@ async function main() {
     // --- 3-bosqich
     const an = await generateAnalysis(attempt.id, stub);
     // Stub qasddan yaroqsiz (kam band, kompetensiyalar yetishmaydi): sifat darvozasi `high` bilan qayta urinadi
-    assert.equal(stub.analysisCalls, 2, "yaroqsiz tahlil → bitta qayta urinish");
+    assert.equal(stub.analysisCalls, 4, "2 qism × (birinchi urinish + sifat darvozasi qayta urinishi)");
     assert.ok(stub.retryPrompt.includes("competencyInsights da kompetensiyalar yetishmaydi"), "kamchiliklar qayta so'rovga yoziladi");
     assert.equal(an.escalated, true);
     assert.ok(an.stored.warnings.some((w) => w.startsWith("Tekshiruv:")), "qolgan kamchiliklar ogohlantirish bo'ladi");

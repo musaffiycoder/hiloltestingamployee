@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { AiError, callJson, type AiClient } from "../src/lib/ai/client";
-import { analysisJsonSchema, analysisSchema, gradeJsonSchema, gradeSchema } from "../src/lib/ai/schemas";
+import { analysisPart1JsonSchema, analysisPart2JsonSchema, analysisSchema, gradeJsonSchema, gradeSchema } from "../src/lib/ai/schemas";
 import { combineGrades } from "../src/lib/ai/combine";
 import { calibrationStats } from "../src/lib/calibration";
 import { analysisPrompt, findUnknownPercents, gradePrompt, MIN_OPEN_ANSWER_CHARS, untrusted, type AnalysisInput } from "../src/lib/ai/prompts";
@@ -134,7 +134,7 @@ assert.deepEqual(findUnknownPercents(["65,5 % va 71 %"], [71]), ["65,5%"]);
 // ---- sxemalar
 assert.equal(gradeSchema.safeParse({ score: 0.75, matched: [0], rationale: "yaxshi", confidence: 0.8, injectionAttempt: false }).success, true);
 assert.equal(gradeSchema.safeParse({ score: 2, matched: [], rationale: "x", confidence: 0.5, injectionAttempt: false }).success, false);
-for (const s of [gradeJsonSchema, analysisJsonSchema]) {
+for (const s of [gradeJsonSchema, analysisPart1JsonSchema, analysisPart2JsonSchema]) {
   const o = s as unknown as { additionalProperties: boolean; required: string[]; properties: Record<string, unknown> };
   assert.equal(o.additionalProperties, false);
   assert.deepEqual([...o.required].sort(), Object.keys(o.properties).sort(), "required == properties (strict sxema)");
@@ -197,6 +197,9 @@ const args = { model: "claude-opus-5-5", system: "s", user: "u", jsonSchema: gra
     dataGaps: [], recommendation: "Shartli mos — SQL bo'yicha reja bilan.", recommendationReasons: ["H3 talabdan 1 daraja past"],
   };
   assert.equal(analysisSchema.safeParse(analysis).success, true);
+  const k1 = Object.keys((analysisPart1JsonSchema as { properties: object }).properties);
+  const k2 = Object.keys((analysisPart2JsonSchema as { properties: object }).properties);
+  assert.deepEqual([...k1, ...k2].sort(), Object.keys(analysis).sort(), "ikki qism birgalikda butun tahlilni qoplaydi, takrorsiz");
 
   console.log("ai: OK");
 })();
