@@ -8,8 +8,9 @@ type Pos = { id: string; title: string; card: string; competencies: Comp[] };
 
 const ROOT = path.resolve(__dirname, "..");
 const KARTALAR = path.resolve(ROOT, "..", "kartalar");
-const TOTAL = 25; // kompetensiyalar uchun; +5 ta qadriyat savoli (V1) = jami 30
-const VALUE_LEVELS = [2, 3, 4, 4, 5];
+const TOTAL = 30; // kompetensiyalar uchun; +5 ta qadriyat savoli (V1) = jami 35
+// Notion yo'riqnomalarida faqat 3 (Yaxshi) va 4 (Professional) talab qilinadi — savollar faqat shu ikki darajada.
+const VALUE_LEVELS = [3, 3, 4, 4, 4];
 const FULL = TOTAL + VALUE_LEVELS.length;
 const MAX_OPEN = 6;
 
@@ -43,12 +44,10 @@ function quotas(comps: Comp[]): Record<string, number> {
 
 /** Talab darajasi atrofida darajalar: t, t-1, t+1, t-2, t+2; ortiqchasi t va t-1 ga qo'shiladi. */
 function levelsFor(target: number, n: number): number[] {
-  const order = [target, target - 1, target + 1, target - 2, target + 2, target - 3].filter((l) => l >= 1 && l <= 5);
-  const uniq = [...new Set(order)];
-  const out = uniq.slice(0, Math.min(n, uniq.length));
-  let i = 0;
-  while (out.length < n) out.push([target, target - 1, target][i++ % 3]);
-  return out.sort((a, b) => a - b);
+  // Faqat yo'riqnomadagi talab darajalari: target 3 → hammasi 3; target ≥4 → yarmi 3, yarmi 4.
+  if (target < 4) return Array.from({ length: n }, () => 3);
+  const low = Math.floor(n / 2);
+  return Array.from({ length: n }, (_, i) => (i < low ? 3 : 4));
 }
 
 function slotsFor(pos: Pos) {
@@ -165,14 +164,15 @@ const POSITION_NOTES: Record<string, string> = {
 
 const TIME: Record<string, number> = { MCQ_SINGLE: 60, MCQ_MULTI: 90, SITUATIONAL: 90, OPEN: 240 };
 
-function build(pos: Pos, num: number): string {
+function build(pos: Pos, num: number, onlySlots?: ReturnType<typeof slotsFor>, existing: string[] = []): string {
   const card = fs.readFileSync(path.join(KARTALAR, pos.card), "utf8");
   const general = fs.readFileSync(path.join(KARTALAR, "00-umumiy-qoidalar.md"), "utf8");
   // Notion lavozim yo'riqnomasidan olingan haqiqiy ish vazifalari (data/yoriqnomalar/<id>.md)
   const duties = fs.readFileSync(path.join(ROOT, "data/yoriqnomalar", `${pos.id}.md`), "utf8");
-  const slots = slotsFor(pos);
+  const slots = onlySlots ?? slotsFor(pos);
+  const FULL_N = slots.length;
   const typeCounts = slots.reduce<Record<string, number>>((m, s) => ((m[s.type] = (m[s.type] ?? 0) + 1), m), {});
-  const totalSec = slots.reduce((s, x) => s + TIME[x.type], 0);
+  const totalSec = slotsFor(pos).reduce((s, x) => s + TIME[x.type], 0);
 
   const rows = slots
     .map((s, i) => `${String(i + 1).padStart(2, "0")}. competency="${s.comp.id}" (${s.comp.name}) · level=${s.level} · type=${s.type}${s.comp.critical ? " · KRITIK" : ""}`)
@@ -190,14 +190,14 @@ function build(pos: Pos, num: number): string {
 
 ## ROL VA MAQSAD
 
-Sen — psixometrika va ${pos.title} sohasi bo'yicha tajribali test tuzuvchi mutaxassissan. Quyida Hilol Nashr (Dasturlash bo'limi) uchun **${pos.title}** lavozimining baholash kartasi berilgan. Shu kartaga tayanib, **aynan ${FULL} ta** savoldan iborat bitta test tuz.
+Sen — psixometrika va ${pos.title} sohasi bo'yicha tajribali test tuzuvchi mutaxassissan. Quyida Hilol Nashr (Dasturlash bo'limi) uchun **${pos.title}** lavozimining baholash kartasi berilgan. Shu kartaga tayanib, **aynan ${FULL_N} ta** savoldan iborat bitta test tuz.
 
 Test ham **nomzodni qabul qilish**, ham **mavjud xodimni baholash** uchun ishlatiladi. Savollar real ish vaziyatlarini o'lchashi, yodlab olib bo'lmaydigan va taxmin qilib topib bo'lmaydigan bo'lishi shart. Test egasi AVVALGI AI tuzgan savollardan norozi bo'lgan: «to'g'ri javob doim eng uzun va eng batafsil, qolganlari qisqa va ochiq-oydin xato» edi. Bunday savol yozma.
 
 ${POSITION_NOTES[pos.id] ? `## LAVOZIMGA XOS ESLATMA\n\n${POSITION_NOTES[pos.id]}\n\n` : ""}## PLATFORMA IMKONIYATLARI (muhim)
 
 - Nomzod savollarni **ixtiyoriy tartibda** yechadi: qiyinini o'tkazib, keyin qaytib kelishi mumkin. Shuning uchun **har bir savol mustaqil** bo'lsin: «oldingi savoldagi kod», «yuqoridagi vaziyat» kabi bog'liqlik yozma. Kontekst kerak bo'lsa, savolning o'zida to'liq keltir.
-- Bir testda jami ${FULL} tadan ko'p savol bo'lmaydi. Taxminiy umumiy vaqt: ${Math.round(totalSec / 60)} daqiqa.
+- Bir testda jami ${FULL} ta savol bo'ladi (30 ta kompetensiya + 5 ta qadriyat). Taxminiy umumiy vaqt: ${Math.round(totalSec / 60)} daqiqa.
 
 ## LAVOZIM KOMPETENSIYALARI
 
@@ -216,7 +216,7 @@ ${duties}
 - «Umumiy» (jamoada nizo chiqdi, vaqt yetmayapti kabi) savol yozma; har vaziyatda rol, vosita, raqam (muddat, foydalanuvchi soni, narx, versiya) va oqibat bo'lsin.
 - Qizil bayroqlardagi xatti-harakatlar (yashirish, vakolatsiz o'zgartirish, maxfiy ma'lumotni sizdirish) SITUATIONAL savollarda "flag":true variantlar sifatida ishlatilsin.
 
-## QADRIYATLAR (V1) — 5 ta savol
+${onlySlots ? "" : `## QADRIYATLAR (V1) — 5 ta savol
 
 V1 «Qadriyatlar: halollik, maxfiylik va mas'uliyat» — **kritik** kompetensiya: bu yerda past natija umumiy ballga qaramay «mos emas»ga olib keladi. 5 ta savol (blueprint oxirida) faqat **SITUATIONAL** bo'lsin.
 
@@ -224,11 +224,10 @@ V1 «Qadriyatlar: halollik, maxfiylik va mas'uliyat» — **kritik** kompetensiy
 
 | Daraja | Xatti-harakat |
 |---|---|
-| 1 | Qoidani biladi, lekin bosim yoki manfaat bo'lsa buzadi yoki yashiradi. |
-| 2 | Odatda qoidaga amal qiladi, noqulay vaziyatda (xato, bosim, do'st) jim qoladi yoki yumshatib aytadi. |
-| 3 | Odatiy vaziyatda halol: xatosini o'zi aytadi, maxfiy ma'lumotni himoya qiladi, vakolat doirasida ishlaydi. |
-| 4 | Bosim, manfaat va shaxsiy munosabat sharoitida ham tamoyilda qoladi; buzilishni to'g'ri kanal orqali xabar qiladi; xavfni oldindan ochiq aytadi. |
-| 5 | Namuna: murakkab axloqiy qarorni asoslab qabul qiladi, jamoada halollik va xavfsizlik madaniyatini shakllantiradi. |
+| 3 — Yaxshi | Odatiy vaziyatda halol: xatosini o'zi aytadi, maxfiy ma'lumotni himoya qiladi, vakolat doirasida ishlaydi. |
+| 4 — Professional | Bosim, manfaat va shaxsiy munosabat sharoitida ham tamoyilda qoladi; buzilishni to'g'ri kanal orqali xabar qiladi; xavfni oldindan ochiq aytadi. |
+
+Daraja 3 dan past natija — qoida buzilishini yoki bosim ostida yashirishni bildiradi.
 
 **5 ta mavzu (har biri bitta savol; tartibda):**
 
@@ -241,15 +240,19 @@ ${(VALUE_THEMES[pos.id] ?? []).map((t, i) => `${i + 1}. ${t}  — daraja ${VALUE
 - 5 ball variant eng uzun yoki eng «ideal» ko'rinishda bo'lmasin; 3–4 ball variantlar ham real va qisman to'g'ri bo'lsin.
 - Yo'riqnomadagi «Javobgarligi» bo'limidagi xatti-harakatlarni (yashirish, vakolatsiz o'zgartirish, sirni oshkor qilish) asos qil.
 
-## SAVOLLAR REJASI (BLUEPRINT) — qat'iy amal qil
+`}${existing.length ? `## ALLAQACHON MAVJUD SAVOLLAR (takrorlama)\n\nQuyidagi mavzular testda bor. Yangi savollar ularni takrorlamasin, boshqa vaziyat va mavzu olsin:\n\n${existing.map((t, i) => `${i + 1}. ${t}`).join("\n")}\n\n` : ""}## SAVOLLAR REJASI (BLUEPRINT) — qat'iy amal qil
 
-Quyidagi ${FULL} ta joyning har biri uchun aynan bitta savol yoz. competency, level va type o'zgarmasin. Tartibni ham saqla.
+Quyidagi ${FULL_N} ta joyning har biri uchun aynan bitta savol yoz. competency, level va type o'zgarmasin. Tartibni ham saqla.
 
 ${rows}
 
 Jami: ${Object.entries(typeCounts).map(([k, v]) => `${k} ${v}`).join(" · ")}.
 
-Level ma'nosi: 1 Boshlang'ich, 2 Rivojlanayotgan, 3 Yaxshi, 4 Professional, 5 Ekspert. Savol qiyinligi **shu darajaning kartadagi "Ball ko'rsatkichlari" qatoriga** mos kelsin: o'sha daraja odamigina to'g'ri javob bera oladi, bir pog'ona pastdagi odam esa ishonarli xatoga tushadi.
+**Faqat ikki daraja ishlatiladi** (lavozim yo'riqnomasidagi talablar bilan bir xil; boshqa daraja yozilmaydi):
+- **3 — Yaxshi:** tegishli ko'nikmani odatiy vaziyatlarda mustaqil qo'llaydi.
+- **4 — Professional:** murakkab vaziyatlarda ham ko'nikmasini mustaqil va sifatli qo'llaydi (va kerak bo'lsa boshqalarning ishini tashkil eta oladi).
+
+Test xodim yo'riqnomadagi talabga javob beradimi-yo'qmi shuni o'lchaydi: «ekspert» yoki o'quv-tajriba darajasidagi (yangi standart yaratish, kompaniya darajasida tizim qurish) savol yozma. Savol qiyinligi kartadagi shu daraja qatoriga mos kelsin: 3-daraja savolga odatiy ish tajribasi yetadi, 4-daraja savolda esa murakkab trade-off va xavfni hisobga olish kerak. Bir pog'ona past darajadagi odam ishonarli xatoga tushsin.
 
 ## SAVOL TURLARI VA JSON FORMATI
 
@@ -267,7 +270,7 @@ SITUATIONAL — real vaziyat; har variantga 1–5 ball (5 = eng yaxshi harakat).
 OPEN — erkin matn javob; AI va inson baholaydi. "rubric" — 3 dan 6 gacha **tekshiriladigan** band (har biri «javobda X bor/yo'q» deb aniq javob beriladigan):
 {"position":"${pos.id}","competency":"H1","level":4,"type":"OPEN","stem":"... (nima yozish kerakligi va taxminiy hajmi: 4–8 gap)","rubric":["...","...","..."],"explanation":"...","timeLimitSec":240}
 
-Maydonlar: position (doim "${pos.id}"), competency (${pos.competencies.map((c) => c.id).join(", ")}), level (1–5), type, stem (savol matni, 10–1500 belgi), options, correct / rubric, explanation (nega aynan shu javob to'g'ri va qaysi tuzoq qaysi variantda; 1000 belgigacha), timeLimitSec (15–900).
+Maydonlar: position (doim "${pos.id}"), competency (${pos.competencies.map((c) => c.id).join(", ")}), level (faqat 3 yoki 4), type, stem (savol matni, 10–1500 belgi), options, correct / rubric, explanation (nega aynan shu javob to'g'ri va qaysi tuzoq qaysi variantda; 1000 belgigacha), timeLimitSec (15–900).
 
 ## SIFAT QOIDALARI — buzilsa savol yaroqsiz
 
@@ -284,7 +287,7 @@ Maydonlar: position (doim "${pos.id}"), competency (${pos.competencies.map((c) =
 
 **Mazmun qoidalari:**
 10. Har bir savol kartadagi o'sha kompetensiyaning o'sha darajadagi ko'rsatkichlariga tayansin; savol kartada yo'q narsani so'ramasin.
-11. Daraja oshgani sari tafsilot emas, **qaror murakkabligi** oshsin: 1–2 daraja — ta'rif/oddiy qo'llash; 3 — odatiy ish vaziyatida to'g'ri harakat; 4 — trade-off, xavf, yuklama, bir nechta cheklov; 5 — nostandart muammo, standart/arxitektura qarori, boshqalarni o'rgatish.
+11. 4-daraja 3-darajadan tafsilot bilan emas, **qaror murakkabligi** bilan farq qilsin: 3 — odatiy ish vaziyatida to'g'ri harakat; 4 — trade-off, xavf, yuklama, bir nechta cheklov va oqibatlarni hisobga olish. 5 yoki 1–2 darajali savol yozma.
 12. Texnik savollarda aniq, qisqa kod/log/SQL/konfiguratsiya parchasi (3–15 qator) ishlat; mavhum «nima deb o'ylaysiz» savol yozma. Parcha mustaqil yetarli bo'lsin.
 13. Vaziyatli savollarda aniq raqam va rollar bo'lsin (muddat, jamoa soni, mijoz ta'siri, kim nima dedi) — umumiy «jamoada nizo chiqdi» deb yozma.
 14. Faqat o'zbek tilida (lotin yozuvi); texnik atamalar inglizcha qolishi mumkin. Savol matnida o'zbekcha tabiiy, ish joyidagi til ishlat.
@@ -299,7 +302,7 @@ JSON'ni berishdan oldin har savol uchun jimgina tekshir: (a) blueprint'dagi comp
 
 ## CHIQISH
 
-Aynan ${FULL} ta elementdan iborat JSON massiv. Boshqa hech narsa.
+Aynan ${FULL_N} ta elementdan iborat JSON massiv. Boshqa hech narsa.
 
 ---
 
@@ -315,6 +318,7 @@ ${general}
 `;
 }
 
+const missingArgIdx = process.argv.indexOf("--missing");
 const outDir = path.join(ROOT, "data/gemini");
 fs.mkdirSync(outDir, { recursive: true });
 const index: string[] = ["# Gemini promptlari", "", "Har fayl — bitta lavozim. Faylning hammasini Gemini'ga tashlang, natijadagi JSON'ni Savollar → Import ga qo'ying.", ""];
@@ -326,3 +330,30 @@ data.positions.forEach((p, i) => {
   console.log(name, slots.length, slots.map((s) => `${s.comp.id}L${s.level}${s.type[0]}`).join(" "));
 });
 fs.writeFileSync(path.join(outDir, "README.md"), index.join("\n") + "\n");
+
+// --missing <lavozim> <mavjud-savollar.json>: yangi rejaga nisbatan yetishmayotgan joylar uchun alohida prompt
+if (missingArgIdx !== -1) {
+  const [code, file] = [process.argv[missingArgIdx + 1], process.argv[missingArgIdx + 2]];
+  const pos = data.positions.find((p) => p.id === code);
+  if (!pos) throw new Error("lavozim topilmadi: " + code);
+  const have = new Map<string, number>();
+  for (const q of JSON.parse(fs.readFileSync(file, "utf8")) as { competency: string; level: number }[]) {
+    const k = `${q.competency}:${q.level}`;
+    have.set(k, (have.get(k) ?? 0) + 1);
+  }
+  const need = slotsFor(pos).filter((s) => {
+    const k = `${s.comp.id}:${s.level}`;
+    const left = have.get(k) ?? 0;
+    if (left > 0) { have.set(k, left - 1); return false; }
+    return true;
+  });
+  // Mavjud savol rejaga sig'masa (ortiqcha), uning o'rniga so'ralmasligi uchun: SKIP="H5:3,..."
+  for (const sk of (process.env.SKIP ?? "").split(",").filter(Boolean)) {
+    const i = need.findIndex((s) => `${s.comp.id}:${s.level}` === sk);
+    if (i !== -1) need.splice(i, 1);
+  }
+  const name = `${code}-qoshimcha.md`;
+  const existingStems = (JSON.parse(fs.readFileSync(file, "utf8")) as { stem: string }[]).map((q) => q.stem.replace(/\s+/g, " ").slice(0, 110) + "…");
+  fs.writeFileSync(path.join(outDir, name), build(pos, 0, need, existingStems));
+  console.log(name, need.length, "yetishmayotgan joy:", need.map((s) => `${s.comp.id}L${s.level}${s.type[0]}`).join(" "));
+}

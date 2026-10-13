@@ -11,6 +11,13 @@ assert.equal(levelFromItems([{ level: 1, score: 0 }, { level: 2, score: 1 }]).le
 // muvaffaqiyatsizlikdan keyingi yuqori daraja hisobga olinmaydi
 assert.equal(levelFromItems([{ level: 1, score: 1 }, { level: 2, score: 0 }, { level: 3, score: 1 }]).level, 1);
 
+// Faqat 3–4 daraja sinalgan bank: yiqilish bir pog'ona pastga tushadi (1 emas)
+assert.equal(levelFromItems([{ level: 3, score: 0.2 }, { level: 4, score: 0 }]).level, 2);
+assert.equal(levelFromItems([{ level: 3, score: 0.6 }, { level: 4, score: 0 }]).level, 2.5);
+assert.equal(levelFromItems([{ level: 3, score: 1 }, { level: 4, score: 0.2 }]).level, 3);
+assert.equal(levelFromItems([{ level: 3, score: 1 }, { level: 4, score: 1 }]).level, 4);
+assert.equal(levelFromItems([{ level: 3, score: 1 }, { level: 4, score: 0.6 }]).level, 3.5);
+
 // scoring helpers
 assert.equal(scoreMcqMulti([0, 1], [0, 1]), 1);
 assert.equal(scoreMcqMulti([0, 2], [0, 1]), 0);

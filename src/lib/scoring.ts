@@ -66,7 +66,9 @@ export function levelFromItems(items: ScoredItem[]): {
     ratioByLevel[l] = arr.reduce((s, x) => s + x, 0) / arr.length;
   }
 
-  let reached = 1;
+  // Yo'riqnomada faqat 3 (Yaxshi) va 4 (Professional) talab qilinadi: eng past sinalgan daraja yiqilsa,
+  // natija shu darajadan bir pog'ona past (3 yiqilsa — 2, ≥50% bo'lsa 2.5). Pastroq darajalar sinalmaydi.
+  let reached = Math.max(1, levels[0] - 1);
   let bonus = 0;
   for (const l of levels) {
     const r = ratioByLevel[l];
