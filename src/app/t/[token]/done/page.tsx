@@ -10,13 +10,13 @@ export default async function DonePage({ params }: PageProps<"/t/[token]/done">)
   if (!a) notFound();
   const candidate = a.mode === "RECRUITING";
   return (
-    <main className="mesh-bg flex min-h-screen items-center justify-center px-4">
-      <div className="glass w-full max-w-md rounded-[24px] p-8 text-center shadow-soft">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-ok-t text-2xl text-ok" aria-hidden>
+    <main className="mesh-bg flex min-h-screen items-center justify-center px-5">
+      <div className="w-full max-w-sm text-center">
+        <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-ok-t text-4xl text-ok" aria-hidden>
           ✓
         </div>
-        <h1 className="font-display text-3xl font-bold">Rahmat, {a.subjectName.split(" ")[0]}!</h1>
-        <p className="mt-3 text-[15px] text-tx2">
+        <h1 className="text-[28px] font-bold leading-tight">Rahmat, {a.subjectName.split(" ")[0]}!</h1>
+        <p className="mt-3 text-[17px] text-tx2">
           {a.status === "SUBMITTED"
             ? candidate
               ? "Javoblaringiz HR ga yuborildi. Tez orada siz bilan bog'lanamiz."

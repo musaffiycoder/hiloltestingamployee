@@ -38,7 +38,7 @@ export default async function EmployeesPage() {
         <p className="max-w-md text-sm text-tx2">
           Taklif yaratishda «Xodimni baholash» rejimini tanlang. Natijalar, dinamika va rivojlanish zonalari shu yerda ko'rinadi.
         </p>
-        <Link href="/hr/takliflar" className="inline-flex min-h-11 items-center rounded-full bg-br px-5 text-sm font-bold text-[#1a0c02]">
+        <Link href="/hr/takliflar" className="inline-flex min-h-11 items-center rounded-full bg-br px-5 text-sm font-bold text-onbr">
           Baholash yaratish
         </Link>
       </Card>

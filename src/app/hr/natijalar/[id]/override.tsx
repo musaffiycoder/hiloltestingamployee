@@ -28,7 +28,7 @@ export function OverrideButton({ responseId, current }: { responseId: string; cu
   };
 
   const chip = (on: boolean) =>
-    `min-h-10 rounded-full px-4 text-sm font-bold ${on ? "bg-br text-[#1a0c02]" : "bg-soft text-tx"}`;
+    `min-h-10 rounded-full px-4 text-sm font-bold ${on ? "bg-brf text-onbr" : "bg-soft text-tx"}`;
 
   return (
     <>
@@ -73,7 +73,7 @@ export function OverrideButton({ responseId, current }: { responseId: string; cu
               <button
                 onClick={save}
                 disabled={score === null || !reason || pending}
-                className="h-12 flex-1 rounded-full bg-br text-sm font-bold text-[#1a0c02] disabled:opacity-50"
+                className="h-12 flex-1 rounded-full bg-br text-sm font-bold text-onbr disabled:opacity-50"
               >
                 {pending ? "Saqlanmoqda…" : "Saqlash"}
               </button>

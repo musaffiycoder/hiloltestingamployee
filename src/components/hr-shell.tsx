@@ -13,32 +13,34 @@ import {
   PanelLeftOpen,
   Plus,
   Settings,
-  Sun,
   SlidersHorizontal,
+  Sun,
   UserCheck,
   Users,
   type LucideIcon,
 } from "lucide-react";
 
-type NavItem = { href: string; label: string; icon: LucideIcon; soon?: boolean };
+type NavItem = { href: string; label: string; short: string; icon: LucideIcon; soon?: boolean };
 
 const NAV: NavItem[] = [
-  { href: "/hr", label: "Bosh sahifa", icon: LayoutDashboard },
-  { href: "/hr/natijalar", label: "Nomzodlar", icon: UserCheck },
-  { href: "/hr/xodimlar", label: "Xodimlar", icon: Users },
-  { href: "/hr/lavozimlar", label: "Lavozim kartalari", icon: ClipboardList },
-  { href: "/hr/savollar", label: "Savollar banki", icon: BookOpenCheck },
-  { href: "/hr/takliflar", label: "Takliflar", icon: Plus },
-  { href: "/hr/konstruktor", label: "Test konstruktori", icon: SlidersHorizontal, soon: true },
-  { href: "/hr/analitika", label: "Analitika", icon: BarChart3, soon: true },
-  { href: "/hr/sozlamalar", label: "Sozlamalar", icon: Settings, soon: true },
+  { href: "/hr", label: "Bosh sahifa", short: "Bosh", icon: LayoutDashboard },
+  { href: "/hr/natijalar", label: "Nomzodlar", short: "Nomzodlar", icon: UserCheck },
+  { href: "/hr/xodimlar", label: "Xodimlar", short: "Xodimlar", icon: Users },
+  { href: "/hr/lavozimlar", label: "Lavozim kartalari", short: "Lavozimlar", icon: ClipboardList },
+  { href: "/hr/savollar", label: "Savollar banki", short: "Savollar", icon: BookOpenCheck },
+  { href: "/hr/takliflar", label: "Takliflar", short: "Takliflar", icon: Plus },
+  { href: "/hr/konstruktor", label: "Test konstruktori", short: "Konstruktor", icon: SlidersHorizontal, soon: true },
+  { href: "/hr/analitika", label: "Analitika", short: "Analitika", icon: BarChart3, soon: true },
+  { href: "/hr/sozlamalar", label: "Sozlamalar", short: "Sozlamalar", icon: Settings, soon: true },
 ];
+
+const PHONE_TABS = [NAV[0], NAV[1], NAV[2], NAV[4], NAV[5]];
 
 const TITLES: [string, string][] = [
   ["/hr/natijalar/", "Nomzod natijasi"],
   ["/hr/natijalar", "Nomzodlar"],
   ["/hr/taqqoslash", "Taqqoslash"],
-  ["/hr/xodimlar", "Xodimlar baholashi"],
+  ["/hr/xodimlar", "Xodimlar"],
   ["/hr/lavozimlar", "Lavozim kartalari"],
   ["/hr/savollar", "Savollar banki"],
   ["/hr/takliflar", "Takliflar"],
@@ -60,8 +62,9 @@ export function HrShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  // Holat <html> atributlarida (data-sidebar, data-theme) saqlanadi: React state kerak emas,
-  // no-flash skripti sahifa chizilishidan oldin o'rnatadi.
+
+  // Holat <html> atributlarida (data-sidebar, data-theme) saqlanadi: no-flash skripti
+  // sahifa chizilishidan oldin o'rnatadi, React state kerak emas.
   const toggleSide = () => {
     const el = document.documentElement;
     const next = el.dataset.sidebar === "collapsed" ? "open" : "collapsed";
@@ -90,47 +93,49 @@ export function HrShell({
     .slice(0, 2)
     .toUpperCase();
 
-  const phoneItems = [NAV[0], NAV[1], null, NAV[2], NAV[3]] as (NavItem | null)[];
-
   return (
     <div className="mesh-bg min-h-screen md:flex">
-      {/* Sidebar (planshet va desktop) */}
+      {/* iPadOS uslubidagi sidebar */}
       <aside
-        className="glass sticky top-0 hidden h-screen w-[72px] shrink-0 flex-col gap-1 border-y-0 border-l-0 p-3 md:flex lg:w-60 [:root[data-sidebar=collapsed]_&]:lg:w-[72px]"
+        className="glass sticky top-0 hidden h-screen w-[76px] shrink-0 flex-col gap-1 border-y-0 border-l-0 px-3 pb-4 pt-5 md:flex lg:w-64 [:root[data-sidebar=collapsed]_&]:lg:w-[76px]"
         aria-label="Asosiy navigatsiya"
       >
-        <div className="mb-4 flex items-center gap-2 px-1.5 pt-1">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-br font-display text-lg font-bold text-[#1a0c02]">
+        <div className="mb-4 flex items-center gap-3 px-1">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-b from-[#ff8a3d] to-[#e5530a] text-lg font-bold text-white">
             B
           </div>
-          <span className="hidden font-display text-xl font-bold text-navy lg:inline [:root[data-sidebar=collapsed]_&]:lg:hidden">Baholash</span>
+          <span className="hidden text-[20px] font-bold tracking-tight lg:inline [:root[data-sidebar=collapsed]_&]:lg:hidden">
+            Baholash
+          </span>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-1" aria-label="Bo'limlar">
+        <nav className="flex flex-1 flex-col gap-0.5" aria-label="Bo'limlar">
           {NAV.map((n) => {
             const Icon = n.icon;
             const active = isActive(pathname, n.href);
-            const label = (
+            const inner = (
               <>
-                <Icon size={20} aria-hidden className="shrink-0" />
-                <span className="hidden whitespace-nowrap lg:inline [:root[data-sidebar=collapsed]_&]:lg:hidden">{n.label}</span>
+                <Icon size={21} strokeWidth={active ? 2.4 : 1.9} aria-hidden className="shrink-0" />
+                <span className="hidden whitespace-nowrap text-[15px] lg:inline [:root[data-sidebar=collapsed]_&]:lg:hidden">
+                  {n.label}
+                </span>
                 {n.soon && (
-                  <span className="ml-auto hidden rounded-full bg-soft px-2 py-0.5 text-[10px] font-bold text-tx2 lg:inline [:root[data-sidebar=collapsed]_&]:lg:hidden">
+                  <span className="ml-auto hidden text-[11px] font-medium text-tx2 lg:inline [:root[data-sidebar=collapsed]_&]:lg:hidden">
                     tez kunda
                   </span>
                 )}
               </>
             );
-            const cls = `flex h-11 items-center gap-3 rounded-2xl px-3 text-sm font-semibold ${
+            const cls = `flex h-11 items-center gap-3 rounded-xl px-3 font-medium ${
               active ? "bg-tint text-brd" : "text-tx hover:bg-soft"
-            } ${n.soon ? "cursor-not-allowed opacity-50" : ""}`;
+            } ${n.soon ? "cursor-not-allowed opacity-45" : ""}`;
             return n.soon ? (
               <div key={n.href} className={cls} title={`${n.label} — tez kunda`} aria-disabled="true">
-                {label}
+                {inner}
               </div>
             ) : (
               <Link key={n.href} href={n.href} className={cls} title={n.label} aria-current={active ? "page" : undefined}>
-                {label}
+                {inner}
               </Link>
             );
           })}
@@ -138,85 +143,80 @@ export function HrShell({
 
         <button
           onClick={toggleSide}
-          className="hidden h-11 items-center gap-3 rounded-2xl px-3 text-sm font-semibold text-tx2 hover:bg-soft lg:flex"
+          className="hidden h-11 items-center gap-3 rounded-xl px-3 text-[15px] font-medium text-tx2 hover:bg-soft lg:flex"
           aria-label="Sidebarni yig'ish yoki ochish"
         >
-          <PanelLeftClose size={20} className="[:root[data-sidebar=collapsed]_&]:hidden" />
-          <PanelLeftOpen size={20} className="hidden [:root[data-sidebar=collapsed]_&]:block" />
+          <PanelLeftClose size={21} className="[:root[data-sidebar=collapsed]_&]:hidden" />
+          <PanelLeftOpen size={21} className="hidden [:root[data-sidebar=collapsed]_&]:block" />
           <span className="[:root[data-sidebar=collapsed]_&]:hidden">Yig'ish</span>
         </button>
 
-        <div className="flex items-center gap-2 border-t border-line px-1.5 pt-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-soft text-xs font-bold">{initials}</div>
+        <div className="flex items-center gap-3 border-t border-line px-1 pt-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-soft text-xs font-semibold">
+            {initials}
+          </div>
           <div className="hidden min-w-0 flex-1 lg:block [:root[data-sidebar=collapsed]_&]:lg:hidden">
-            <div className="truncate text-sm font-bold">{user.name}</div>
+            <div className="truncate text-[15px] font-semibold">{user.name}</div>
             <div className="truncate text-xs text-tx2">HR menejer</div>
           </div>
         </div>
       </aside>
 
       <div className="min-w-0 flex-1">
-        {/* Yuqori panel */}
-        <header className="glass sticky top-0 z-20 flex h-16 items-center gap-3 border-x-0 border-t-0 px-4 md:px-8">
-          <h1 className="min-w-0 flex-1 truncate font-display text-xl font-bold text-navy md:text-2xl">{title}</h1>
-          <button
-            onClick={toggleTheme}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-tx2 hover:bg-soft"
-            aria-label="Mavzuni almashtirish"
-          >
-            <Sun size={18} className="hidden [:root[data-theme=dark]_&]:block" />
-            <Moon size={18} className="block [:root[data-theme=dark]_&]:hidden" />
-          </button>
-          <Link
-            href="/hr/takliflar"
-            className="hidden min-h-10 items-center gap-1.5 rounded-full bg-br px-4 text-sm font-bold text-[#1a0c02] sm:inline-flex"
-          >
-            <Plus size={16} aria-hidden /> Yangi baholash
-          </Link>
-          <form action={logoutAction}>
-            <button className="flex h-10 w-10 items-center justify-center rounded-full text-tx2 hover:bg-soft" aria-label="Chiqish" title={user.email}>
-              <LogOut size={18} />
+        {/* Navigatsiya paneli: iOS "inline title" */}
+        <header className="glass sticky top-0 z-20 grid h-12 grid-cols-[1fr_auto_1fr] items-center border-x-0 border-t-0 px-3 md:h-14 md:px-6">
+          <span className="hidden md:block" />
+          <h1 className="col-start-2 truncate text-[17px] font-semibold md:col-start-1 md:row-start-1 md:text-left">{title}</h1>
+          <div className="col-start-3 flex items-center justify-end gap-1 md:col-start-3">
+            <button
+              onClick={toggleTheme}
+              className="flex h-10 w-10 items-center justify-center rounded-full text-brd hover:bg-soft"
+              aria-label="Mavzuni almashtirish"
+            >
+              <Sun size={20} className="hidden [:root[data-theme=dark]_&]:block" />
+              <Moon size={20} className="block [:root[data-theme=dark]_&]:hidden" />
             </button>
-          </form>
+            <Link
+              href="/hr/takliflar"
+              className="hidden min-h-9 items-center gap-1 rounded-full bg-brf px-4 text-[15px] font-semibold text-onbr sm:inline-flex"
+            >
+              <Plus size={16} aria-hidden /> Yangi baholash
+            </Link>
+            <form action={logoutAction}>
+              <button
+                className="flex h-10 w-10 items-center justify-center rounded-full text-brd hover:bg-soft"
+                aria-label="Chiqish"
+                title={user.email}
+              >
+                <LogOut size={20} />
+              </button>
+            </form>
+          </div>
         </header>
 
-        <main className="px-4 pb-28 pt-6 md:px-8 md:pb-10">
+        <main className="px-4 pb-28 pt-5 md:px-8 md:pb-10">
           <div className="mx-auto max-w-6xl">{children}</div>
         </main>
       </div>
 
-      {/* Telefon: suzuvchi shisha tab bar */}
+      {/* Telefon: iOS tab bar (to'liq kenglik, material, hairline) */}
       <nav
-        className="glass fixed inset-x-3 bottom-3 z-30 flex items-center justify-around rounded-full px-2 py-1.5 shadow-soft md:hidden"
+        className="glass fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-x-0 border-b-0 md:hidden"
         style={{ paddingBottom: "max(6px, env(safe-area-inset-bottom))" }}
         aria-label="Telefon navigatsiyasi"
       >
-        {phoneItems.map((n, i) => {
-          if (!n) {
-            return (
-              <Link
-                key="center"
-                href="/hr/takliflar"
-                className="-mt-6 flex h-14 w-14 items-center justify-center rounded-full bg-br text-[#1a0c02] shadow-soft"
-                aria-label="Yangi baholash"
-              >
-                <Plus size={26} />
-              </Link>
-            );
-          }
+        {PHONE_TABS.map((n) => {
           const Icon = n.icon;
           const active = isActive(pathname, n.href);
           return (
             <Link
-              key={n.href + i}
+              key={n.href}
               href={n.href}
-              className={`flex min-w-14 flex-col items-center gap-0.5 rounded-2xl px-2 py-1 text-[10px] font-bold ${
-                active ? "text-brd" : "text-tx2"
-              }`}
+              className={`flex flex-col items-center gap-0.5 pb-0.5 pt-1.5 text-[10px] font-medium ${active ? "text-brd" : "text-tx2"}`}
               aria-current={active ? "page" : undefined}
             >
-              <Icon size={20} aria-hidden />
-              {n.label.split(" ")[0]}
+              <Icon size={24} strokeWidth={active ? 2.4 : 1.8} aria-hidden />
+              {n.short}
             </Link>
           );
         })}

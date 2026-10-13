@@ -46,7 +46,7 @@ export default async function QuestionBankPage({ searchParams }: PageProps<"/hr/
     return `/hr/savollar${s ? `?${s}` : ""}`;
   };
   const chip = (on: boolean) =>
-    `inline-flex min-h-9 items-center gap-1.5 rounded-full px-3.5 text-xs font-bold border ${on ? "border-br bg-br text-[#1a0c02]" : "border-line bg-card hover:bg-soft"}`;
+    `inline-flex min-h-9 items-center gap-1.5 rounded-full px-3.5 text-xs font-bold border ${on ? "border-br bg-brf text-onbr" : "border-line bg-card hover:bg-soft"}`;
 
   return (
     <div className="flex flex-col gap-5">

@@ -138,7 +138,7 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
         </div>
         <div className="flex flex-wrap items-center gap-2 print:hidden">
           <form action={setDecision.bind(null, attempt.id, "ADVANCE")}>
-            <button className="min-h-11 rounded-full bg-br px-5 text-sm font-bold text-[#1a0c02]">Intervyuga taklif qilish</button>
+            <button className="min-h-11 rounded-full bg-br px-5 text-sm font-bold text-onbr">Intervyuga taklif qilish</button>
           </form>
           <form action={setDecision.bind(null, attempt.id, "REJECT")}>
             <button className="min-h-11 rounded-full bg-bad-t px-5 text-sm font-bold text-bad">Rad etish</button>
@@ -179,7 +179,7 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
         ))}
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="flex flex-col gap-5">
           {tab === "sum" && (
             <>

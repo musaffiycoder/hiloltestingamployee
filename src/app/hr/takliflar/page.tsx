@@ -33,10 +33,10 @@ export default async function InvitesPage() {
         
         <p className="mt-1 text-sm text-tx2">Nomzod yoki xodimga shaxsiy havola yuboring.</p>
       </header>
-      <div className="grid gap-6 lg:grid-cols-5">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-5">
         <section className="lg:col-span-2">
           <SectionTitle>Yangi taklif</SectionTitle>
-          <Card className="p-5">
+          <div>
             <InviteForm
               positions={positions.map((p) => ({
                 id: p.id,
@@ -44,7 +44,7 @@ export default async function InvitesPage() {
                 questions: p.competencies.reduce((s, c) => s + c._count.questions, 0),
               }))}
             />
-          </Card>
+          </div>
         </section>
         <section className="lg:col-span-3">
           <SectionTitle>So'nggi takliflar</SectionTitle>

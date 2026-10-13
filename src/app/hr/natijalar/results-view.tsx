@@ -42,7 +42,7 @@ export function ResultsView({ rows, view }: { rows: Row[]; view: "table" | "card
           <button
             onClick={compare}
             disabled={sel.length < 2}
-            className="min-h-10 rounded-full bg-br px-4 text-sm font-bold text-[#1a0c02] disabled:opacity-50"
+            className="min-h-10 rounded-full bg-br px-4 text-sm font-bold text-onbr disabled:opacity-50"
           >
             Taqqoslash
           </button>
@@ -50,7 +50,7 @@ export function ResultsView({ rows, view }: { rows: Row[]; view: "table" | "card
       )}
 
       {view === "table" ? (
-        <div className="overflow-x-auto rounded-[18px] border border-line bg-card shadow-soft">
+        <div className="overflow-x-auto rounded-2xl bg-card">
           <div className="min-w-[720px] divide-y divide-line">
             {rows.map((r) => {
               const on = sel.includes(r.attemptId);
@@ -62,7 +62,7 @@ export function ResultsView({ rows, view }: { rows: Row[]; view: "table" | "card
                     aria-label={`${r.name} ni taqqoslash uchun tanlash`}
                     onClick={() => toggle(r.attemptId)}
                     className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border text-xs font-bold ${
-                      on ? "border-br bg-br text-[#1a0c02]" : "border-line"
+                      on ? "border-br bg-brf text-onbr" : "border-line"
                     }`}
                   >
                     {on ? "✓" : ""}
@@ -99,7 +99,7 @@ export function ResultsView({ rows, view }: { rows: Row[]; view: "table" | "card
             return (
               <div
                 key={r.attemptId}
-                className={`relative rounded-[18px] border bg-card p-4 shadow-soft ${on ? "border-br ring-2 ring-br" : "border-line"}`}
+                className={`relative rounded-2xl border bg-card p-4 shadow-soft ${on ? "border-br ring-2 ring-br" : "border-line"}`}
               >
                 <button
                   role="checkbox"
@@ -107,7 +107,7 @@ export function ResultsView({ rows, view }: { rows: Row[]; view: "table" | "card
                   aria-label={`${r.name} ni taqqoslash uchun tanlash`}
                   onClick={() => toggle(r.attemptId)}
                   className={`absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-md border text-xs font-bold ${
-                    on ? "border-br bg-br text-[#1a0c02]" : "border-line"
+                    on ? "border-br bg-brf text-onbr" : "border-line"
                   }`}
                 >
                   {on ? "✓" : ""}

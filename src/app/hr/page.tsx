@@ -128,7 +128,7 @@ export default async function Dashboard() {
         ))}
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-2">
         <section>
           <SectionTitle>Bugun e'tibor talab qiladi</SectionTitle>
           <Card className="divide-y divide-line">
@@ -209,7 +209,7 @@ export default async function Dashboard() {
           <div className="text-3xl text-tx2" aria-hidden>◔</div>
           <div className="font-bold">Hali nomzod yo'q</div>
           <p className="text-sm text-tx2">Birinchi taklifni yuboring — natijalar shu yerda paydo bo'ladi.</p>
-          <Link href="/hr/takliflar" className="inline-flex min-h-11 items-center rounded-full bg-br px-5 text-sm font-bold text-[#1a0c02]">
+          <Link href="/hr/takliflar" className="inline-flex min-h-11 items-center rounded-full bg-br px-5 text-sm font-bold text-onbr">
             Taklif yuborish
           </Link>
         </Card>

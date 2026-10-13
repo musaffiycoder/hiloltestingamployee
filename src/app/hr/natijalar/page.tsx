@@ -76,7 +76,7 @@ export default async function ResultsPage({ searchParams }: PageProps<"/hr/natij
             key={x.key}
             href={href({ f: x.key })}
             className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-3.5 text-xs font-bold ${
-              f === x.key ? "bg-br text-[#1a0c02]" : "bg-card text-tx hover:bg-soft border border-line"
+              f === x.key ? "bg-brf text-onbr" : "bg-card text-tx hover:bg-soft border border-line"
             }`}
           >
             {x.label}
@@ -120,7 +120,7 @@ export default async function ResultsPage({ searchParams }: PageProps<"/hr/natij
           <p className="text-sm text-tx2">
             {q || f !== "all" ? "Filtrni o'zgartirib ko'ring." : "Birinchi taklifni yuboring — natijalar shu yerda paydo bo'ladi."}
           </p>
-          <Link href="/hr/takliflar" className="inline-flex min-h-11 items-center rounded-full bg-br px-5 text-sm font-bold text-[#1a0c02]">
+          <Link href="/hr/takliflar" className="inline-flex min-h-11 items-center rounded-full bg-br px-5 text-sm font-bold text-onbr">
             Taklif yuborish
           </Link>
         </Card>

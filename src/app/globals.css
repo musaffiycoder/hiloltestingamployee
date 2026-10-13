@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Dizayn tokenlari: "Test Panel Interactive File" (HR Dashboard v2) dan olingan. */
+/* iOS tuzilma (system font, grouped list, tab bar) + loyihaning asl ranglari: krem/navy va sabzi-rang tint. */
 :root {
   --bg: #f8f5ee;
   --card: #ffffff;
@@ -8,8 +8,10 @@
   --line: rgba(28, 66, 107, 0.14);
   --tx: #14243a;
   --tx2: #5a6b7e;
-  --br: #f26b1d;
+  --br: #f26b1d; /* sabzi-rang */
   --brd: #b84a0a;
+  --brf: #f26b1d; /* to'ldirilgan tugma foni */
+  --onbr: #1a0c02; /* tugma matni (AA) */
   --tint: #ffe9da;
   --navy: #1c426b;
   --ok: #3f8c5c;
@@ -18,9 +20,9 @@
   --warn-t: #fff0d9;
   --bad: #c84545;
   --bad-t: #fbe5e5;
-  --glass: rgba(255, 255, 255, 0.62);
-  --glass-line: rgba(255, 255, 255, 0.7);
-  --sh: 0 1px 2px rgba(20, 36, 58, 0.06), 0 8px 24px rgba(20, 36, 58, 0.08);
+  --glass: rgba(255, 255, 255, 0.72);
+  --glass-line: rgba(28, 66, 107, 0.14);
+  --sh: none;
   --mesh:
     radial-gradient(60% 40% at 10% 0%, #ffe3cc 0, transparent 70%),
     radial-gradient(50% 40% at 100% 35%, #ffefd9 0, transparent 70%), #f8f5ee;
@@ -36,6 +38,8 @@
   --tx2: #a9b7c6;
   --br: #ff8a3d;
   --brd: #ff9d5e;
+  --brf: #ff8a3d;
+  --onbr: #1a0c02;
   --tint: #3a1d0c;
   --navy: #f2ebdd;
   --ok: #5cbf82;
@@ -44,9 +48,8 @@
   --warn-t: #3a2a10;
   --bad: #f08080;
   --bad-t: #3f1c22;
-  --glass: rgba(20, 42, 66, 0.58);
+  --glass: rgba(20, 42, 66, 0.66);
   --glass-line: rgba(255, 255, 255, 0.14);
-  --sh: none;
   --mesh:
     radial-gradient(60% 40% at 15% 0%, #12365c 0, transparent 70%),
     radial-gradient(50% 40% at 100% 30%, #0f2a4a 0, transparent 70%), #0a1828;
@@ -63,6 +66,8 @@
     --tx2: #a9b7c6;
     --br: #ff8a3d;
     --brd: #ff9d5e;
+    --brf: #ff8a3d;
+    --onbr: #1a0c02;
     --tint: #3a1d0c;
     --navy: #f2ebdd;
     --ok: #5cbf82;
@@ -71,9 +76,8 @@
     --warn-t: #3a2a10;
     --bad: #f08080;
     --bad-t: #3f1c22;
-    --glass: rgba(20, 42, 66, 0.58);
+    --glass: rgba(20, 42, 66, 0.66);
     --glass-line: rgba(255, 255, 255, 0.14);
-    --sh: none;
     --mesh:
       radial-gradient(60% 40% at 15% 0%, #12365c 0, transparent 70%),
       radial-gradient(50% 40% at 100% 30%, #0f2a4a 0, transparent 70%), #0a1828;
@@ -90,6 +94,8 @@
   --color-tx2: var(--tx2);
   --color-br: var(--br);
   --color-brd: var(--brd);
+  --color-brf: var(--brf);
+  --color-onbr: var(--onbr);
   --color-tint: var(--tint);
   --color-navy: var(--navy);
   --color-ok: var(--ok);
@@ -98,19 +104,25 @@
   --color-warn-t: var(--warn-t);
   --color-bad: var(--bad);
   --color-bad-t: var(--bad-t);
-  --font-sans: var(--font-manrope), system-ui, sans-serif;
-  --font-display: var(--font-playfair), Georgia, serif;
-  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
-  --radius-card: 18px;
-  --radius-tile: 24px;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-inter), system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", var(--font-inter), system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
 }
 
 html,
 body {
   background: var(--bg);
   color: var(--tx);
-  font-family: var(--font-manrope), system-ui, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-inter), system-ui, sans-serif;
+  font-size: 16px;
   -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.02em;
 }
 
 ::selection {
@@ -118,11 +130,12 @@ body {
   color: #1a0c02;
 }
 
-/* Press feedback (Aberno qoidasi) */
+/* Bosish effekti (iOS) */
 button:not(:disabled):active,
 a[href]:active,
 [role="button"]:active {
-  scale: 0.95;
+  scale: 0.97;
+  opacity: 0.85;
 }
 button,
 a[href] {
@@ -131,31 +144,70 @@ a[href] {
     background-color 0.15s,
     border-color 0.15s,
     opacity 0.15s,
-    box-shadow 0.15s,
     scale 0.15s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 button:not(:disabled),
 a[href] {
   cursor: pointer;
 }
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--br) 55%, transparent);
+  outline-offset: 2px;
+}
 
 .mesh-bg {
   background: var(--mesh);
+  background-attachment: fixed;
 }
 .shadow-soft {
   box-shadow: var(--sh);
 }
+
+/* iOS "material" — faqat funksional qatlamda (bar, sheet) */
 .glass {
   background: var(--glass);
-  border: 1px solid var(--glass-line);
-  backdrop-filter: blur(18px) saturate(1.6);
-  -webkit-backdrop-filter: blur(18px) saturate(1.6);
+  border: 0.5px solid var(--glass-line);
+  backdrop-filter: saturate(180%) blur(22px);
+  -webkit-backdrop-filter: saturate(180%) blur(22px);
 }
 @supports not (backdrop-filter: blur(1px)) {
   .glass {
     background: var(--card);
   }
 }
+
+/* iOS Switch */
+.ios-switch {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 51px;
+  height: 31px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tx2) 35%, transparent);
+  position: relative;
+  transition: background-color 0.25s;
+  cursor: pointer;
+}
+.ios-switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+  transition: transform 0.25s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+.ios-switch:checked {
+  background: #34c759;
+}
+.ios-switch:checked::after {
+  transform: translateX(20px);
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation: none !important;

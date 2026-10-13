@@ -137,52 +137,37 @@ export function Runner({
   const warn = left <= 300;
 
   return (
-    <div className="mesh-bg min-h-screen pb-32">
+    <div className="mesh-bg min-h-screen pb-28">
+      {/* iOS navigatsiya paneli + progress */}
       <header className="glass sticky top-0 z-20 border-x-0 border-t-0">
-        <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
+        <div className="mx-auto flex h-12 max-w-2xl items-center gap-3 px-4">
           <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-bold">{positionTitle}</div>
-            <div className="text-xs text-tx2" aria-live="polite">
+            <div className="truncate text-[15px] font-semibold">{positionTitle}</div>
+            <div className="text-[11px] text-tx2" aria-live="polite">
               {saving === "saving" ? "Saqlanmoqda…" : saving === "error" ? "Saqlanmadi — qayta urinib ko'ring" : "Saqlandi ✓"}
             </div>
           </div>
           <div
-            className={`rounded-full px-3 py-1.5 font-mono text-sm font-bold ${warn ? "bg-warn-t text-warn" : "bg-card text-tx"}`}
+            className={`rounded-full px-3 py-1 text-[15px] font-semibold tabular-nums ${warn ? "bg-warn-t text-warn" : "bg-soft text-tx"}`}
             aria-label={`Qolgan vaqt ${fmt(left)}`}
           >
-            ⏱ {fmt(left)}
+            {fmt(left)}
           </div>
         </div>
-        <div className="mx-auto flex max-w-3xl gap-1 px-4 pb-3" aria-hidden>
-          {questions.map((x, i) => (
-            <span
-              key={x.id}
-              className={`h-1.5 flex-1 rounded-full ${i === index ? "bg-br" : i < index ? "bg-navy/60" : "bg-soft"}`}
-            />
-          ))}
+        <div className="h-0.5 w-full bg-soft" aria-hidden>
+          <div className="h-full bg-br transition-[width] duration-300" style={{ width: `${((index + 1) / questions.length) * 100}%` }} />
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-4 pt-6">
-        <div className="relative">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -top-4 right-0 select-none font-display text-[110px] font-bold leading-none text-transparent opacity-30"
-            style={{ WebkitTextStroke: "1.5px var(--line)" }}
-          >
-            {String(index + 1).padStart(2, "0")}
-          </div>
-          <p className="relative text-xs font-bold uppercase tracking-wide text-brd">
-            {q.section} · Savol {index + 1} / {questions.length}
-          </p>
-          <h1 className="relative mt-2 text-xl font-bold leading-snug sm:text-2xl">{q.stem}</h1>
-          {q.type === "MCQ_MULTI" || (q.multi && q.type === "MCQ_SINGLE") ? (
-            <p className="relative mt-1 text-sm text-tx2">Bir nechtasini tanlang.</p>
-          ) : null}
-        </div>
+      <main className="mx-auto max-w-2xl px-4 pt-6">
+        <p className="px-1 text-[13px] font-semibold uppercase tracking-wide text-tx2">
+          {q.section} · {index + 1} / {questions.length}
+        </p>
+        <h1 className="mt-2 px-1 text-[22px] font-semibold leading-snug">{q.stem}</h1>
+        {q.multi && q.type !== "OPEN" && <p className="mt-1 px-1 text-[15px] text-tx2">Bir nechtasini tanlang.</p>}
 
         {q.type === "OPEN" ? (
-          <div className="mt-6">
+          <div className="mt-5">
             <textarea
               value={a.text}
               onChange={(e) => setAnswers((p) => ({ ...p, [q.id]: { ...p[q.id], text: e.target.value } }))}
@@ -190,37 +175,40 @@ export function Runner({
               onPaste={() => void logSignal(token, "paste")}
               rows={8}
               maxLength={5000}
-              className="w-full rounded-2xl border border-line bg-card p-4 text-[15px] leading-relaxed outline-none focus:border-br focus:ring-2 focus:ring-br/30"
+              className="w-full rounded-2xl bg-card p-4 text-[17px] leading-relaxed outline-none focus:ring-2 focus:ring-br/40"
               placeholder="Javobingizni yozing…"
               aria-label="Javob"
             />
-            <div className="mt-1 text-right text-xs text-tx2">{a.text.trim() ? a.text.trim().split(/\s+/).length : 0} so'z</div>
+            <div className="mt-1 px-1 text-right text-[13px] text-tx2">
+              {a.text.trim() ? a.text.trim().split(/\s+/).length : 0} so'z
+            </div>
           </div>
         ) : (
-          <ul className="mt-6 flex flex-col gap-3" role={q.multi ? "group" : "radiogroup"} aria-label="Variantlar">
+          /* iOS inset grouped ro'yxat: qatorlar hairline bilan ajratilgan, tanlangan qatorda belgi */
+          <ul className="mt-5 overflow-hidden rounded-2xl bg-card" role={q.multi ? "group" : "radiogroup"} aria-label="Variantlar">
             {q.options.map((opt, pos) => {
               const i = opt.idx;
               const checked = Array.isArray(a.selected) ? a.selected.includes(i) : a.selected === i;
               return (
-                <li key={i}>
+                <li key={i} className={pos < q.options.length - 1 ? "border-b border-line" : ""}>
                   <button
                     type="button"
                     role={q.multi ? "checkbox" : "radio"}
                     aria-checked={checked}
                     onClick={() => setSelected(i)}
-                    className={`flex min-h-14 w-full items-start gap-3 rounded-2xl border p-4 text-left text-[15px] leading-snug ${
-                      checked ? "border-br bg-tint ring-2 ring-br" : "border-line bg-card hover:border-br/60"
+                    className={`flex min-h-[52px] w-full items-center gap-3 px-4 py-3 text-left text-[17px] leading-snug ${
+                      checked ? "bg-tint/60" : ""
                     }`}
                   >
+                    <span className="flex-1">{opt.text}</span>
                     <span
                       aria-hidden
-                      className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center border text-xs font-bold ${
-                        q.multi ? "rounded-md" : "rounded-full"
-                      } ${checked ? "border-br bg-br text-[#1a0c02]" : "border-line"}`}
+                      className={`flex h-6 w-6 shrink-0 items-center justify-center text-lg font-bold text-brd ${
+                        checked ? "opacity-100" : "opacity-0"
+                      }`}
                     >
-                      {checked ? "✓" : String.fromCharCode(65 + pos)}
+                      ✓
                     </span>
-                    <span>{opt.text}</span>
                   </button>
                 </li>
               );
@@ -229,51 +217,55 @@ export function Runner({
         )}
       </main>
 
-      <nav className="glass fixed inset-x-3 bottom-3 z-30 mx-auto flex max-w-xl items-center gap-2 rounded-full p-2 shadow-soft" aria-label="Test boshqaruvi">
-        <button
-          onClick={() => go(index - 1)}
-          disabled={index === 0 || pending}
-          className="h-12 rounded-full px-5 text-sm font-bold text-tx2 disabled:opacity-40"
-        >
-          ← Oldingi
-        </button>
-        <span className="flex-1 text-center text-xs font-semibold text-tx2">
-          {answeredCount} / {questions.length} javob
-        </span>
-        {isLast ? (
+      {/* Pastki toolbar */}
+      <nav className="glass fixed inset-x-0 bottom-0 z-30 border-x-0 border-b-0" aria-label="Test boshqaruvi"
+        style={{ paddingBottom: "max(8px, env(safe-area-inset-bottom))" }}>
+        <div className="mx-auto flex max-w-2xl items-center gap-2 px-3 pt-2">
           <button
-            onClick={() => setConfirmFinish(true)}
-            disabled={pending}
-            className="h-12 rounded-full bg-br px-6 text-sm font-bold text-[#1a0c02] disabled:opacity-60"
+            onClick={() => go(index - 1)}
+            disabled={index === 0 || pending}
+            className="h-11 rounded-full px-4 text-[17px] font-medium text-brd disabled:opacity-30"
           >
-            Yakunlash
+            ‹ Oldingi
           </button>
-        ) : (
-          <button
-            onClick={() => go(index + 1)}
-            disabled={pending}
-            className="h-12 rounded-full bg-br px-6 text-sm font-bold text-[#1a0c02] disabled:opacity-60"
-          >
-            Keyingi →
-          </button>
-        )}
+          <span className="flex-1 text-center text-[13px] text-tx2">
+            {answeredCount} / {questions.length} javob
+          </span>
+          {isLast ? (
+            <button
+              onClick={() => setConfirmFinish(true)}
+              disabled={pending}
+              className="h-11 rounded-full bg-brf px-6 text-[17px] font-semibold text-onbr disabled:opacity-50"
+            >
+              Yakunlash
+            </button>
+          ) : (
+            <button
+              onClick={() => go(index + 1)}
+              disabled={pending}
+              className="h-11 rounded-full bg-brf px-6 text-[17px] font-semibold text-onbr disabled:opacity-50"
+            >
+              Keyingi ›
+            </button>
+          )}
+        </div>
       </nav>
 
       {confirmFinish && (
-        <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-4 sm:items-center" role="dialog" aria-modal="true" aria-labelledby="fin-title">
-          <div className="w-full max-w-md rounded-[24px] bg-card p-6 shadow-soft">
-            <h2 id="fin-title" className="text-lg font-bold">Testni yakunlaysizmi?</h2>
-            <p className="mt-2 text-sm text-tx2">
-              {questions.length - answeredCount > 0
-                ? `${questions.length - answeredCount} ta savol javobsiz qoldi. `
-                : ""}
-              Yakunlagandan keyin javoblarni o'zgartirib bo'lmaydi.
-            </p>
-            <div className="mt-5 flex gap-3">
-              <button onClick={() => setConfirmFinish(false)} className="h-12 flex-1 rounded-full bg-soft text-sm font-bold">
+        <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-3 sm:items-center" role="dialog" aria-modal="true" aria-labelledby="fin-title">
+          <div className="w-full max-w-sm overflow-hidden rounded-[22px] bg-card">
+            <div className="p-5 text-center">
+              <h2 id="fin-title" className="text-[17px] font-semibold">Testni yakunlaysizmi?</h2>
+              <p className="mt-1 text-[15px] text-tx2">
+                {questions.length - answeredCount > 0 ? `${questions.length - answeredCount} ta savol javobsiz qoldi. ` : ""}
+                Yakunlagandan keyin javoblarni o'zgartirib bo'lmaydi.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 border-t border-line text-[17px]">
+              <button onClick={() => setConfirmFinish(false)} className="h-12 border-r border-line font-medium text-brd">
                 Qaytish
               </button>
-              <button onClick={submit} disabled={pending} className="h-12 flex-1 rounded-full bg-br text-sm font-bold text-[#1a0c02] disabled:opacity-60">
+              <button onClick={submit} disabled={pending} className="h-12 font-semibold text-brd disabled:opacity-50">
                 {pending ? "Yuborilmoqda…" : "Yakunlash"}
               </button>
             </div>

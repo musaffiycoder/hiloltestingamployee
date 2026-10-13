@@ -1,10 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { Manrope, Playfair_Display, JetBrains_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
-const manrope = Manrope({ subsets: ["latin", "cyrillic"], variable: "--font-manrope", display: "swap" });
-const playfair = Playfair_Display({ subsets: ["latin", "cyrillic"], variable: "--font-playfair", display: "swap" });
-const jetbrains = JetBrains_Mono({ subsets: ["latin", "cyrillic"], variable: "--font-jetbrains", display: "swap" });
+// Apple qurilmalarida system font (SF Pro) ishlatiladi; Inter — boshqa platformalar uchun zaxira.
+const inter = Inter({ subsets: ["latin", "cyrillic"], variable: "--font-inter", display: "swap" });
 
 export const metadata: Metadata = {
   title: { default: "Baholash", template: "%s · Baholash" },
@@ -20,7 +19,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="uz" className={`${manrope.variable} ${playfair.variable} ${jetbrains.variable}`} suppressHydrationWarning>
+    <html lang="uz" className={inter.variable} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{

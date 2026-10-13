@@ -93,7 +93,7 @@ export function ScoreRing({ pct, threshold, size = 112 }: { pct: number; thresho
         x="55"
         y="63"
         textAnchor="middle"
-        style={{ fill: "var(--tx)", fontSize: 24, fontWeight: 700, fontFamily: "var(--font-playfair), serif" }}
+        style={{ fill: "var(--tx)", fontSize: 24, fontWeight: 700, fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif" }}
       >
         {Math.round(pct)}%
       </text>
