@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { AiError, callJson, type AiClient } from "../src/lib/ai/client";
 import { analysisJsonSchema, analysisSchema, gradeJsonSchema, gradeSchema } from "../src/lib/ai/schemas";
+import { combineGrades } from "../src/lib/ai/combine";
+import { calibrationStats } from "../src/lib/calibration";
 import { analysisPrompt, findUnknownPercents, gradePrompt, MIN_OPEN_ANSWER_CHARS, untrusted, type AnalysisInput } from "../src/lib/ai/prompts";
 
 // ---- untrusted: ajratuvchi zararsizlantiriladi
@@ -14,6 +16,38 @@ assert.ok(g.system.includes("ishonchsiz kirish"));
 assert.ok(g.system.includes("injectionAttempt"));
 assert.ok(g.user.includes("0. Parametrlangan so'rov") && g.user.includes("<<<NOMZOD_MATNI"));
 assert.equal(MIN_OPEN_ANSWER_CHARS, 15);
+
+// ---- ikki mustaqil baholovchi variantlari farqli
+const gA = gradePrompt({ stem: "s", level: 3, rubric: ["x"], answer: "yetarlicha uzun javob matni" }, "A");
+const gB = gradePrompt({ stem: "s", level: 3, rubric: ["x"], answer: "yetarlicha uzun javob matni" }, "B");
+assert.notEqual(gA.system, gB.system);
+assert.ok(gA.system.includes("bandini alohida tekshir") && gB.system.includes("mazmunini o'zingcha baholab"));
+assert.equal(gA.user, gB.user, "foydalanuvchi qismi bir xil");
+
+// ---- combineGrades
+const mkG = (score: number, confidence: number, inj = false) => ({ score, matched: [], rationale: `r${score}`, confidence, injectionAttempt: inj });
+let c = combineGrades(mkG(0.75, 0.8), mkG(0.75, 0.7));
+assert.deepEqual([c.score, c.confidence, c.disagreement], [0.75, 0.7, false]);
+c = combineGrades(mkG(0.5, 0.9), mkG(0.75, 0.9)); // farq 0.25 — kelishuv
+assert.equal(c.disagreement, false);
+assert.equal(c.score, 0.75); // 0.625 -> 0.75 (0.25 qadamga yaxlitlanadi)
+c = combineGrades(mkG(1, 0.95), mkG(0.25, 0.9)); // farq 0.75 — kelishmovchilik
+assert.equal(c.disagreement, true);
+assert.ok(c.confidence <= 0.45 && c.rationale.includes("kelishmadi"));
+c = combineGrades(mkG(0.5, 0.9), mkG(0.5, 0.9, true));
+assert.equal(c.injectionAttempt, true);
+
+// ---- kalibrlash statistikasi
+assert.equal(calibrationStats([]).n, 0);
+const good = Array.from({ length: 24 }, (_, i) => ({ ai: 0.75, human: i % 8 === 0 ? 0.5 : 0.75 }));
+const gs = calibrationStats(good);
+assert.equal(gs.ready, true);
+assert.ok(gs.withinOne === 1 && gs.exact > 0.8);
+const biased = Array.from({ length: 24 }, () => ({ ai: 1, human: 0.5 }));
+const bs = calibrationStats(biased);
+assert.equal(bs.ready, false);
+assert.ok(bs.verdict.includes("saxiyroq") && bs.bias > 0.4);
+assert.equal(calibrationStats(good.slice(0, 5)).ready, false, "namuna kam");
 
 // ---- analysisPrompt
 const base: AnalysisInput = {

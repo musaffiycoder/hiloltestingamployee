@@ -35,10 +35,18 @@ vercel deploy --prod
 
 ## AI tahlil (Claude)
 Manba qoidalar: `PROMPT-TEST-TAHLIL.md`. Uch bosqich — **raqamlarni formula hisoblaydi, AI faqat matn yozadi**:
-1. Ochiq javoblarni baholash (`src/lib/ai/review.ts → gradeOpenAnswers`): rubrika bo'yicha 0–1 ball, asos, ishonch;
-   15 belgidan qisqa javob API'siz 0 ball; ishonch < 0.6 bo'lsa natija «ko'rib chiqish kerak».
+1. Ochiq javoblarni baholash (`src/lib/ai/review.ts → gradeOpenAnswers`): **ikki mustaqil baholovchi** (A: bandma-band,
+   B: mazmun → rubrika); farq > 0.25 yoki ishonch < 0.6 bo'lsa «ko'rib chiqish kerak». 15 belgidan qisqa javob API'siz 0 ball.
+   Dastlabki AI bali (`Response.aiScore`) HR o'zgartirsa ham saqlanadi.
 2. Yakuniy raqamlar — `computeAttempt` (formula; AI ballari saqlanadi).
 3. Chuqur tahlil (`generateAnalysis`): profil, SWOT, javob naqshlari, kompetensiya tahlili, reja, `dataGaps`.
 
 Yoqish: `ANTHROPIC_API_KEY` (Vercel → Production env + lokal `.env`). Natija sahifasida «AI tahlil» tabi.
 Testlar: `npm test` (stub klient), `npm run test:integration` (bazaga ulangan, vaqtinchalik yozuv).
+
+**Kalibrlash** (`/hr/kalibrlash`): HR javobni AI ballini ko'rmasdan baholaydi; tizim kelishuvni o'lchaydi
+(±1 pog'ona ≥ 85%, o'rtacha farq ≤ 0.15, siljish ≤ 0.1, kamida 20 namuna). HR o'zgartirishlari ham hisobga olinadi.
+
+Model: `claude-opus-5-5` (env: `ANTHROPIC_ANALYSIS_MODEL`, `ANTHROPIC_GRADER_MODEL`); chuqurlik: `ANTHROPIC_ANALYSIS_EFFORT`,
+`ANTHROPIC_GRADER_EFFORT` (standart `high`). Haqiqiy chaqiruv sinovi: `npx tsx --env-file=.env --conditions=react-server scripts/test-ai-live.ts`
+(pul sarflaydi; ≈ 0.25 USD, tahlil ~90 s — shu sabab natija sahifasida `maxDuration = 300`).

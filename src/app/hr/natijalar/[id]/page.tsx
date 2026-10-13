@@ -17,8 +17,8 @@ import { aiConfigured } from "@/lib/ai/client";
 import type { StoredAnalysis } from "@/lib/ai/schemas";
 
 export const metadata: Metadata = { title: "Nomzod natijasi" };
-// AI tahlil server action'i shu marshrutda ishlaydi (Hobby: maks 60 s)
-export const maxDuration = 60;
+// AI tahlil server action'i shu marshrutda ishlaydi (Fluid Compute: 300 s gacha)
+export const maxDuration = 300;
 
 type Opt = string | { text: string; points?: number };
 const optText = (o: Opt) => (typeof o === "string" ? o : o.text);

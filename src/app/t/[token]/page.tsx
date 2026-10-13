@@ -93,8 +93,9 @@ export default async function InvitePage({ params, searchParams }: PageProps<"/t
             <div>
               <label className="flex items-center gap-4 rounded-2xl bg-card px-4 py-3.5 text-[15px]">
                 <span className="flex-1">
-                  Shaxsiy ma'lumotlarim (ism, javoblar, natijalar) baholash maqsadida qayta ishlanishiga va test davomida
-                  oyna fokusi kuzatilishiga roziman.
+                  Shaxsiy ma'lumotlarim (ism, javoblar, natijalar) baholash maqsadida qayta ishlanishiga, ochiq javoblarim
+                  sun'iy intellekt (Anthropic Claude) yordamida tahlil qilinishiga (yakuniy qaror odam tomonidan
+                  qabul qilinadi) va test davomida oyna fokusi kuzatilishiga roziman.
                 </span>
                 <input type="checkbox" name="consent" required className="ios-switch" />
               </label>

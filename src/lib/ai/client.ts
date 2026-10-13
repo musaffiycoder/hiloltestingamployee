@@ -13,6 +13,16 @@ export class AiError extends Error {
 export const aiConfigured = () => Boolean(process.env.ANTHROPIC_API_KEY);
 
 /** Standart model: claude-opus-5-5. Arzonroq model uchun env orqali almashtiriladi (qaror — loyiha egasiniki). */
+export type Effort = "low" | "medium" | "high" | "xhigh" | "max";
+
+/** Tahlil/baholash chuqurligi. Standart `high`: aniqlik ustuvor, lekin 60 s server chegarasiga sig'adi. */
+export function aiEffort(): { analysis: Effort; grader: Effort } {
+  const ok = (v: string | undefined): v is Effort => !!v && ["low", "medium", "high", "xhigh", "max"].includes(v);
+  const a = process.env.ANTHROPIC_ANALYSIS_EFFORT;
+  const g = process.env.ANTHROPIC_GRADER_EFFORT;
+  return { analysis: ok(a) ? a : "high", grader: ok(g) ? g : "high" };
+}
+
 export function aiModels() {
   return {
     analysis: process.env.ANTHROPIC_ANALYSIS_MODEL || "claude-opus-5-5",
@@ -22,7 +32,7 @@ export function aiModels() {
 
 /** Testlar uchun almashtiriladigan minimal interfeys. */
 export type AiClient = {
-  messages: { create: (params: Record<string, unknown>) => Promise<unknown> };
+  messages: { create: (params: Record<string, unknown>, options?: { timeout?: number; maxRetries?: number }) => Promise<unknown> };
 };
 
 type MessageLike = {
@@ -34,7 +44,7 @@ type MessageLike = {
 let cached: Anthropic | null = null;
 function realClient(): AiClient {
   if (!aiConfigured()) throw new AiError("not_configured", "ANTHROPIC_API_KEY sozlanmagan");
-  cached ??= new Anthropic({ maxRetries: 2, timeout: 50_000 });
+  cached ??= new Anthropic();
   return cached as unknown as AiClient;
 }
 
@@ -45,7 +55,11 @@ export type JsonCall<T> = {
   jsonSchema: object;
   parse: (raw: unknown) => T;
   maxTokens: number;
-  effort: "low" | "medium" | "high";
+  effort: Effort;
+  /** So'rov vaqt chegarasi (ms). Baholash: 45 s, tahlil: 270 s. */
+  timeoutMs?: number;
+  /** SDK avtomatik qayta urinishlari (uzoq so'rovda 0 — funksiya vaqti tugab qolmasligi uchun). */
+  retries?: number;
   client?: AiClient;
 };
 
@@ -75,7 +89,9 @@ export async function callJson<T>(o: JsonCall<T>): Promise<JsonResult<T>> {
           },
         ],
         output_config: { effort: o.effort, format: { type: "json_schema", schema: o.jsonSchema } },
-      })) as MessageLike;
+      },
+      { timeout: o.timeoutMs ?? 45_000, maxRetries: o.retries ?? 1 },
+      )) as MessageLike;
     } catch (e) {
       throw new AiError("api", `Claude API xatosi: ${(e as Error).message}`);
     }

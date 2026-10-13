@@ -3,9 +3,10 @@ import { db } from "@/lib/db";
 import { computeAttempt } from "@/lib/attempt";
 import { VERDICTS } from "@/lib/labels";
 import type { VerdictKey } from "@/lib/scoring";
-import { aiModels, callJson, type AiClient } from "./client";
+import { aiEffort, aiModels, callJson, type AiClient } from "./client";
 import { analysisJsonSchema, analysisSchema, gradeJsonSchema, gradeSchema, type StoredAnalysis } from "./schemas";
 import { analysisPrompt, findUnknownPercents, gradePrompt, MIN_OPEN_ANSWER_CHARS, type AnalysisInput } from "./prompts";
+import { combineGrades } from "./combine";
 
 type Opt = string | { text: string; points?: number; flag?: boolean };
 const optText = (o: Opt) => (typeof o === "string" ? o : o.text);
@@ -15,6 +16,7 @@ export type GradingSummary = {
   tooShort: number;
   noRubric: number;
   lowConfidence: number;
+  disagreement: number;
   injection: number;
   inputTokens: number;
   outputTokens: number;
@@ -26,7 +28,7 @@ export async function gradeOpenAnswers(attemptId: string, client?: AiClient): Pr
     where: { attemptId, question: { type: "OPEN" } },
     include: { question: true },
   });
-  const summary: GradingSummary = { graded: 0, tooShort: 0, noRubric: 0, lowConfidence: 0, injection: 0, inputTokens: 0, outputTokens: 0 };
+  const summary: GradingSummary = { graded: 0, tooShort: 0, noRubric: 0, lowConfidence: 0, disagreement: 0, injection: 0, inputTokens: 0, outputTokens: 0 };
 
   const todo = responses.filter((r) => r.scoreSource !== "human" && !r.reviewed);
   const queue = [...todo];
@@ -47,33 +49,40 @@ export async function gradeOpenAnswers(attemptId: string, client?: AiClient): Pr
         summary.noRubric++;
         continue;
       }
-      const p = gradePrompt({ stem: r.question.stem, level: r.question.level, rubric, answer: text });
-      const res = await callJson({
-        model: aiModels().grader,
-        system: p.system,
-        user: p.user,
-        jsonSchema: gradeJsonSchema,
-        parse: (x) => gradeSchema.parse(x),
-        maxTokens: 1200,
-        effort: "low",
-        client,
-      });
-      const g = res.data;
+      // Ikki mustaqil baholovchi (A/B): kelishmasa — odamga yo'naltiriladi
+      const input = { stem: r.question.stem, level: r.question.level, rubric, answer: text };
+      const run = (variant: "A" | "B") => {
+        const p = gradePrompt(input, variant);
+        return callJson({
+          model: aiModels().grader,
+          system: p.system,
+          user: p.user,
+          jsonSchema: gradeJsonSchema,
+          parse: (x) => gradeSchema.parse(x),
+          maxTokens: 2000,
+          effort: aiEffort().grader,
+          client,
+        });
+      };
+      const [ra, rb] = await Promise.all([run("A"), run("B")]);
+      const c = combineGrades(ra.data, rb.data);
       await db.response.update({
         where: { id: r.id },
         data: {
-          score: Math.round(g.score * 4) / 4,
+          score: c.score,
+          aiScore: c.score,
           scoreSource: "ai",
-          rationale: g.rationale,
-          confidence: g.confidence,
-          flagged: g.injectionAttempt || r.flagged,
+          rationale: c.rationale,
+          confidence: c.confidence,
+          flagged: c.injectionAttempt || r.flagged,
         },
       });
       summary.graded++;
-      if (g.confidence < 0.6) summary.lowConfidence++;
-      if (g.injectionAttempt) summary.injection++;
-      summary.inputTokens += res.inputTokens;
-      summary.outputTokens += res.outputTokens;
+      if (c.confidence < 0.6) summary.lowConfidence++;
+      if (c.disagreement) summary.disagreement++;
+      if (c.injectionAttempt) summary.injection++;
+      summary.inputTokens += ra.inputTokens + rb.inputTokens;
+      summary.outputTokens += ra.outputTokens + rb.outputTokens;
     }
   };
   await Promise.all(Array.from({ length: Math.min(4, todo.length) }, worker));
@@ -226,8 +235,10 @@ export async function generateAnalysis(attemptId: string, client?: AiClient) {
     user: p.user,
     jsonSchema: analysisJsonSchema,
     parse: (x) => analysisSchema.parse(x),
-    maxTokens: 8000,
-    effort: "medium",
+    maxTokens: 16000,
+    effort: aiEffort().analysis,
+    timeoutMs: 270_000,
+    retries: 0,
     client,
   });
 

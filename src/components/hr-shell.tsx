@@ -11,6 +11,7 @@ import {
   Moon,
   PanelLeftClose,
   PanelLeftOpen,
+  Scale,
   Plus,
   Settings,
   SlidersHorizontal,
@@ -29,6 +30,7 @@ const NAV: NavItem[] = [
   { href: "/hr/lavozimlar", label: "Lavozim kartalari", short: "Lavozimlar", icon: ClipboardList },
   { href: "/hr/savollar", label: "Savollar banki", short: "Savollar", icon: BookOpenCheck },
   { href: "/hr/takliflar", label: "Takliflar", short: "Takliflar", icon: Plus },
+  { href: "/hr/kalibrlash", label: "Kalibrlash", short: "Kalibrlash", icon: Scale },
   { href: "/hr/konstruktor", label: "Test konstruktori", short: "Konstruktor", icon: SlidersHorizontal, soon: true },
   { href: "/hr/analitika", label: "Analitika", short: "Analitika", icon: BarChart3, soon: true },
   { href: "/hr/sozlamalar", label: "Sozlamalar", short: "Sozlamalar", icon: Settings },
@@ -44,6 +46,7 @@ const TITLES: [string, string][] = [
   ["/hr/lavozimlar", "Lavozim kartalari"],
   ["/hr/savollar", "Savollar banki"],
   ["/hr/takliflar", "Takliflar"],
+  ["/hr/kalibrlash", "Kalibrlash"],
   ["/hr/sozlamalar", "Sozlamalar"],
   ["/hr", "Bosh sahifa"],
 ];

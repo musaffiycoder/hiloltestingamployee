@@ -68,6 +68,7 @@ model User {
   assessments Assessment[]
   auditLogs   AuditLog[]
   comments    Comment[]
+  ratings     CalibrationRating[]
 }
 
 model Position {
@@ -168,10 +169,14 @@ model Response {
   confidence     Float?
   reviewed       Boolean  @default(false)
   overrideReason String?
+  /// AI taklif qilgan dastlabki ball (odam o'zgartirsa ham saqlanadi — kalibrlash uchun)
+  aiScore        Float?
   createdAt      DateTime @default(now())
 
   attempt  Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
   question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  ratings CalibrationRating[]
 
   @@unique([attemptId, questionId])
 }
@@ -248,4 +253,18 @@ model RateLimit {
   key     String   @id
   count   Int      @default(0)
   resetAt DateTime
+}
+
+/// Kalibrlash: HR ko'r-ko'rona (AI ballini ko'rmasdan) bergan baho.
+model CalibrationRating {
+  id         String   @id @default(cuid())
+  responseId String
+  raterId    String
+  score      Float
+  at         DateTime @default(now())
+
+  response Response @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  rater    User     @relation(fields: [raterId], references: [id], onDelete: Cascade)
+
+  @@unique([responseId, raterId])
 }

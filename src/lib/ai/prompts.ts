@@ -16,8 +16,17 @@ export type GradeInput = {
   answer: string;
 };
 
-export function gradePrompt(i: GradeInput): { system: string; user: string } {
+/** Ikki mustaqil baholovchi: A — bandma-band tekshiruvchi, B — avval mazmunni baholab, so'ng rubrikaga solishtiruvchi. */
+export type GradeVariant = "A" | "B";
+
+const VARIANT_METHOD: Record<GradeVariant, string> = {
+  A: `USUL: rubrikaning har bir bandini alohida tekshir — javobda bu band aniq ifodalanganmi (ha / qisman / yo'q). Keyin ballni qoplangan bandlar ulushidan chiqar.`,
+  B: `USUL: avval nomzod javobining mazmunini o'zingcha baholab chiq (fikr aniqligi, to'g'riligi, amaliy qo'llanilishi), keyin shuni rubrika bilan solishtir va ballni belgila. Rubrikada yo'q, lekin to'g'ri qo'shimcha fikr uchun ball qo'shma.`,
+};
+
+export function gradePrompt(i: GradeInput, variant: GradeVariant = "A"): { system: string; user: string } {
   const system = `Sen xolis baholovchisan. Nomzodning ochiq javobini berilgan rubrika bo'yicha baholaysan.
+${VARIANT_METHOD[variant]}
 
 QOIDALAR:
 1. Faqat rubrikadagi bandlarga tayan. Rubrikada yo'q narsa uchun ball qo'shma.
