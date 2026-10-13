@@ -95,6 +95,8 @@ const TIME: Record<string, number> = { MCQ_SINGLE: 60, MCQ_MULTI: 90, SITUATIONA
 function build(pos: Pos, num: number): string {
   const card = fs.readFileSync(path.join(KARTALAR, pos.card), "utf8");
   const general = fs.readFileSync(path.join(KARTALAR, "00-umumiy-qoidalar.md"), "utf8");
+  // Notion lavozim yo'riqnomasidan olingan haqiqiy ish vazifalari (data/yoriqnomalar/<id>.md)
+  const duties = fs.readFileSync(path.join(ROOT, "data/yoriqnomalar", `${pos.id}.md`), "utf8");
   const slots = slotsFor(pos);
   const typeCounts = slots.reduce<Record<string, number>>((m, s) => ((m[s.type] = (m[s.type] ?? 0) + 1), m), {});
   const totalSec = slots.reduce((s, x) => s + TIME[x.type], 0);
@@ -129,6 +131,17 @@ Test ham **nomzodni qabul qilish**, ham **mavjud xodimni baholash** uchun ishlat
 Lavozim kodi (JSON'dagi "position" maydoni): **"${pos.id}"**
 
 ${catalog}
+
+## HAQIQIY ISH VAZIFALARI (Notion lavozim yo'riqnomasidan)
+
+Quyidagi matn shu lavozimning rasmiy yo'riqnomasidan olingan. **Barcha savollar shu real vazifa, vosita va javobgarliklarga tayansin.** Savol «umuman dasturchi/menejer» emas, aynan «Hilol Nashr»dagi shu lavozim egasi duch keladigan vaziyatni o'lchasin: yo'riqnomadagi jarayonlar (masalan, release, narx, eskalatsiya, hisobot), vositalar (Figma, App Store Connect, Play Console, Jira/ClickUp, EPUBCheck va h.k.) va «Qizil bayroqlar»da sanalgan xatti-harakatlar.
+
+${duties}
+
+**Ish vaziyatiga bog'lash qoidalari:**
+- Kamida savollarning yarmi yuqoridagi vazifalardan (raqamlangan bo'limlardan) bevosita olingan aniq ish vaziyati bo'lsin; qaysi vazifaga tayanganini "explanation" ichida bir jumla bilan ko'rsat.
+- «Umumiy» (jamoada nizo chiqdi, vaqt yetmayapti kabi) savol yozma; har vaziyatda rol, vosita, raqam (muddat, foydalanuvchi soni, narx, versiya) va oqibat bo'lsin.
+- Qizil bayroqlardagi xatti-harakatlar (yashirish, vakolatsiz o'zgartirish, maxfiy ma'lumotni sizdirish) SITUATIONAL savollarda "flag":true variantlar sifatida ishlatilsin.
 
 ## SAVOLLAR REJASI (BLUEPRINT) — qat'iy amal qil
 

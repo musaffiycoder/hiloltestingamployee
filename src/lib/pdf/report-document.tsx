@@ -305,6 +305,13 @@ export function ReportDocument({ r }: { r: ReportData }) {
               </View>
             </Section>
 
+            {a.swotStrategy ? (
+              <View style={[s.card, { marginTop: 8, borderLeftWidth: 3, borderLeftColor: C.br }]} wrap={false}>
+                <Text style={s.h3}>SWOT xulosasi</Text>
+                <Text style={{ marginTop: 3 }}>{a.swotStrategy}</Text>
+              </View>
+            ) : null}
+
             {insights.length > 0 && (
               <Section title="Kompetensiyalar bo'yicha chuqur tahlil" minAhead={120}>
                 {insights.map((c) => (
@@ -417,6 +424,20 @@ export function ReportDocument({ r }: { r: ReportData }) {
                   <Text style={{ marginTop: 3, color: C.tx2 }}>
                     {d.format} · {d.courseSuggestion} · {d.estimatedDuration}
                   </Text>
+                  {(d.resources?.length ?? 0) > 0 && (
+                    <View style={{ marginTop: 5, backgroundColor: C.cream, borderRadius: 6, padding: 6 }}>
+                      {d.resources.map((rs, k) => (
+                        <View key={k} style={{ marginBottom: k < d.resources.length - 1 ? 4 : 0 }}>
+                          <Text>
+                            <Text style={{ fontWeight: 700, color: C.brd, fontSize: 7.5 }}>{rs.kind.toUpperCase()}  </Text>
+                            <Text style={{ fontWeight: 600 }}>{rs.title}</Text>
+                            <Text style={{ color: C.tx2 }}> · {rs.provider}</Text>
+                          </Text>
+                          <Text style={{ color: C.tx2, fontSize: 8.5 }}>{rs.why}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
                   {d.successMetric ? (
                     <Text style={{ marginTop: 2, color: C.ok }}>
                       <Text style={{ fontWeight: 700 }}>Muvaffaqiyat mezoni: </Text>

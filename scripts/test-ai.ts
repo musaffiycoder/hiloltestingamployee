@@ -88,6 +88,10 @@ const noCohort = analysisPrompt({ ...base, cohort: null, history: [] });
 assert.ok(noCohort.user.includes("qiyoslash uchun yetarli emas") && noCohort.user.includes("bazaviy nuqta"));
 assert.ok(p.user.includes("ishonchlilik: yuqori") && p.user.includes("Oynadan chiqish: 2 marta"));
 assert.ok(p.user.includes("HR hali kiritmagan"));
+assert.ok(!p.user.includes("O'RGANISH YO'NALISHLARI"), "positionCode berilmasa yo'nalish yo'q");
+const withPos = analysisPrompt({ ...base, positionCode: "pm" });
+assert.ok(withPos.user.includes("O'RGANISH YO'NALISHLARI") && withPos.user.includes("Scrum"));
+assert.ok(p.system.includes("swotStrategy") && p.system.includes("resources"));
 const withCtx = analysisPrompt({ ...base, hrContext: "Rahbar: oxirgi chorakda 2 ta incident" });
 assert.ok(withCtx.user.includes("<<<NOMZOD_MATNI") && withCtx.user.includes("2 ta incident"));
 
@@ -156,7 +160,8 @@ const args = { model: "claude-opus-5-5", system: "s", user: "u", jsonSchema: gra
     errorDiagnostics: [{ question: 1, competency: "H3", chose: "Jadval nusxasi", shows: "indeks tushunchasi chalkash", fix: "EXPLAIN bilan mashq" }],
     interviewQuestions: [{ question: "Sekin so'rovni qanday tekshirasiz?", verifies: "H3", lookFor: "EXPLAIN, indeks" }],
     roleRisks: ["production'da sekin so'rov"],
-    developmentPlan: [{ area: "H3", recommendation: "r", format: "mentorlik", courseSuggestion: "SQL optimizatsiya kursi turi", estimatedDuration: "4 hafta", horizon: "0–30 kun", successMetric: "qayta testda daraja 4", priority: 1 }],
+    developmentPlan: [{ area: "H3", recommendation: "r", format: "mentorlik", courseSuggestion: "SQL optimizatsiya kursi turi", estimatedDuration: "4 hafta", horizon: "0–30 kun", successMetric: "qayta testda daraja 4", priority: 1, resources: [{ kind: "rasmiy hujjat", title: "PostgreSQL EXPLAIN", provider: "postgresql.org", why: "indeks tanlashni mashq qiladi" }] }],
+    swotStrategy: "Kuchli tomonlar orqali kamchilikni yopish rejasi.",
     dataGaps: [], recommendation: "Shartli mos — SQL bo'yicha reja bilan.", recommendationReasons: ["H3 talabdan 1 daraja past"],
   };
   assert.equal(analysisSchema.safeParse(analysis).success, true);

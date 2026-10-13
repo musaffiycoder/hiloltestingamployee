@@ -47,10 +47,11 @@ const stub: AiClient & { gradeA: number; gradeB: number; analysisCalls: number; 
         interviewQuestions: [{ question: "Savol?", verifies: "H3", lookFor: "aniq misol" }],
         roleRisks: ["xavf"],
         developmentPlan: [
-          { area: "H2", recommendation: "r2", format: "kurs", courseSuggestion: "turi", estimatedDuration: "2 hafta", horizon: "30–60 kun", successMetric: "qayta test", priority: 2 },
-          { area: "H3", recommendation: "r1", format: "mentorlik", courseSuggestion: "turi", estimatedDuration: "4 hafta", horizon: "0–30 kun", successMetric: "qayta test", priority: 1 },
+          { area: "H2", recommendation: "r2", format: "kurs", courseSuggestion: "turi", estimatedDuration: "2 hafta", horizon: "30–60 kun", successMetric: "qayta test", priority: 2, resources: [{ kind: "kurs", title: "t", provider: "p", why: "w" }] },
+          { area: "H3", recommendation: "r1", format: "mentorlik", courseSuggestion: "turi", estimatedDuration: "4 hafta", horizon: "0–30 kun", successMetric: "qayta test", priority: 1, resources: [{ kind: "kitob", title: "t", provider: "p", why: "w" }] },
         ],
         dataGaps: [{ gap: "HR konteksti yo'q", why: "real natija bilan solishtirib bo'lmaydi", howToClose: "HR kontekst maydonini to'ldiring" }],
+        swotStrategy: "SWOT xulosasi.",
         recommendation: "Formuladagi xulosa toifasiga mos tavsiya.",
         recommendationReasons: ["dalil 1"],
       };

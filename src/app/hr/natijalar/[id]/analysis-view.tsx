@@ -54,6 +54,12 @@ export function AnalysisView({ analysis, isEmployee }: { analysis: StoredAnalysi
             </Card>
           ))}
         </div>
+        {a.swotStrategy && (
+          <Card className="mt-3 border-l-4 border-l-brf p-4 text-[15px] leading-relaxed">
+            <div className={`${tone} text-tx2`}>SWOT xulosasi</div>
+            <p className="mt-1">{a.swotStrategy}</p>
+          </Card>
+        )}
       </section>
 
       {a.competencyInsights.length > 0 && (
@@ -184,7 +190,19 @@ export function AnalysisView({ analysis, isEmployee }: { analysis: StoredAnalysi
               <p className="mt-1 text-[13px] text-tx2">
                 {d.format} · {d.courseSuggestion} · {d.estimatedDuration}
               </p>
-              {d.successMetric && <p className="mt-1 text-[13px] text-ok">Mezon: {d.successMetric}</p>}
+              {(d.resources?.length ?? 0) > 0 && (
+                <ul className="mt-2 flex flex-col gap-1.5 rounded-xl bg-soft/60 p-3 text-[14px]">
+                  {d.resources.map((r, k) => (
+                    <li key={k}>
+                      <span className="mr-1.5 rounded-full bg-tint px-2 py-0.5 text-[11px] font-semibold uppercase text-brd">{r.kind}</span>
+                      <b className="font-semibold">{r.title}</b>
+                      <span className="text-tx2"> · {r.provider}</span>
+                      <div className="text-tx2">{r.why}</div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {d.successMetric && <p className="mt-2 text-[13px] text-ok">Mezon: {d.successMetric}</p>}
             </div>
           ))}
         </Card>

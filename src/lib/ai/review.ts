@@ -206,6 +206,7 @@ export async function buildAnalysisInput(attemptId: string): Promise<{ input: An
   const redFlags = (Array.isArray(result.redFlags) ? result.redFlags : []) as { t: string; q: string }[];
 
   const input: AnalysisInput = {
+    positionCode: assessment.position.code,
     mode: assessment.mode,
     positionTitle: assessment.position.title,
     verdictLabel: VERDICTS[result.verdict as VerdictKey].label,
@@ -278,7 +279,7 @@ export async function generateAnalysis(attemptId: string, client?: AiClient) {
     maxTokens: 40000,
     stream: true,
     effort: aiEffort().analysis,
-    timeoutMs: 270_000,
+    timeoutMs: 285_000,
     retries: 0,
     client,
   });
@@ -296,7 +297,8 @@ export async function generateAnalysis(attemptId: string, client?: AiClient) {
     ...a.errorDiagnostics.flatMap((e) => [e.shows, e.fix]),
     ...a.interviewQuestions.flatMap((i) => [i.question, i.lookFor]),
     ...a.roleRisks,
-    ...a.developmentPlan.flatMap((d) => [d.recommendation, d.successMetric]),
+    ...a.developmentPlan.flatMap((d) => [d.recommendation, d.successMetric, ...d.resources.map((r) => r.why)]),
+    a.swotStrategy,
     ...a.dataGaps.flatMap((g) => [g.gap, g.why, g.howToClose]),
     a.recommendation,
     ...a.recommendationReasons,
