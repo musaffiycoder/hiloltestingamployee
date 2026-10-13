@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
-import { Card, LevelChip, VerdictChip } from "@/components/ui";
+import { Card, LevelChip, SectionTitle, VerdictChip } from "@/components/ui";
 import { Radar } from "@/components/svg-charts";
 import { initials } from "@/lib/format";
 import type { VerdictKey } from "@/lib/scoring";
@@ -33,8 +33,8 @@ export default async function ComparePage({ searchParams }: PageProps<"/hr/taqqo
   if (positionIds.size > 1) {
     return (
       <Card className="p-8 text-center">
-        <p className="font-bold">Faqat bir xil lavozim nomzodlarini taqqoslash mumkin.</p>
-        <Link href="/hr/natijalar" className="mt-3 inline-block text-sm font-bold text-brd">← Nomzodlarga qaytish</Link>
+        <p className="text-[17px] font-semibold">Faqat bir xil lavozim nomzodlarini taqqoslash mumkin.</p>
+        <Link href="/hr/natijalar" className="mt-3 inline-block text-[17px] text-brd">‹ Nomzodlarga qaytish</Link>
       </Card>
     );
   }
@@ -44,56 +44,79 @@ export default async function ComparePage({ searchParams }: PageProps<"/hr/taqqo
   const level = (a: (typeof ordered)[number], cid: string) => a.scores.find((s) => s.competencyId === cid)?.level ?? null;
 
   return (
-    <div className="flex flex-col gap-5">
-      <Link href="/hr/natijalar" className="text-sm font-semibold text-tx2 hover:text-brd">← Nomzodlar</Link>
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,420px)_1fr]">
+    <div className="flex flex-col gap-6">
+      <Link href="/hr/natijalar" className="inline-flex items-center gap-1 text-[17px] text-brd">
+        <span aria-hidden className="text-2xl leading-none">‹</span> Nomzodlar
+      </Link>
+
+      <header className="px-1">
+        <h2 className="text-[34px] font-bold leading-tight">Taqqoslash</h2>
+        <p className="mt-1 text-[15px] text-tx2">{position.title}</p>
+      </header>
+
+      <section>
+        <SectionTitle>Kompetensiyalar</SectionTitle>
         <Card className="p-4">
-          <h2 className="mb-2 text-[15px] font-bold">Taqqoslash · {position.title}</h2>
-          <Radar
-            axes={comps.map((c) => ({ code: c.code, name: c.name, critical: c.critical }))}
-            series={[
-              { name: "Talab", values: comps.map((c) => c.target), color: "var(--tx2)", dashed: true },
-              ...ordered.map((a, i) => ({
-                name: a.assessment.subjectName,
-                values: comps.map((c) => level(a, c.id) ?? 0),
-                color: COLORS[i],
-                fill: i === 0,
-              })),
-            ]}
-          />
-          <div className="flex flex-wrap justify-center gap-3 text-xs font-semibold text-tx2">
+          <div className="mx-auto max-w-md">
+            <Radar
+              axes={comps.map((c) => ({ code: c.code, name: c.name, critical: c.critical }))}
+              series={[
+                { name: "Talab", values: comps.map((c) => c.target), color: "var(--tx2)", dashed: true },
+                ...ordered.map((a, i) => ({
+                  name: a.assessment.subjectName,
+                  values: comps.map((c) => level(a, c.id) ?? 0),
+                  color: COLORS[i],
+                  fill: i === 0,
+                })),
+              ]}
+            />
+          </div>
+          <div className="flex flex-wrap justify-center gap-4 text-[13px] text-tx2">
             {ordered.map((a, i) => (
-              <span key={a.id}><b style={{ color: COLORS[i] }}>━</b> {a.assessment.subjectName}</span>
+              <span key={a.id}>
+                <b style={{ color: COLORS[i] }}>━</b> {a.assessment.subjectName}
+              </span>
             ))}
             <span><b>╌</b> Talab</span>
           </div>
         </Card>
+      </section>
 
-        <div className={`grid gap-3 ${ordered.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
-          {ordered.map((a, i) => (
-            <Card key={a.id} className="p-4">
-              <Link href={`/hr/natijalar/${a.id}`} className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full text-xs font-bold" style={{ background: COLORS[i], color: "#1a0c02" }}>
+      <div className={`grid grid-cols-[minmax(0,1fr)] gap-6 ${ordered.length === 3 ? "lg:grid-cols-3" : "lg:grid-cols-2"}`}>
+        {ordered.map((a, i) => (
+          <section key={a.id}>
+            <SectionTitle>{a.assessment.subjectName}</SectionTitle>
+            <Card>
+              <Link href={`/hr/natijalar/${a.id}`} className="flex items-center gap-3 border-b border-line px-4 py-3">
+                <span
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold"
+                  style={{ background: COLORS[i], color: i === 1 ? "var(--bg)" : "#1a0c02" }}
+                >
                   {initials(a.assessment.subjectName)}
                 </span>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-bold">{a.assessment.subjectName}</div>
-                  <b className="font-display text-xl">{Math.round(a.result!.overallPct)}%</b>
-                </div>
+                <span className="min-w-0 flex-1">
+                  <b className="block text-[22px] leading-tight tabular-nums">{Math.round(a.result!.overallPct)}%</b>
+                  <VerdictChip verdict={a.result!.verdict as VerdictKey} />
+                </span>
+                <span aria-hidden className="text-lg text-tx2">›</span>
               </Link>
-              <div className="mt-2"><VerdictChip verdict={a.result!.verdict as VerdictKey} /></div>
-              <div className="mt-3 flex flex-col gap-1.5">
-                {comps.map((c) => (
-                  <div key={c.id} className="flex items-center justify-between gap-2 text-xs">
-                    <span className="font-mono text-tx2" title={c.name}>{c.code}</span>
-                    <span className="flex-1 border-b border-dotted border-line" />
+              <ul>
+                {comps.map((c, k) => (
+                  <li
+                    key={c.id}
+                    className={`flex items-center justify-between gap-3 px-4 py-2.5 ${k < comps.length - 1 ? "border-b border-line" : ""}`}
+                  >
+                    <span className="min-w-0 truncate text-[15px]" title={c.name}>
+                      <span className="mr-2 font-mono text-xs text-tx2">{c.code}</span>
+                      {c.name}
+                    </span>
                     <LevelChip level={level(a, c.id)} />
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </Card>
-          ))}
-        </div>
+          </section>
+        ))}
       </div>
     </div>
   );

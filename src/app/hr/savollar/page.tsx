@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Search } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
-import { Card, LevelChip, Pill } from "@/components/ui";
+import { Card, LevelChip, Pill, SectionTitle } from "@/components/ui";
 import { QUESTION_TYPE_LABELS } from "@/lib/labels";
 import type { Prisma } from "@prisma/client";
 
@@ -46,11 +47,36 @@ export default async function QuestionBankPage({ searchParams }: PageProps<"/hr/
     return `/hr/savollar${s ? `?${s}` : ""}`;
   };
   const chip = (on: boolean) =>
-    `inline-flex min-h-9 items-center gap-1.5 rounded-full px-3.5 text-xs font-bold border ${on ? "border-br bg-brf text-onbr" : "border-line bg-card hover:bg-soft"}`;
+    `inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-4 text-[15px] font-medium ${on ? "bg-brf text-onbr" : "bg-card text-tx"}`;
+
+  // Kompetensiya bo'yicha guruhlash (tartib saqlanadi)
+  const groups: { key: string; title: string; items: typeof questions }[] = [];
+  for (const x of questions) {
+    const key = x.competencyId;
+    let g = groups.find((y) => y.key === key);
+    if (!g) {
+      g = { key, title: `${x.competency.code} · ${x.competency.name}`, items: [] };
+      groups.push(g);
+    }
+    g.items.push(x);
+  }
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-col gap-4">
+      <form action="/hr/savollar" className="relative">
+        {pos && <input type="hidden" name="p" value={pos} />}
+        {lvl ? <input type="hidden" name="l" value={lvl} /> : null}
+        <Search size={17} aria-hidden className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-tx2" />
+        <input
+          name="q"
+          defaultValue={q}
+          placeholder="Qidirish"
+          aria-label="Savol matni bo'yicha qidirish"
+          className="h-10 w-full rounded-[10px] bg-soft pl-9 pr-3 text-[17px] outline-none placeholder:text-tx2"
+        />
+      </form>
+
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:px-0 [scrollbar-width:none]">
         <Link href={href({ p: "" })} className={chip(!pos)}>Barcha lavozimlar</Link>
         {positions.map((p) => {
           const n = p.competencies.reduce((s, c) => s + c._count.questions, 0);
@@ -61,83 +87,93 @@ export default async function QuestionBankPage({ searchParams }: PageProps<"/hr/
           );
         })}
       </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-bold uppercase tracking-wide text-tx2">Daraja:</span>
-        <Link href={href({ l: "" })} className={chip(!lvl)}>Hammasi</Link>
-        {[1, 2, 3, 4, 5].map((l) => (
-          <Link key={l} href={href({ l: String(l) })} className={chip(lvl === l)}>{l}</Link>
-        ))}
-        <form action="/hr/savollar" className="ml-auto">
-          {pos && <input type="hidden" name="p" value={pos} />}
-          {lvl ? <input type="hidden" name="l" value={lvl} /> : null}
-          <input
-            name="q"
-            defaultValue={q}
-            placeholder="⌕ Savol matni bo'yicha qidirish…"
-            className="h-10 w-64 rounded-full border border-line bg-card px-4 text-sm outline-none focus:border-br"
-          />
-        </form>
+
+      <div className="flex items-center gap-3">
+        <span className="shrink-0 text-[13px] font-semibold uppercase tracking-wide text-tx2">Daraja</span>
+        <div className="grid flex-1 grid-cols-6 rounded-[10px] bg-soft p-0.5 md:max-w-sm" role="group" aria-label="Daraja">
+          {[0, 1, 2, 3, 4, 5].map((l) => (
+            <Link
+              key={l}
+              href={href({ l: l ? String(l) : "" })}
+              className={`rounded-lg py-1.5 text-center text-[13px] font-semibold ${
+                (lvl || 0) === l ? "bg-card shadow-[0_1px_3px_rgba(0,0,0,0.18)]" : ""
+              }`}
+              aria-current={(lvl || 0) === l ? "true" : undefined}
+            >
+              {l === 0 ? "Hammasi" : l}
+            </Link>
+          ))}
+        </div>
       </div>
 
-      <p className="text-sm text-tx2">
-        {total} ta savol{total > questions.length ? ` (dastlabki ${questions.length} tasi ko'rsatilmoqda)` : ""}. Javob kalitlari faqat HR ga ko'rinadi.
+      <p className="px-1 text-[13px] text-tx2">
+        {total} ta savol{total > questions.length ? ` (dastlabki ${questions.length} tasi)` : ""}. Javob kalitlari faqat HR ga
+        ko'rinadi.
       </p>
 
       {questions.length === 0 ? (
         <Card className="p-10 text-center">
-          <div className="font-bold">Savol topilmadi</div>
-          <p className="mt-1 text-sm text-tx2">Filtrni o'zgartiring yoki lavozim uchun savollar yarating.</p>
+          <div className="text-[17px] font-semibold">Savol topilmadi</div>
+          <p className="mt-1 text-[15px] text-tx2">Filtrni o'zgartiring yoki lavozim uchun savollar yarating.</p>
         </Card>
       ) : (
-        <div className="flex flex-col gap-3">
-          {questions.map((x) => {
-            const opts = ((x.payload as { options?: Opt[] })?.options ?? []) as Opt[];
-            const key = (x.answerKey as { correct?: number | number[] } | null)?.correct;
-            const correct = new Set(Array.isArray(key) ? key : typeof key === "number" ? [key] : []);
-            return (
-              <Card key={x.id} className="p-4">
-                <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <Pill>{x.competency.code}</Pill>
-                  <span className="text-xs font-semibold text-tx2">{x.competency.name}</span>
-                  <span className="ml-auto flex items-center gap-2">
-                    <LevelChip level={x.level} />
-                    <Pill tone="soft">{QUESTION_TYPE_LABELS[x.type]}</Pill>
-                    <Pill tone="soft">{x.timeLimitSec}s</Pill>
-                  </span>
-                </div>
-                <p className="text-sm font-semibold">{x.stem}</p>
-                {opts.length > 0 && (
-                  <details className="mt-2">
-                    <summary className="cursor-pointer text-xs font-bold text-brd">Variantlar va kalit</summary>
-                    <ul className="mt-2 flex flex-col gap-1.5">
-                      {opts.map((o, i) => {
-                        const isCorrect = correct.has(i);
-                        const pts = typeof o === "object" ? o.points : undefined;
-                        return (
-                          <li
-                            key={i}
-                            className={`flex gap-2 rounded-xl p-2.5 text-sm ${isCorrect || (pts !== undefined && pts >= 5) ? "bg-ok-t" : "bg-soft"}`}
-                          >
-                            <b className="w-5 shrink-0">{String.fromCharCode(65 + i)}</b>
-                            <span className="flex-1">{text(o)}</span>
-                            {pts !== undefined && <span className="text-xs font-bold text-tx2">{pts} ball</span>}
-                            {typeof o === "object" && o.flag && <span className="text-xs font-bold text-bad">⚑ bayroq</span>}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                    {x.explanation && <p className="mt-2 text-xs text-tx2">{x.explanation}</p>}
+        groups.map((g) => (
+          <section key={g.key}>
+            <SectionTitle>{g.title}</SectionTitle>
+            <Card>
+              {g.items.map((x, i) => {
+                const opts = ((x.payload as { options?: Opt[] })?.options ?? []) as Opt[];
+                const key = (x.answerKey as { correct?: number | number[] } | null)?.correct;
+                const correct = new Set(Array.isArray(key) ? key : typeof key === "number" ? [key] : []);
+                const rubric = (x.rubric as { points?: string[] } | null)?.points;
+                return (
+                  <details key={x.id} className={`group ${i < g.items.length - 1 ? "border-b border-line" : ""}`}>
+                    <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
+                      <span className="min-w-0 flex-1">
+                        <span className="line-clamp-2 block text-[15px] font-medium">{x.stem}</span>
+                        <span className="mt-1 flex flex-wrap items-center gap-1.5">
+                          <LevelChip level={x.level} />
+                          <Pill tone="soft">{QUESTION_TYPE_LABELS[x.type]}</Pill>
+                          <Pill tone="soft">{x.timeLimitSec}s</Pill>
+                        </span>
+                      </span>
+                      <span aria-hidden className="text-lg text-tx2 transition-transform group-open:rotate-90">›</span>
+                    </summary>
+                    <div className="bg-soft/50 px-4 py-3">
+                      {opts.length > 0 && (
+                        <ul className="overflow-hidden rounded-xl bg-card">
+                          {opts.map((o, k) => {
+                            const pts = typeof o === "object" ? o.points : undefined;
+                            const isCorrect = correct.has(k) || (pts !== undefined && pts >= 5);
+                            return (
+                              <li
+                                key={k}
+                                className={`flex items-start gap-3 px-3 py-2.5 text-[15px] ${k < opts.length - 1 ? "border-b border-line" : ""}`}
+                              >
+                                <span className={`mt-0.5 w-4 shrink-0 text-center font-bold ${isCorrect ? "text-ok" : "text-transparent"}`} aria-hidden>
+                                  ✓
+                                </span>
+                                <span className="flex-1">{text(o)}</span>
+                                {pts !== undefined && <span className="text-[13px] font-semibold text-tx2">{pts} ball</span>}
+                                {typeof o === "object" && o.flag && <span className="text-[13px] font-semibold text-bad">⚑</span>}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                      {x.type === "OPEN" && rubric && (
+                        <ul className="list-disc pl-5 text-[15px] text-tx2">
+                          {rubric.map((p) => <li key={p}>{p}</li>)}
+                        </ul>
+                      )}
+                      {x.explanation && <p className="mt-2 text-[13px] text-tx2">{x.explanation}</p>}
+                    </div>
                   </details>
-                )}
-                {x.type === "OPEN" && (x.rubric as { points?: string[] } | null)?.points && (
-                  <ul className="mt-2 list-disc pl-5 text-xs text-tx2">
-                    {(x.rubric as { points: string[] }).points.map((p) => <li key={p}>{p}</li>)}
-                  </ul>
-                )}
-              </Card>
-            );
-          })}
-        </div>
+                );
+              })}
+            </Card>
+          </section>
+        ))
       )}
     </div>
   );

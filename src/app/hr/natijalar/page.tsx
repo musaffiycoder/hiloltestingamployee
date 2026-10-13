@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Search } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { Card } from "@/components/ui";
@@ -69,58 +70,67 @@ export default async function ResultsPage({ searchParams }: PageProps<"/hr/natij
   };
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-col gap-4">
+      {/* iOS qidiruv maydoni */}
+      <form action="/hr/natijalar" className="relative">
+        {f !== "all" && <input type="hidden" name="f" value={f} />}
+        {view !== "table" && <input type="hidden" name="v" value={view} />}
+        <Search size={17} aria-hidden className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-tx2" />
+        <input
+          name="q"
+          defaultValue={q}
+          placeholder="Qidirish"
+          aria-label="Ism bo'yicha qidirish"
+          className="h-10 w-full rounded-[10px] bg-soft pl-9 pr-3 text-[17px] outline-none placeholder:text-tx2"
+        />
+      </form>
+
+      {/* Filtrlar: gorizontal aylanadigan chiplar */}
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:px-0 [scrollbar-width:none]">
         {FILTERS.map((x, i) => (
           <Link
             key={x.key}
             href={href({ f: x.key })}
-            className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-3.5 text-xs font-bold ${
-              f === x.key ? "bg-brf text-onbr" : "bg-card text-tx hover:bg-soft border border-line"
+            className={`inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-4 text-[15px] font-medium ${
+              f === x.key ? "bg-brf text-onbr" : "bg-card text-tx"
             }`}
+            aria-current={f === x.key ? "true" : undefined}
           >
             {x.label}
             <span className={f === x.key ? "opacity-70" : "text-tx2"}>{counts[i]}</span>
           </Link>
         ))}
-        <div className="ml-auto flex gap-1 rounded-full bg-soft p-1" role="group" aria-label="Ko'rinish">
-          {(
-            [
-              ["table", "Jadval"],
-              ["cards", "Kartochka"],
-            ] as const
-          ).map(([k, l]) => (
-            <Link
-              key={k}
-              href={href({ v: k })}
-              className={`rounded-full px-3 py-1.5 text-xs font-bold ${view === k ? "bg-card shadow-soft" : "text-tx2"}`}
-              aria-current={view === k ? "true" : undefined}
-            >
-              {l}
-            </Link>
-          ))}
-        </div>
       </div>
 
-      <form action="/hr/natijalar" className="flex gap-2">
-        {f !== "all" && <input type="hidden" name="f" value={f} />}
-        {view !== "table" && <input type="hidden" name="v" value={view} />}
-        <input
-          name="q"
-          defaultValue={q}
-          placeholder="⌕ Ism bo'yicha qidirish…"
-          className="h-11 w-full max-w-sm rounded-full border border-line bg-card px-4 text-sm outline-none focus:border-br focus:ring-2 focus:ring-br/30"
-        />
-      </form>
+      {/* Ko'rinish: iOS segmented control */}
+      <div className="grid w-full max-w-[220px] grid-cols-2 self-end rounded-[10px] bg-soft p-0.5" role="group" aria-label="Ko'rinish">
+        {(
+          [
+            ["table", "Ro'yxat"],
+            ["cards", "Kartochka"],
+          ] as const
+        ).map(([k, l]) => (
+          <Link
+            key={k}
+            href={href({ v: k })}
+            className={`rounded-lg py-1.5 text-center text-[13px] font-semibold ${
+              view === k ? "bg-card shadow-[0_1px_3px_rgba(0,0,0,0.18)]" : ""
+            }`}
+            aria-current={view === k ? "true" : undefined}
+          >
+            {l}
+          </Link>
+        ))}
+      </div>
 
       {rows.length === 0 ? (
         <Card className="flex flex-col items-center gap-3 p-10 text-center">
-          <div className="text-3xl text-tx2" aria-hidden>◔</div>
-          <div className="font-bold">{q || f !== "all" ? "Mos natija topilmadi" : "Hali nomzod yo'q"}</div>
-          <p className="text-sm text-tx2">
+          <div className="text-4xl text-tx2" aria-hidden>◔</div>
+          <div className="text-[17px] font-semibold">{q || f !== "all" ? "Mos natija topilmadi" : "Hali nomzod yo'q"}</div>
+          <p className="text-[15px] text-tx2">
             {q || f !== "all" ? "Filtrni o'zgartirib ko'ring." : "Birinchi taklifni yuboring — natijalar shu yerda paydo bo'ladi."}
           </p>
-          <Link href="/hr/takliflar" className="inline-flex min-h-11 items-center rounded-full bg-br px-5 text-sm font-bold text-onbr">
+          <Link href="/hr/takliflar" className="inline-flex h-11 items-center rounded-full bg-brf px-6 text-[17px] font-semibold text-onbr">
             Taklif yuborish
           </Link>
         </Card>

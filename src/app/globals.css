@@ -20,7 +20,7 @@
   --warn-t: #fff0d9;
   --bad: #c84545;
   --bad-t: #fbe5e5;
-  --glass: rgba(255, 255, 255, 0.72);
+  --glass: rgba(255, 255, 255, 0.86);
   --glass-line: rgba(28, 66, 107, 0.14);
   --sh: none;
   --mesh:
@@ -48,7 +48,7 @@
   --warn-t: #3a2a10;
   --bad: #f08080;
   --bad-t: #3f1c22;
-  --glass: rgba(20, 42, 66, 0.66);
+  --glass: rgba(20, 42, 66, 0.86);
   --glass-line: rgba(255, 255, 255, 0.14);
   --mesh:
     radial-gradient(60% 40% at 15% 0%, #12365c 0, transparent 70%),
@@ -76,7 +76,7 @@
     --warn-t: #3a2a10;
     --bad: #f08080;
     --bad-t: #3f1c22;
-    --glass: rgba(20, 42, 66, 0.66);
+    --glass: rgba(20, 42, 66, 0.86);
     --glass-line: rgba(255, 255, 255, 0.14);
     --mesh:
       radial-gradient(60% 40% at 15% 0%, #12365c 0, transparent 70%),

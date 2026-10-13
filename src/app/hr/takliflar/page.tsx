@@ -48,23 +48,25 @@ export default async function InvitesPage() {
         </section>
         <section className="lg:col-span-3">
           <SectionTitle>So'nggi takliflar</SectionTitle>
-          <Card className="divide-y divide-line">
-            {invites.length === 0 && <p className="p-5 text-sm text-tx2">Hozircha bo'sh.</p>}
-            {invites.map((i) => {
-              const s = STATUS[i.status];
-              return (
-                <div key={i.id} className="flex flex-wrap items-center gap-3 p-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-bold">{i.subjectName}</div>
-                    <div className="truncate text-xs text-tx2">
-                      {i.position.title} · {i.mode === "RECRUITING" ? "Recruiting" : "Baholash"}
+          <Card>
+            {invites.length === 0 && <p className="px-4 py-3.5 text-[15px] text-tx2">Hozircha bo'sh.</p>}
+            <ul>
+              {invites.map((i, idx) => {
+                const s = STATUS[i.status];
+                return (
+                  <li key={i.id} className={`flex items-center gap-3 px-4 py-3 ${idx < invites.length - 1 ? "border-b border-line" : ""}`}>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[17px] font-semibold">{i.subjectName}</div>
+                      <div className="truncate text-[13px] text-tx2">
+                        {i.position.title} · {i.mode === "RECRUITING" ? "Recruiting" : "Baholash"}
+                      </div>
+                      <code className="mt-0.5 block truncate font-mono text-[11px] text-tx2">{base}/t/{i.token}</code>
                     </div>
-                    <code className="mt-1 block truncate font-mono text-[11px] text-tx2">{base}/t/{i.token}</code>
-                  </div>
-                  <Pill tone={s.tone}>{s.label}</Pill>
-                </div>
-              );
-            })}
+                    <Pill tone={s.tone}>{s.label}</Pill>
+                  </li>
+                );
+              })}
+            </ul>
           </Card>
         </section>
       </div>
