@@ -131,6 +131,7 @@ export async function buildAnalysisInput(attemptId: string): Promise<{ input: An
       rationale: r.rationale,
       confidence: r.confidence,
       timeSec: Math.round(r.timeMs / 1000),
+      limitSec: q.timeLimitSec,
     };
     if (q.type === "OPEN") {
       return { ...base, answer: pl.text ?? "", rubric: (q.rubric as { points?: string[] } | null)?.points ?? [] };
@@ -162,7 +163,7 @@ export async function buildAnalysisInput(attemptId: string): Promise<{ input: An
   const spentMin =
     attempt.finishedAt ? Math.max(1, Math.round((attempt.finishedAt.getTime() - attempt.startedAt.getTime()) / 60000)) : null;
 
-  // Qiyoslash: shu lavozim va rejim bo'yicha boshqalar (kamida 5 kishi bo'lsa)
+  // Qiyoslash: shu lavozim va rejim bo'yicha boshqalar (kamida 3 kishi bo'lsa)
   const others = await db.attemptResult.findMany({
     where: {
       attemptId: { not: attemptId },
@@ -170,7 +171,22 @@ export async function buildAnalysisInput(attemptId: string): Promise<{ input: An
     },
     select: { overallPct: true },
   });
-  const cohort = others.length >= 5 ? { avgPct: others.reduce((s, o) => s + o.overallPct, 0) / others.length, n: others.length } : null;
+  const cohort = others.length >= 3 ? { avgPct: others.reduce((s, o) => s + o.overallPct, 0) / others.length, n: others.length } : null;
+
+  // Kompetensiya bo'yicha boshqalarning o'rtacha darajasi (kamida 3 kishi)
+  const otherScores = await db.competencyScore.findMany({
+    where: {
+      attemptId: { not: attemptId },
+      attempt: { assessment: { positionId: assessment.positionId, mode: assessment.mode }, result: { isNot: null } },
+    },
+    select: { competencyId: true, level: true },
+  });
+  const cohortLevelBy = new Map<string, number>();
+  {
+    const acc = new Map<string, number[]>();
+    for (const o of otherScores) acc.set(o.competencyId, [...(acc.get(o.competencyId) ?? []), o.level]);
+    for (const [k, v] of acc) if (v.length >= 3) cohortLevelBy.set(k, v.reduce((x, y) => x + y, 0) / v.length);
+  }
 
   const prev = await db.attemptResult.findMany({
     where: {
@@ -195,21 +211,44 @@ export async function buildAnalysisInput(attemptId: string): Promise<{ input: An
     verdictLabel: VERDICTS[result.verdict as VerdictKey].label,
     overallPct: result.overallPct,
     requiredPct,
+    weightedLevel: (() => {
+      const scored = comps.filter((c) => levelBy.get(c.id) != null);
+      const w = scored.reduce((x, c) => x + c.weight, 0);
+      return w ? scored.reduce((x, c) => x + (levelBy.get(c.id) as number) * c.weight, 0) / w : null;
+    })(),
     criticalFail: result.criticalFail,
     needsReview: result.needsReview,
-    competencies: comps.map((c) => ({
-      code: c.code,
-      name: c.name,
-      type: c.type,
-      target: c.target,
-      level: levelBy.get(c.id) ?? null,
-      critical: c.critical,
-      answered: attempt.responses.filter((r) => r.question.competencyId === c.id).length,
-    })),
+    competencies: comps.map((c) => {
+      const answered = attempt.responses.filter((r) => r.question.competencyId === c.id).length;
+      return {
+        code: c.code,
+        name: c.name,
+        type: c.type,
+        target: c.target,
+        level: levelBy.get(c.id) ?? null,
+        critical: c.critical,
+        weight: c.weight,
+        answered,
+        reliability: answered >= 4 ? ("yuqori" as const) : answered >= 2 ? ("o'rta" as const) : ("past" as const),
+        cohortLevel: cohortLevelBy.get(c.id) ?? null,
+      };
+    }),
     questions,
     timing: { spentMin, avgSec, fastCount: times.filter((t) => t < 20000).length, total: ordered.length },
+    conditions: {
+      allowedMin: Math.round(ordered.reduce((x, r) => x + r.question.timeLimitSec, 0) / 60),
+      unanswered: questions.filter((q) => q.type === "OPEN" ? !q.answer?.trim() : q.chosen === undefined).length,
+      focusLost: attempt.signals.filter((x) => x.type === "focus_lost").length,
+      paste: attempt.signals.filter((x) => x.type === "paste").length,
+      medianSec: (() => {
+        const t = times.slice().sort((x, y) => x - y);
+        return t.length ? t[Math.floor(t.length / 2)] / 1000 : 0;
+      })(),
+      openWords: questions.reduce((x, q) => x + (q.type === "OPEN" && q.answer ? q.answer.trim().split(/\s+/).filter(Boolean).length : 0), 0),
+    },
     cohort,
     history,
+    hrContext: result.hrContext?.trim() || null,
     redFlags,
     signals: signalCounts,
   };
@@ -219,6 +258,7 @@ export async function buildAnalysisInput(attemptId: string): Promise<{ input: An
     requiredPct,
     ...(cohort ? [cohort.avgPct] : []),
     ...history.map((h) => h.pct),
+    ...comps.map((c) => c.weight),
     0, 25, 50, 75, 100,
     ...questions.flatMap((q) => (q.score === null ? [] : [q.score * 100])),
   ];
@@ -235,7 +275,8 @@ export async function generateAnalysis(attemptId: string, client?: AiClient) {
     user: p.user,
     jsonSchema: analysisJsonSchema,
     parse: (x) => analysisSchema.parse(x),
-    maxTokens: 16000,
+    maxTokens: 40000,
+    stream: true,
     effort: aiEffort().analysis,
     timeoutMs: 270_000,
     retries: 0,
@@ -249,10 +290,16 @@ export async function generateAnalysis(attemptId: string, client?: AiClient) {
     ...a.weaknesses,
     ...a.opportunities,
     ...a.threats,
+    a.executiveSummary,
     ...Object.values(a.answerPatterns),
-    ...a.competencyInsights.map((c) => c.analysis),
-    ...a.developmentPlan.map((d) => d.recommendation),
+    ...a.competencyInsights.flatMap((c) => [c.analysis, c.evidence, c.nextStep]),
+    ...a.errorDiagnostics.flatMap((e) => [e.shows, e.fix]),
+    ...a.interviewQuestions.flatMap((i) => [i.question, i.lookFor]),
+    ...a.roleRisks,
+    ...a.developmentPlan.flatMap((d) => [d.recommendation, d.successMetric]),
+    ...a.dataGaps.flatMap((g) => [g.gap, g.why, g.howToClose]),
     a.recommendation,
+    ...a.recommendationReasons,
   ];
   const unknown = findUnknownPercents(texts, allowedPercents);
   const stored: StoredAnalysis = {

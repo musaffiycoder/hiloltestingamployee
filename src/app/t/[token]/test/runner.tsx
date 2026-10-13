@@ -45,6 +45,8 @@ export function Runner({
   const [left, setLeft] = useState(remainingSec);
   const [saving, setSaving] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [confirmFinish, setConfirmFinish] = useState(false);
+  const [showMap, setShowMap] = useState(false);
+  const [marked, setMarked] = useState<Set<string>>(new Set());
   const [pending, startTransition] = useTransition();
   const startedAt = useRef(0);
   const finished = useRef(false);
@@ -56,16 +58,27 @@ export function Runner({
     const v = answers[x.id];
     return v && (Array.isArray(v.selected) ? v.selected.length > 0 : v.selected !== null || v.text.trim().length > 0);
   }).length;
+  const unanswered = questions.length - answeredCount;
+  const nextOpen = () => {
+    for (let k = 1; k <= questions.length; k++) {
+      const j = (index + k) % questions.length;
+      if (!isAnswered(questions[j])) return j;
+    }
+    return -1;
+  };
 
   const persist = useCallback(
     async (question: RunnerQuestion, ans: Answer) => {
       setSaving("saving");
       try {
+        const now = Date.now();
+        const delta = Math.min(now - startedAt.current, 20 * 60 * 1000);
+        startedAt.current = now;
         const res = await saveResponse(token, {
           questionId: question.id,
           selected: ans.selected,
           text: ans.text,
-          timeMs: Date.now() - startedAt.current,
+          timeMs: delta,
         });
         setSaving(res.ok ? "saved" : "error");
       } catch {
@@ -86,7 +99,12 @@ export function Runner({
 
   useEffect(() => {
     startedAt.current = Date.now();
-  }, []);
+    try {
+      const raw = sessionStorage.getItem(`marked:${token}`);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sessionStorage faqat mount'dan keyin o'qiladi
+      if (raw) setMarked(new Set(JSON.parse(raw) as string[]));
+    } catch {}
+  }, [token]);
 
   // Taymer
   useEffect(() => {
@@ -116,11 +134,28 @@ export function Runner({
   }, []);
 
   const go = async (next: number) => {
+    if (next < 0 || next >= questions.length) return;
+    setShowMap(false);
     await persist(q, a);
     startedAt.current = Date.now();
     setIndex(next);
     window.scrollTo({ top: 0 });
   };
+
+  const isAnswered = (x: RunnerQuestion) => {
+    const v = answers[x.id];
+    return !!v && (Array.isArray(v.selected) ? v.selected.length > 0 : v.selected !== null || v.text.trim().length > 0);
+  };
+  const toggleMark = () =>
+    setMarked((prev) => {
+      const next = new Set(prev);
+      if (next.has(q.id)) next.delete(q.id);
+      else next.add(q.id);
+      try {
+        sessionStorage.setItem(`marked:${token}`, JSON.stringify([...next]));
+      } catch {}
+      return next;
+    });
 
   const setSelected = (i: number) => {
     setAnswers((prev) => {
@@ -160,9 +195,19 @@ export function Runner({
       </header>
 
       <main className="mx-auto max-w-2xl px-4 pt-6">
-        <p className="px-1 text-[13px] font-semibold uppercase tracking-wide text-tx2">
-          {q.section} · {index + 1} / {questions.length}
-        </p>
+        <div className="flex items-center justify-between gap-2 px-1">
+          <p className="text-[13px] font-semibold uppercase tracking-wide text-tx2">
+            {q.section} · {index + 1} / {questions.length}
+          </p>
+          <button
+            type="button"
+            onClick={toggleMark}
+            aria-pressed={marked.has(q.id)}
+            className={`h-8 shrink-0 rounded-full px-3 text-[13px] font-semibold ${marked.has(q.id) ? "bg-brf text-onbr" : "bg-soft text-tx2"}`}
+          >
+            {marked.has(q.id) ? "⚑ Belgilandi" : "⚐ Keyinroq qaytaman"}
+          </button>
+        </div>
         <h1 className="mt-2 px-1 text-[22px] font-semibold leading-snug">{q.stem}</h1>
         {q.multi && q.type !== "OPEN" && <p className="mt-1 px-1 text-[15px] text-tx2">Bir nechtasini tanlang.</p>}
 
@@ -224,18 +269,26 @@ export function Runner({
           <button
             onClick={() => go(index - 1)}
             disabled={index === 0 || pending}
-            className="h-11 rounded-full px-4 text-[17px] font-medium text-brd disabled:opacity-30"
+            className="h-11 rounded-full px-3 text-[17px] font-medium text-brd disabled:opacity-30"
           >
             ‹ Oldingi
           </button>
-          <span className="flex-1 text-center text-[13px] text-tx2">
-            {answeredCount} / {questions.length} javob
-          </span>
+          <button
+            onClick={() => setShowMap(true)}
+            className="flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-soft text-[15px] font-semibold"
+            aria-label="Barcha savollar ro'yxati"
+          >
+            <span aria-hidden>▦</span>
+            <span>
+              {answeredCount} / {questions.length}
+            </span>
+            {marked.size > 0 && <span className="text-brd">⚑ {marked.size}</span>}
+          </button>
           {isLast ? (
             <button
-              onClick={() => setConfirmFinish(true)}
+              onClick={() => (unanswered > 0 ? setShowMap(true) : setConfirmFinish(true))}
               disabled={pending}
-              className="h-11 rounded-full bg-brf px-6 text-[17px] font-semibold text-onbr disabled:opacity-50"
+              className="h-11 rounded-full bg-brf px-5 text-[17px] font-semibold text-onbr disabled:opacity-50"
             >
               Yakunlash
             </button>
@@ -243,13 +296,65 @@ export function Runner({
             <button
               onClick={() => go(index + 1)}
               disabled={pending}
-              className="h-11 rounded-full bg-brf px-6 text-[17px] font-semibold text-onbr disabled:opacity-50"
+              className="h-11 rounded-full bg-brf px-5 text-[17px] font-semibold text-onbr disabled:opacity-50"
             >
               Keyingi ›
             </button>
           )}
         </div>
       </nav>
+
+      {showMap && (
+        <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 sm:items-center" role="dialog" aria-modal="true" aria-label="Savollar xaritasi" onClick={() => setShowMap(false)}>
+          <div className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-[22px] bg-card p-5 sm:rounded-[22px]" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-[17px] font-semibold">Savollar</h2>
+              <button onClick={() => setShowMap(false)} className="h-9 rounded-full bg-soft px-4 text-[15px] font-semibold">Yopish</button>
+            </div>
+            <p className="mt-1 text-[13px] text-tx2">Istalgan savolga o'ting — qiyin savolni qoldirib, keyin qaytishingiz mumkin. Javoblar avtomatik saqlanadi.</p>
+            <div className="mt-4 grid grid-cols-6 gap-2 sm:grid-cols-8">
+              {questions.map((x, i) => {
+                const ans = isAnswered(x);
+                const mk = marked.has(x.id);
+                return (
+                  <button
+                    key={x.id}
+                    onClick={() => go(i)}
+                    aria-label={`Savol ${i + 1}${ans ? ", javob berilgan" : ", javobsiz"}${mk ? ", belgilangan" : ""}`}
+                    className={`relative flex h-11 items-center justify-center rounded-xl text-[15px] font-semibold tabular-nums ${
+                      i === index ? "ring-2 ring-brf" : ""
+                    } ${ans ? "bg-tint text-brd" : "bg-soft text-tx"}`}
+                  >
+                    {i + 1}
+                    {mk && <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-brf text-[9px] text-onbr" aria-hidden>⚑</span>}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-tx2">
+              <span><span className="mr-1 inline-block h-2.5 w-2.5 rounded bg-tint align-middle" />javob berilgan</span>
+              <span><span className="mr-1 inline-block h-2.5 w-2.5 rounded bg-soft align-middle" />javobsiz</span>
+              <span>⚑ keyinroq qaytaman</span>
+            </div>
+            <div className="mt-5 flex flex-col gap-2">
+              {nextOpen() !== -1 && (
+                <button onClick={() => go(nextOpen())} className="h-12 rounded-full bg-tint text-[17px] font-semibold text-brd">
+                  Keyingi javobsiz savolga
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  setShowMap(false);
+                  setConfirmFinish(true);
+                }}
+                className="h-12 rounded-full bg-brf text-[17px] font-semibold text-onbr"
+              >
+                Testni yakunlash{unanswered > 0 ? ` (${unanswered} ta javobsiz)` : ""}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {confirmFinish && (
         <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-3 sm:items-center" role="dialog" aria-modal="true" aria-labelledby="fin-title">

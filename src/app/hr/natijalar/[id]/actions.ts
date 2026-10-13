@@ -64,6 +64,19 @@ export async function addComment(form: FormData) {
   revalidatePath(`/hr/natijalar/${parsed.data.attemptId}`);
 }
 
+const contextSchema = z.object({ attemptId: z.string().min(1), text: z.string().trim().max(4000) });
+
+/** Real ish natijalari / rahbar bahosi — AI tahlilga qo'shimcha kontekst sifatida beriladi. */
+export async function saveContext(attemptId: string, text: string): Promise<{ ok: boolean; message: string }> {
+  const user = await requireWriter();
+  const p = contextSchema.safeParse({ attemptId, text });
+  if (!p.success) return { ok: false, message: "Matn 4000 belgidan oshmasligi kerak" };
+  await db.attemptResult.update({ where: { attemptId }, data: { hrContext: p.data.text || null } });
+  await db.auditLog.create({ data: { actorId: user.id, action: "result.context", entity: "Attempt", entityId: attemptId, meta: { chars: p.data.text.length } } });
+  revalidatePath(`/hr/natijalar/${attemptId}`);
+  return { ok: true, message: "Saqlandi" };
+}
+
 // ---------------------------------------------------------------------------------------------
 // AI bosqichlari (PROMPT-TEST-TAHLIL.md): 1) ochiq javoblarni baholash, 3) chuqur tahlil.
 // Raqamlarni (ball, foiz, xulosa toifasi) formula hisoblaydi, AI faqat matn yozadi.

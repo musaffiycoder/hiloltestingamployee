@@ -32,7 +32,11 @@ export function aiModels() {
 
 /** Testlar uchun almashtiriladigan minimal interfeys. */
 export type AiClient = {
-  messages: { create: (params: Record<string, unknown>, options?: { timeout?: number; maxRetries?: number }) => Promise<unknown> };
+  messages: {
+    create: (params: Record<string, unknown>, options?: { timeout?: number; maxRetries?: number }) => Promise<unknown>;
+    /** Uzoq so'rovlar (katta max_tokens) uchun oqim; mavjud bo'lmasa `create` ishlatiladi. */
+    stream?: (params: Record<string, unknown>, options?: { timeout?: number; maxRetries?: number }) => { finalMessage: () => Promise<unknown> };
+  };
 };
 
 type MessageLike = {
@@ -60,6 +64,8 @@ export type JsonCall<T> = {
   timeoutMs?: number;
   /** SDK avtomatik qayta urinishlari (uzoq so'rovda 0 — funksiya vaqti tugab qolmasligi uchun). */
   retries?: number;
+  /** Katta max_tokens (≈21k dan yuqori) uchun oqim rejimi majburiy. */
+  stream?: boolean;
   client?: AiClient;
 };
 
@@ -78,7 +84,7 @@ export async function callJson<T>(o: JsonCall<T>): Promise<JsonResult<T>> {
   for (let attempt = 0; attempt < 2; attempt++) {
     let msg: MessageLike;
     try {
-      msg = (await client.messages.create({
+      const params = {
         model: o.model,
         max_tokens: o.maxTokens,
         system: o.system,
@@ -89,9 +95,13 @@ export async function callJson<T>(o: JsonCall<T>): Promise<JsonResult<T>> {
           },
         ],
         output_config: { effort: o.effort, format: { type: "json_schema", schema: o.jsonSchema } },
-      },
-      { timeout: o.timeoutMs ?? 45_000, maxRetries: o.retries ?? 1 },
-      )) as MessageLike;
+      };
+      const opts = { timeout: o.timeoutMs ?? 45_000, maxRetries: o.retries ?? 1 };
+      msg = (
+        o.stream && client.messages.stream
+          ? await client.messages.stream(params, opts).finalMessage()
+          : await client.messages.create(params, opts)
+      ) as MessageLike;
     } catch (e) {
       throw new AiError("api", `Claude API xatosi: ${(e as Error).message}`);
     }

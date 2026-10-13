@@ -25,6 +25,7 @@ export const gradeJsonSchema = {
 
 /** 3-bosqich: chuqur tahlil (faqat MATN; raqamlar formuladan). */
 export const analysisSchema = z.object({
+  executiveSummary: z.string().min(40),
   overallNarrative: z.string().min(20),
   strengths: z.array(z.string()),
   weaknesses: z.array(z.string()),
@@ -35,8 +36,23 @@ export const analysisSchema = z.object({
     distractors: z.string(),
     time: z.string(),
     comparison: z.string(),
+    reliability: z.string(),
   }),
-  competencyInsights: z.array(z.object({ code: z.string(), name: z.string(), analysis: z.string() })),
+  competencyInsights: z.array(
+    z.object({
+      code: z.string(),
+      name: z.string(),
+      analysis: z.string(),
+      evidence: z.string(),
+      reliability: z.string(),
+      nextStep: z.string(),
+    }),
+  ),
+  errorDiagnostics: z.array(
+    z.object({ question: z.number().int(), competency: z.string(), chose: z.string(), shows: z.string(), fix: z.string() }),
+  ),
+  interviewQuestions: z.array(z.object({ question: z.string(), verifies: z.string(), lookFor: z.string() })),
+  roleRisks: z.array(z.string()),
   developmentPlan: z.array(
     z.object({
       area: z.string(),
@@ -44,11 +60,14 @@ export const analysisSchema = z.object({
       format: z.string(),
       courseSuggestion: z.string(),
       estimatedDuration: z.string(),
+      horizon: z.string(),
+      successMetric: z.string(),
       priority: z.number().int().min(1).max(10),
     }),
   ),
-  dataGaps: z.array(z.string()),
+  dataGaps: z.array(z.object({ gap: z.string(), why: z.string(), howToClose: z.string() })),
   recommendation: z.string().min(10),
+  recommendationReasons: z.array(z.string()),
 });
 export type Analysis = z.infer<typeof analysisSchema>;
 
@@ -57,52 +76,54 @@ export type StoredAnalysis = Analysis & { warnings: string[]; generatedFrom: { a
 
 const str = { type: "string" } as const;
 const strArr = { type: "array", items: str } as const;
+const obj = (props: Record<string, unknown>) => ({
+  type: "object",
+  properties: props,
+  required: Object.keys(props),
+  additionalProperties: false,
+});
 
 export const analysisJsonSchema = {
   type: "object",
   properties: {
+    executiveSummary: str,
     overallNarrative: str,
     strengths: strArr,
     weaknesses: strArr,
     opportunities: strArr,
     threats: strArr,
-    answerPatterns: {
-      type: "object",
-      properties: { difficulty: str, distractors: str, time: str, comparison: str },
-      required: ["difficulty", "distractors", "time", "comparison"],
-      additionalProperties: false,
-    },
+    answerPatterns: obj({ difficulty: str, distractors: str, time: str, comparison: str, reliability: str }),
     competencyInsights: {
       type: "array",
-      items: {
-        type: "object",
-        properties: { code: str, name: str, analysis: str },
-        required: ["code", "name", "analysis"],
-        additionalProperties: false,
-      },
+      items: obj({ code: str, name: str, analysis: str, evidence: str, reliability: str, nextStep: str }),
     },
+    errorDiagnostics: {
+      type: "array",
+      items: obj({ question: { type: "integer" }, competency: str, chose: str, shows: str, fix: str }),
+    },
+    interviewQuestions: { type: "array", items: obj({ question: str, verifies: str, lookFor: str }) },
+    roleRisks: strArr,
     developmentPlan: {
       type: "array",
-      items: {
-        type: "object",
-        properties: {
-          area: str,
-          recommendation: str,
-          format: str,
-          courseSuggestion: str,
-          estimatedDuration: str,
-          priority: { type: "integer" },
-        },
-        required: ["area", "recommendation", "format", "courseSuggestion", "estimatedDuration", "priority"],
-        additionalProperties: false,
-      },
+      items: obj({
+        area: str,
+        recommendation: str,
+        format: str,
+        courseSuggestion: str,
+        estimatedDuration: str,
+        horizon: str,
+        successMetric: str,
+        priority: { type: "integer" },
+      }),
     },
-    dataGaps: strArr,
+    dataGaps: { type: "array", items: obj({ gap: str, why: str, howToClose: str }) },
     recommendation: str,
+    recommendationReasons: strArr,
   },
   required: [
-    "overallNarrative", "strengths", "weaknesses", "opportunities", "threats", "answerPatterns",
-    "competencyInsights", "developmentPlan", "dataGaps", "recommendation",
+    "executiveSummary", "overallNarrative", "strengths", "weaknesses", "opportunities", "threats", "answerPatterns",
+    "competencyInsights", "errorDiagnostics", "interviewQuestions", "roleRisks", "developmentPlan", "dataGaps",
+    "recommendation", "recommendationReasons",
   ],
   additionalProperties: false,
 } as const;

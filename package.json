@@ -17,6 +17,7 @@
     "@neon/config": "^1.9.1",
     "@neon/env": "^1.6.1",
     "@prisma/client": "^6.19.3",
+    "@react-pdf/renderer": "^4.9.0",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "jose": "^6.2.12",

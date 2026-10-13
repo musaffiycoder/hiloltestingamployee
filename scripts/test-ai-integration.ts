@@ -38,16 +38,21 @@ const stub: AiClient & { gradeA: number; gradeB: number; analysisCalls: number; 
       const present = new Set([...user.matchAll(/(\d+)\s*%/g)].map((m) => Number(m[1])));
       stub.unknownPct = [37, 41, 59, 83, 91, 17].find((n) => !present.has(n)) ?? 7;
       const out = {
+        executiveSummary: `Xulosa toifasi formuladan olingan; taxminan ${stub.unknownPct}% o'sish imkoniyati bor. Asosiy sabablar va keyingi qadam quyida.`,
         overallNarrative: `Nomzod umumiy natijasi formuladagi raqamlar bilan berilgan; taxminan ${stub.unknownPct}% o'sish imkoniyati bor.`,
         strengths: ["Kuchli tomon"], weaknesses: ["Zaif tomon"], opportunities: ["Imkoniyat"], threats: ["Xavf"],
-        answerPatterns: { difficulty: "d", distractors: "x", time: "t", comparison: "qiyoslash bazasi yo'q" },
-        competencyInsights: [{ code: "H3", name: "Ma'lumotlar bazasi", analysis: "tahlil" }],
+        answerPatterns: { difficulty: "d", distractors: "x", time: "t", comparison: "talabga nisbatan", reliability: "o'rta" },
+        competencyInsights: [{ code: "H3", name: "Ma'lumotlar bazasi", analysis: "tahlil", evidence: "savol 1", reliability: "o'rta", nextStep: "amaliy topshiriq" }],
+        errorDiagnostics: [{ question: 1, competency: "H3", chose: "x", shows: "chalkashlik", fix: "mashq" }],
+        interviewQuestions: [{ question: "Savol?", verifies: "H3", lookFor: "aniq misol" }],
+        roleRisks: ["xavf"],
         developmentPlan: [
-          { area: "H2", recommendation: "r2", format: "kurs", courseSuggestion: "turi", estimatedDuration: "2 hafta", priority: 2 },
-          { area: "H3", recommendation: "r1", format: "mentorlik", courseSuggestion: "turi", estimatedDuration: "4 hafta", priority: 1 },
+          { area: "H2", recommendation: "r2", format: "kurs", courseSuggestion: "turi", estimatedDuration: "2 hafta", horizon: "30–60 kun", successMetric: "qayta test", priority: 2 },
+          { area: "H3", recommendation: "r1", format: "mentorlik", courseSuggestion: "turi", estimatedDuration: "4 hafta", horizon: "0–30 kun", successMetric: "qayta test", priority: 1 },
         ],
-        dataGaps: ["oldingi urinish yo'q"],
+        dataGaps: [{ gap: "HR konteksti yo'q", why: "real natija bilan solishtirib bo'lmaydi", howToClose: "HR kontekst maydonini to'ldiring" }],
         recommendation: "Formuladagi xulosa toifasiga mos tavsiya.",
+        recommendationReasons: ["dalil 1"],
       };
       return { stop_reason: "end_turn", content: [{ type: "text", text: JSON.stringify(out) }], usage: { input_tokens: 5000, output_tokens: 900 } };
     },

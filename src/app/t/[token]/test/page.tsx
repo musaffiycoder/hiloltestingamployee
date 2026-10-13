@@ -5,6 +5,9 @@ import { db } from "@/lib/db";
 import { seededShuffle } from "@/lib/shuffle";
 import { Runner, type RunnerQuestion } from "./runner";
 
+// Yakunlash bosilganda fon rejimida AI baholash va tahlil ishlaydi (after()).
+export const maxDuration = 300;
+
 export const metadata: Metadata = { title: "Test", robots: { index: false, follow: false } };
 
 export default async function TestPage({ params }: PageProps<"/t/[token]/test">) {

@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getAssessmentByToken, isExpired } from "@/lib/attempt-access";
@@ -59,7 +60,8 @@ export async function saveResponse(token: string, input: unknown) {
   await db.response.upsert({
     where: { attemptId_questionId: { attemptId: ctx.attempt.id, questionId: data.questionId } },
     create: { attemptId: ctx.attempt.id, questionId: data.questionId, payload, timeMs: data.timeMs ?? 0 },
-    update: { payload, timeMs: data.timeMs ?? 0, score: null, scoreSource: null, reviewed: false },
+    // Vaqt yig'iladi: nomzod savolga bir necha marta qaytishi mumkin
+    update: { payload, timeMs: { increment: data.timeMs ?? 0 }, score: null, scoreSource: null, reviewed: false },
   });
   return { ok: true as const };
 }
@@ -81,5 +83,19 @@ export async function finishAttempt(token: string) {
     // Javoblar saqlangan; natija HR sahifasi ochilganda qayta hisoblanadi.
     console.error("computeAttempt failed", err);
   }
+  // Yakunlash bosilishi bilan AI ishga tushadi: ochiq javoblar baholanadi, so'ng chuqur tahlil yoziladi.
+  // Nomzod kutib o'tirmaydi (after) — natija tayyor bo'lganda HR sahifasida paydo bo'ladi.
+  const attemptId = ctx.attempt.id;
+  after(async () => {
+    try {
+      const { aiConfigured } = await import("@/lib/ai/client");
+      if (!aiConfigured()) return;
+      const { generateAnalysis, gradeOpenAnswers } = await import("@/lib/ai/review");
+      await gradeOpenAnswers(attemptId);
+      await generateAnalysis(attemptId);
+    } catch (err) {
+      console.error("auto AI pipeline failed", err);
+    }
+  });
   redirect(`/t/${token}/done`);
 }

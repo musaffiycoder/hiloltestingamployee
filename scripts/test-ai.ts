@@ -56,17 +56,20 @@ const base: AnalysisInput = {
   verdictLabel: "Shartli mos",
   overallPct: 71,
   requiredPct: 78,
+  weightedLevel: 3.6,
   criticalFail: false,
   needsReview: false,
   competencies: [
-    { code: "H3", name: "Ma'lumotlar bazasi", type: "HARD", target: 4, level: 3, critical: true, answered: 5 },
-    { code: "S2", name: "Mas'uliyat", type: "SOFT", target: 4, level: 4, critical: false, answered: 3 },
+    { code: "H3", name: "Ma'lumotlar bazasi", type: "HARD", target: 4, level: 3, critical: true, weight: 15, answered: 5, reliability: "yuqori", cohortLevel: 3.4 },
+    { code: "S2", name: "Mas'uliyat", type: "SOFT", target: 4, level: 4, critical: false, weight: 10, answered: 3, reliability: "o'rta", cohortLevel: null },
   ],
   questions: [
-    { n: 1, comp: "H3 Ma'lumotlar bazasi", level: 2, type: "MCQ_SINGLE", stem: "Indeks nima?", chosen: "Jadval nusxasi", correct: "Tezlashtiruvchi struktura", isCorrect: false, score: 0, scoreSource: "auto", timeSec: 12 },
-    { n: 2, comp: "S2 Mas'uliyat", level: 4, type: "OPEN", stem: "Xatoni qanday aytasiz?", rubric: ["Darhol xabar", "Sabab tahlili"], answer: "Darhol PMga yozaman va sababini tahlil qilaman", score: 0.75, scoreSource: "ai", rationale: "Ikki bandning ko'pi qoplangan", confidence: 0.8, timeSec: 95 },
+    { n: 1, comp: "H3 Ma'lumotlar bazasi", level: 2, type: "MCQ_SINGLE", stem: "Indeks nima?", chosen: "Jadval nusxasi", correct: "Tezlashtiruvchi struktura", isCorrect: false, score: 0, scoreSource: "auto", timeSec: 12, limitSec: 60 },
+    { n: 2, comp: "S2 Mas'uliyat", level: 4, type: "OPEN", stem: "Xatoni qanday aytasiz?", rubric: ["Darhol xabar", "Sabab tahlili"], answer: "Darhol PMga yozaman va sababini tahlil qilaman", score: 0.75, scoreSource: "ai", rationale: "Ikki bandning ko'pi qoplangan", confidence: 0.8, timeSec: 95, limitSec: 240 },
   ],
   timing: { spentMin: 34, avgSec: 70, fastCount: 1, total: 2 },
+  conditions: { allowedMin: 45, unanswered: 0, focusLost: 2, paste: 0, medianSec: 40, openWords: 60 },
+  hrContext: null,
   cohort: { avgPct: 64, n: 12 },
   history: [{ date: "2026-08-01", pct: 58 }],
   redFlags: [],
@@ -82,7 +85,11 @@ assert.ok(!/ism|familiya/i.test(p.user.split("SAVOLLAR")[0]), "shaxsiy ma'lumot 
 const pe = analysisPrompt({ ...base, mode: "EVALUATION" });
 assert.ok(pe.system.includes("Bu XODIM") && pe.system.toLowerCase().includes("ishdan bo'shatish"));
 const noCohort = analysisPrompt({ ...base, cohort: null, history: [] });
-assert.ok(noCohort.user.includes("qiyoslash uchun ma'lumot yetarli emas") && noCohort.user.includes("oldingi urinish yo'q"));
+assert.ok(noCohort.user.includes("qiyoslash uchun yetarli emas") && noCohort.user.includes("bazaviy nuqta"));
+assert.ok(p.user.includes("ishonchlilik: yuqori") && p.user.includes("Oynadan chiqish: 2 marta"));
+assert.ok(p.user.includes("HR hali kiritmagan"));
+const withCtx = analysisPrompt({ ...base, hrContext: "Rahbar: oxirgi chorakda 2 ta incident" });
+assert.ok(withCtx.user.includes("<<<NOMZOD_MATNI") && withCtx.user.includes("2 ta incident"));
 
 // ---- foiz tekshiruvi
 assert.deepEqual(findUnknownPercents(["Natija 71% edi, o'rtacha 64%."], [71, 64, 78]), []);
@@ -141,12 +148,16 @@ const args = { model: "claude-opus-5-5", system: "s", user: "u", jsonSchema: gra
 
   // analysis sxemasi namunasi
   const analysis = {
+    executiveSummary: "Shartli mos: umumiy 71%, talab 78%. H3 bo'yicha daraja 3, talab 4. Keyingi qadam — SQL bo'yicha amaliy topshiriq.",
     overallNarrative: "Nomzod umumiy 71% natija ko'rsatdi; talab 78%. H3 bo'yicha daraja 3, talab 4.",
     strengths: ["S2 Mas'uliyat: 4/4"], weaknesses: ["H3: 3/4"], opportunities: ["SQL kursi"], threats: ["Production sekin so'rovlar"],
-    answerPatterns: { difficulty: "d", distractors: "x", time: "t", comparison: "o'rtacha 64%" },
-    competencyInsights: [{ code: "H3", name: "Ma'lumotlar bazasi", analysis: "..." }],
-    developmentPlan: [{ area: "H3", recommendation: "r", format: "mentorlik", courseSuggestion: "SQL optimizatsiya kursi turi", estimatedDuration: "4 hafta", priority: 1 }],
-    dataGaps: [], recommendation: "Shartli mos — SQL bo'yicha reja bilan.",
+    answerPatterns: { difficulty: "d", distractors: "x", time: "t", comparison: "o'rtacha 64%", reliability: "o'rta" },
+    competencyInsights: [{ code: "H3", name: "Ma'lumotlar bazasi", analysis: "...", evidence: "savol 1", reliability: "yuqori", nextStep: "amaliy topshiriq" }],
+    errorDiagnostics: [{ question: 1, competency: "H3", chose: "Jadval nusxasi", shows: "indeks tushunchasi chalkash", fix: "EXPLAIN bilan mashq" }],
+    interviewQuestions: [{ question: "Sekin so'rovni qanday tekshirasiz?", verifies: "H3", lookFor: "EXPLAIN, indeks" }],
+    roleRisks: ["production'da sekin so'rov"],
+    developmentPlan: [{ area: "H3", recommendation: "r", format: "mentorlik", courseSuggestion: "SQL optimizatsiya kursi turi", estimatedDuration: "4 hafta", horizon: "0–30 kun", successMetric: "qayta testda daraja 4", priority: 1 }],
+    dataGaps: [], recommendation: "Shartli mos — SQL bo'yicha reja bilan.", recommendationReasons: ["H3 talabdan 1 daraja past"],
   };
   assert.equal(analysisSchema.safeParse(analysis).success, true);
 

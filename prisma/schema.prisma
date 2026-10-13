@@ -208,6 +208,7 @@ model AttemptResult {
   analysis      Json?
   analysisAt    DateTime?
   analysisModel String?
+  hrContext     String?
   createdAt     DateTime  @default(now())
 
   attempt Attempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
