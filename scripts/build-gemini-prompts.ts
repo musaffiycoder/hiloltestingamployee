@@ -155,6 +155,14 @@ const VALUE_THEMES: Record<string, string[]> = {
   ],
 };
 
+/** Lavozimga xos qo'shimcha ko'rsatma (prompt boshiga qo'shiladi). */
+const POSITION_NOTES: Record<string, string> = {
+  bosh_pm:
+    "**Bosh PM va oddiy PM farqi:** Bosh PM boshqa PMlarni **boshqarmaydi**, ularga bo'ysundirmaydi va baholamaydi (PMlar bo'lim boshlig'iga hisobot beradi). Uning vazifalari PM bilan deyarli bir xil, faqat qo'shimcha ma'muriy-texnik vazifalari bor: domen, AWS S3, Apple sertifikat va provisioning, GitLab va asosiy tizimlarning ma'muriy huquqlari, Firebase. Shuning uchun: (1) PM bilan umumiy vaziyatlar (sprint, talab, smoke test, release) PM savollari kabi bo'lsin; (2) «PMlarni boshqarish, baholash, ustuvorlik berish» vaziyatlari yozilmasin; (3) Karta jadvalidagi «PMlarni o'stiradi, mentorlik» kabi 5-daraja ko'rsatkichlari faqat tengdosh darajasidagi tajriba ulashish deb tushunilsin; (4) ma'muriy-texnik vazifalar (kirish huquqi, kalit, sertifikat, domen) bo'yicha savollar ko'proq bo'lsin.",
+  pm:
+    "**PM va Bosh PM:** Bosh PM lavozimi PM bilan deyarli bir xil (u ham boshqa PMlarni boshqarmaydi), shu sabab savollar ikkala lavozim uchun ham mos bo'ladigan umumiy PM vaziyatlariga tayansin.",
+};
+
 const TIME: Record<string, number> = { MCQ_SINGLE: 60, MCQ_MULTI: 90, SITUATIONAL: 90, OPEN: 240 };
 
 function build(pos: Pos, num: number): string {
@@ -186,7 +194,7 @@ Sen — psixometrika va ${pos.title} sohasi bo'yicha tajribali test tuzuvchi mut
 
 Test ham **nomzodni qabul qilish**, ham **mavjud xodimni baholash** uchun ishlatiladi. Savollar real ish vaziyatlarini o'lchashi, yodlab olib bo'lmaydigan va taxmin qilib topib bo'lmaydigan bo'lishi shart. Test egasi AVVALGI AI tuzgan savollardan norozi bo'lgan: «to'g'ri javob doim eng uzun va eng batafsil, qolganlari qisqa va ochiq-oydin xato» edi. Bunday savol yozma.
 
-## PLATFORMA IMKONIYATLARI (muhim)
+${POSITION_NOTES[pos.id] ? `## LAVOZIMGA XOS ESLATMA\n\n${POSITION_NOTES[pos.id]}\n\n` : ""}## PLATFORMA IMKONIYATLARI (muhim)
 
 - Nomzod savollarni **ixtiyoriy tartibda** yechadi: qiyinini o'tkazib, keyin qaytib kelishi mumkin. Shuning uchun **har bir savol mustaqil** bo'lsin: «oldingi savoldagi kod», «yuqoridagi vaziyat» kabi bog'liqlik yozma. Kontekst kerak bo'lsa, savolning o'zida to'liq keltir.
 - Bir testda jami ${FULL} tadan ko'p savol bo'lmaydi. Taxminiy umumiy vaqt: ${Math.round(totalSec / 60)} daqiqa.
