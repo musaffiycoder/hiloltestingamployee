@@ -8,7 +8,9 @@ type Pos = { id: string; title: string; card: string; competencies: Comp[] };
 
 const ROOT = path.resolve(__dirname, "..");
 const KARTALAR = path.resolve(ROOT, "..", "kartalar");
-const TOTAL = 30;
+const TOTAL = 25; // kompetensiyalar uchun; +5 ta qadriyat savoli (V1) = jami 30
+const VALUE_LEVELS = [2, 3, 4, 4, 5];
+const FULL = TOTAL + VALUE_LEVELS.length;
 const MAX_OPEN = 6;
 
 const data = JSON.parse(fs.readFileSync(path.join(ROOT, "data/competencies.json"), "utf8")) as { positions: Pos[] };
@@ -50,13 +52,14 @@ function levelsFor(target: number, n: number): number[] {
 }
 
 function slotsFor(pos: Pos) {
-  const q = quotas(pos.competencies);
+  const comps = pos.competencies.filter((c) => c.id !== "V1");
+  const q = quotas(comps);
   type Slot = { comp: Comp; level: number; type: string };
   const slots: Slot[] = [];
-  for (const c of pos.competencies) for (const l of levelsFor(c.target, q[c.id])) slots.push({ comp: c, level: l, type: "" });
+  for (const c of comps) for (const l of levelsFor(c.target, q[c.id])) slots.push({ comp: c, level: l, type: "" });
 
   // OPEN: eng og'ir vazn (kritik/hard avval) bo'yicha MAX_OPEN ta kompetensiyaning talab-darajasidagi slotiga
-  const ranked = [...pos.competencies].sort(
+  const ranked = [...comps].sort(
     (a, b) => Number(b.critical) - Number(a.critical) || b.weight - a.weight || Number(b.type === "hard") - Number(a.type === "hard"),
   );
   let opens = 0;
@@ -80,15 +83,77 @@ function slotsFor(pos: Pos) {
     }
   }
   // Hard kompetensiyada ham kamida bitta SITUATIONAL (xavfsizlik/vaziyat) bo'lsin: eng yuqori MCQ_SINGLE'ni almashtirish emas, faqat Hxx n>=4 da
-  for (const c of pos.competencies.filter((x) => x.type === "hard")) {
+  for (const c of comps.filter((x) => x.type === "hard")) {
     const mine = slots.filter((s) => s.comp.id === c.id);
     if (mine.length >= 4 && !mine.some((s) => s.type === "SITUATIONAL")) {
       const cand = mine.filter((s) => s.type === "MCQ_SINGLE" && s.level >= 3).sort((a, b) => b.level - a.level)[0];
       if (cand) cand.type = "SITUATIONAL";
     }
   }
+  const v1 = pos.competencies.find((c) => c.id === "V1");
+  if (v1) for (const l of VALUE_LEVELS) slots.push({ comp: v1, level: l, type: "SITUATIONAL" });
   return slots;
 }
+
+/** Lavozim bo'yicha 5 ta qadriyat mavzusi (yo'riqnomadagi javobgarlik/qizil bayroqlardan). */
+const VALUE_THEMES: Record<string, string[]> = {
+  backend: [
+    "Xato yoki incident'ni yashirmaslik: o'z kodidagi xatoni release'dan keyin aniqlash va rahbarga darhol xabar berish",
+    "Vakolatsiz production/DB/server o'zgartirishga vasvasa (tez tuzatib qo'yish, ruxsatsiz hotfix)",
+    "Maxfiy kod, token, API kalit yoki mijoz ma'lumotini ruxsat etilmagan AI servis yoki tashqi kanalga bermaslik",
+    "Test o'tkazmasdan topshirish bosimi (muddat, PM yoki rahbar istagi) va test natijasi haqida rost aytish",
+    "Berilgan akkaunt, parol va kirish huquqlaridan noto'g'ri foydalanmaslik (boshqasiga berish, shaxsiy maqsad)",
+  ],
+  frontend: [
+    "Test o'tkazmasdan yoki topilgan muhim xatoni yashirib buildni PM yoki do'kon tekshiruviga topshirmaslik",
+    "App Store Connect/Google Play'da vakolatsiz o'zgartirish yoki imzo kalit/sertifikatni noto'g'ri saqlash va berish",
+    "Maxfiy kod, token, kalit yoki foydalanuvchi ma'lumotini ruxsat etilmagan AI servisga kiritmaslik",
+    "Release holati, crash va kechikish haqida rost hisobot (yaxshi ko'rinish uchun yumshatmaslik)",
+    "Foydalanuvchi ma'lumoti, log va analitikada maxfiylik; berilgan kirish huquqlaridan to'g'ri foydalanish",
+  ],
+  pm: [
+    "Loyiha holati, muddat va xavf haqida rahbariyatga rost hisobot (kechikishni yashirmaslik)",
+    "Xodim natijasi haqida adolatli, misolli fikr; shaxsiy munosabat ta'sir qilmasligi",
+    "Maxfiy ma'lumot, kirish ma'lumotlari va hujjatlarni AI yoki tashqi kanallarga bermaslik",
+    "Test/smoke natijasini buzib ko'rsatish bosimi (mijoz yoki rahbar shoshiltirsa) va xatoni yozib borish",
+    "Boshqa PM yoki xodim bilan resurs/ustuvorlik nizosida xolislik va kelishuvga rioya qilish",
+  ],
+  bosh_pm: [
+    "Ma'muriy kirish huquqlari (GitLab, AWS, Apple Developer, Firebase) ni xavfsiz boshqarish; ruxsatsiz berish yoki shaxsiy foydalanish vasvasasi",
+    "Domen, to'lov, buxgalteriya bilan bog'liq ishlarda rostlik va shaffoflik",
+    "Loyihalar holati, resurs va xavf haqida rahbarga rost hisobot",
+    "Xodimlar haqida adolatli fikr va ularning ma'lumotlari maxfiyligi",
+    "Maxfiy kalit, sertifikat va credentiallarni xavfsiz topshirish (messenjerda ochiq yubormaslik)",
+  ],
+  bolim_boshligi: [
+    "Rahbariyatga bo'lim holati, xavf, budjet va KPI haqida rost hisobot (yomon natijani yashirmaslik, ko'rsatkichni «chiroyli qilmaslik»)",
+    "Xodimlar haqida adolatli qaror: maosh, bonus, intizomiy chora, loyihadan almashtirish; tanish-bilishchilik va shaxsiy munosabatdan xoli bo'lish",
+    "Korporativ akkauntlar (Google, Facebook, Yandex, Apple), bank va to'lov ma'lumotlarini xavfsiz boshqarish va ularni shaxsiy maqsadda ishlatmaslik",
+    "Manfaatlar to'qnashuvi: tashqi pudratchi, bank yoki yetkazib beruvchi bilan shaxsiy manfaat vasvasasi",
+    "Xodimlarning shaxsiy ma'lumotlari va ichki tijorat sirlarini oshkor qilmaslik; bosim ostida ham tartibga rioya",
+  ],
+  dizayner: [
+    "Hisobot jadvaliga bajarilmagan yoki tasdiqlanmagan ishni kiritmaslik (ish haqi hisobiga ta'sir qiladi)",
+    "Dizayn fayllarini shaxsiy akkauntda saqlamaslik va uchinchi shaxslarga bermaslik",
+    "Litsenziyasiz shrift, rasm yoki materialdan foydalanib mualliflik huquqini buzmaslik",
+    "Maxfiy loyiha materiallarini (maket, brend, hujjat) tashqariga yoki AI servisga bermaslik",
+    "O'z xatosini yoki muddat kechikishini tan olish va vaqtida xabar berish",
+  ],
+  kontent_menejer: [
+    "Nashr huquqi tasdiqlanmagan kitobni ilovaga joylamaslik (rahbar yoki muddat bosimida ham)",
+    "Narxni tasdiqlanmagan holda o'zgartirmaslik yoki noto'g'ri narx qo'ymaslik",
+    "Kitob fayllarini tarqatmaslik, shaxsiy qurilma/akkauntda saqlamaslik",
+    "Reyestr va hisobotga rost va to'liq ma'lumot kiritish (xatoni yashirmaslik)",
+    "App Store/Google Play kabinet kirish ma'lumotlarini himoya qilish va boshqasiga bermaslik",
+  ],
+  support: [
+    "Foydalanuvchidan parol, bank karta kodi yoki autentifikatsiya ma'lumotini so'ramaslik va oshkor qilmaslik",
+    "Muhim yoki kritik murojaatni yashirmaslik, o'z vaqtida eskalatsiya qilish",
+    "Tasdiqlanmagan yechim yoki muddatni foydalanuvchiga va'da qilmaslik",
+    "Foydalanuvchining shaxsiy ma'lumotlari va akkaunt ma'lumotlari maxfiyligi (hamkasbga ham ortiqcha bermaslik)",
+    "Qo'pol yoki bosimli foydalanuvchiga ham xushmuomala, rost va vakolat doirasida javob berish",
+  ],
+};
 
 const TIME: Record<string, number> = { MCQ_SINGLE: 60, MCQ_MULTI: 90, SITUATIONAL: 90, OPEN: 240 };
 
@@ -117,14 +182,14 @@ function build(pos: Pos, num: number): string {
 
 ## ROL VA MAQSAD
 
-Sen — psixometrika va ${pos.title} sohasi bo'yicha tajribali test tuzuvchi mutaxassissan. Quyida Hilol Nashr (Dasturlash bo'limi) uchun **${pos.title}** lavozimining baholash kartasi berilgan. Shu kartaga tayanib, **aynan ${TOTAL} ta** savoldan iborat bitta test tuz.
+Sen — psixometrika va ${pos.title} sohasi bo'yicha tajribali test tuzuvchi mutaxassissan. Quyida Hilol Nashr (Dasturlash bo'limi) uchun **${pos.title}** lavozimining baholash kartasi berilgan. Shu kartaga tayanib, **aynan ${FULL} ta** savoldan iborat bitta test tuz.
 
 Test ham **nomzodni qabul qilish**, ham **mavjud xodimni baholash** uchun ishlatiladi. Savollar real ish vaziyatlarini o'lchashi, yodlab olib bo'lmaydigan va taxmin qilib topib bo'lmaydigan bo'lishi shart. Test egasi AVVALGI AI tuzgan savollardan norozi bo'lgan: «to'g'ri javob doim eng uzun va eng batafsil, qolganlari qisqa va ochiq-oydin xato» edi. Bunday savol yozma.
 
 ## PLATFORMA IMKONIYATLARI (muhim)
 
 - Nomzod savollarni **ixtiyoriy tartibda** yechadi: qiyinini o'tkazib, keyin qaytib kelishi mumkin. Shuning uchun **har bir savol mustaqil** bo'lsin: «oldingi savoldagi kod», «yuqoridagi vaziyat» kabi bog'liqlik yozma. Kontekst kerak bo'lsa, savolning o'zida to'liq keltir.
-- Bir testda jami ${TOTAL} tadan ko'p savol bo'lmaydi. Taxminiy umumiy vaqt: ${Math.round(totalSec / 60)} daqiqa.
+- Bir testda jami ${FULL} tadan ko'p savol bo'lmaydi. Taxminiy umumiy vaqt: ${Math.round(totalSec / 60)} daqiqa.
 
 ## LAVOZIM KOMPETENSIYALARI
 
@@ -143,9 +208,34 @@ ${duties}
 - «Umumiy» (jamoada nizo chiqdi, vaqt yetmayapti kabi) savol yozma; har vaziyatda rol, vosita, raqam (muddat, foydalanuvchi soni, narx, versiya) va oqibat bo'lsin.
 - Qizil bayroqlardagi xatti-harakatlar (yashirish, vakolatsiz o'zgartirish, maxfiy ma'lumotni sizdirish) SITUATIONAL savollarda "flag":true variantlar sifatida ishlatilsin.
 
+## QADRIYATLAR (V1) — 5 ta savol
+
+V1 «Qadriyatlar: halollik, maxfiylik va mas'uliyat» — **kritik** kompetensiya: bu yerda past natija umumiy ballga qaramay «mos emas»ga olib keladi. 5 ta savol (blueprint oxirida) faqat **SITUATIONAL** bo'lsin.
+
+**O'lchov birliklari (daraja ko'rsatkichlari):**
+
+| Daraja | Xatti-harakat |
+|---|---|
+| 1 | Qoidani biladi, lekin bosim yoki manfaat bo'lsa buzadi yoki yashiradi. |
+| 2 | Odatda qoidaga amal qiladi, noqulay vaziyatda (xato, bosim, do'st) jim qoladi yoki yumshatib aytadi. |
+| 3 | Odatiy vaziyatda halol: xatosini o'zi aytadi, maxfiy ma'lumotni himoya qiladi, vakolat doirasida ishlaydi. |
+| 4 | Bosim, manfaat va shaxsiy munosabat sharoitida ham tamoyilda qoladi; buzilishni to'g'ri kanal orqali xabar qiladi; xavfni oldindan ochiq aytadi. |
+| 5 | Namuna: murakkab axloqiy qarorni asoslab qabul qiladi, jamoada halollik va xavfsizlik madaniyatini shakllantiradi. |
+
+**5 ta mavzu (har biri bitta savol; tartibda):**
+
+${(VALUE_THEMES[pos.id] ?? []).map((t, i) => `${i + 1}. ${t}  — daraja ${VALUE_LEVELS[i]}`).join("\n")}
+
+**Qadriyat savollari uchun maxsus qoidalar:**
+- Har savol real dilemma bo'lsin: halol yo'lning **narxi** bo'lsin (muddat o'tadi, rahbar norozi bo'ladi, do'st xafa bo'ladi, bonus xavf ostida). «Albatta rostini ayt» deb turgan savol yozma.
+- Variantlar axloqiy darajasi bo'yicha farqlansin, ammo qoidabuzar variant ham ishonarli ko'rinsin (kimdir uni «oqilona» deb tanlashi mumkin). Vaa'z ohangidan qoch.
+- Halollik, maxfiylik, vakolat yoki xavfsizlikni buzadigan variantga albatta "flag":true va 1–2 ball ber. 5 ball — halol va amaliy yo'l (faqat «jim qol» yoki «hammasini oshkor qil» emas, to'g'ri kanal va vaqt).
+- 5 ball variant eng uzun yoki eng «ideal» ko'rinishda bo'lmasin; 3–4 ball variantlar ham real va qisman to'g'ri bo'lsin.
+- Yo'riqnomadagi «Javobgarligi» bo'limidagi xatti-harakatlarni (yashirish, vakolatsiz o'zgartirish, sirni oshkor qilish) asos qil.
+
 ## SAVOLLAR REJASI (BLUEPRINT) — qat'iy amal qil
 
-Quyidagi ${TOTAL} ta joyning har biri uchun aynan bitta savol yoz. competency, level va type o'zgarmasin. Tartibni ham saqla.
+Quyidagi ${FULL} ta joyning har biri uchun aynan bitta savol yoz. competency, level va type o'zgarmasin. Tartibni ham saqla.
 
 ${rows}
 
@@ -201,7 +291,7 @@ JSON'ni berishdan oldin har savol uchun jimgina tekshir: (a) blueprint'dagi comp
 
 ## CHIQISH
 
-Aynan ${TOTAL} ta elementdan iborat JSON massiv. Boshqa hech narsa.
+Aynan ${FULL} ta elementdan iborat JSON massiv. Boshqa hech narsa.
 
 ---
 
