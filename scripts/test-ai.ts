@@ -91,6 +91,8 @@ assert.ok(p.user.includes("HR hali kiritmagan"));
 assert.ok(!p.user.includes("O'RGANISH YO'NALISHLARI"), "positionCode berilmasa yo'nalish yo'q");
 const withPos = analysisPrompt({ ...base, positionCode: "pm" });
 assert.ok(withPos.user.includes("O'RGANISH YO'NALISHLARI") && withPos.user.includes("Scrum"));
+assert.ok(p.system.includes("JAVOB KALITI") && p.system.includes("keyConcerns"));
+assert.ok(p.user.includes("TO'G'RI JAVOB: Tezlashtiruvchi struktura"), "to'g'ri javob kaliti promptga kiradi");
 assert.ok(p.system.includes("swotStrategy") && p.system.includes("resources"));
 const withCtx = analysisPrompt({ ...base, hrContext: "Rahbar: oxirgi chorakda 2 ta incident" });
 assert.ok(withCtx.user.includes("<<<NOMZOD_MATNI") && withCtx.user.includes("2 ta incident"));
@@ -162,6 +164,7 @@ const args = { model: "claude-opus-5-5", system: "s", user: "u", jsonSchema: gra
     roleRisks: ["production'da sekin so'rov"],
     developmentPlan: [{ area: "H3", recommendation: "r", format: "mentorlik", courseSuggestion: "SQL optimizatsiya kursi turi", estimatedDuration: "4 hafta", horizon: "0–30 kun", successMetric: "qayta testda daraja 4", priority: 1, resources: [{ kind: "rasmiy hujjat", title: "PostgreSQL EXPLAIN", provider: "postgresql.org", why: "indeks tanlashni mashq qiladi" }] }],
     swotStrategy: "Kuchli tomonlar orqali kamchilikni yopish rejasi.",
+    keyConcerns: [],
     dataGaps: [], recommendation: "Shartli mos — SQL bo'yicha reja bilan.", recommendationReasons: ["H3 talabdan 1 daraja past"],
   };
   assert.equal(analysisSchema.safeParse(analysis).success, true);

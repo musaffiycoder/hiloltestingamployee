@@ -68,6 +68,7 @@ export const analysisSchema = z.object({
   ),
   dataGaps: z.array(z.object({ gap: z.string(), why: z.string(), howToClose: z.string() })),
   swotStrategy: z.string(),
+  keyConcerns: z.array(z.object({ question: z.number().int(), concern: z.string() })),
   recommendation: z.string().min(10),
   recommendationReasons: z.array(z.string()),
 });
@@ -121,13 +122,14 @@ export const analysisJsonSchema = {
     },
     dataGaps: { type: "array", items: obj({ gap: str, why: str, howToClose: str }) },
     swotStrategy: str,
+    keyConcerns: { type: "array", items: obj({ question: { type: "integer" }, concern: str }) },
     recommendation: str,
     recommendationReasons: strArr,
   },
   required: [
     "executiveSummary", "overallNarrative", "strengths", "weaknesses", "opportunities", "threats", "answerPatterns",
     "competencyInsights", "errorDiagnostics", "interviewQuestions", "roleRisks", "developmentPlan", "dataGaps",
-    "swotStrategy", "recommendation", "recommendationReasons",
+    "swotStrategy", "keyConcerns", "recommendation", "recommendationReasons",
   ],
   additionalProperties: false,
 } as const;

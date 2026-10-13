@@ -136,6 +136,7 @@ export function analysisPrompt(a: AnalysisInput): { system: string; user: string
 
 MUTLAQ CHEGARALAR:
 1. RAQAM O'YLAB TOPMA. Barcha ball, daraja va foiz foydalanuvchi xabarida berilgan — ularni ayni holda ishlat. Yangi foiz, o'rtacha yoki prognoz hisoblama.
+1a. JAVOB KALITI — O'ZGARMAS HAQIQAT. Har bir savol uchun «TO'G'RI JAVOB» / «ENG YAXSHI VARIANT» / RUBRIKA HR tomonidan belgilangan va tasdiqlangan. Tanlangan javob kalitga mos kelsa TO'G'RI, mos kelmasa XATO — shu hukmni o'zgartirma, o'z fikringcha «aslida boshqa variant to'g'ri» deb qayta baholama va bunga asoslanib xulosa chiqarma. Tahlilni faqat nomzod javobi bilan kalitni SOLISHTIRIB yoz: nomzod nimani tanladi, kalit nima, farq nimani ko'rsatadi. Agar kalit professional nuqtai nazardan shubhali tuyulsa, hukmni o'zgartirmagan holda "keyConcerns" ga yoz (savol raqami + qisqa sabab, ko'pi bilan 3 ta); bu HR kalitni tekshirishi uchun, nomzod natijasiga ta'sir qilmaydi.
 2. XULOSA TOIFASI (mos / shartli mos / rivojlantirish kerak / mos emas) formula bilan belgilangan. Uni O'ZGARTIRMA va unga zid gap yozma; vazifang — shu toifaning ASOSINI ochib berish.
 3. MA'LUMOT YO'Q BO'LSA — o'ylab topma. Lekin «ma'lumot yo'q» deb yozishdan oldin tekshir: berilgan ma'lumotlardan (javoblar, vaqt, signallar, talab darajasi) xulosa chiqarsa bo'ladimi? Bo'lsa — chiqar. Haqiqiy bo'shliqni "dataGaps" ga yoz va har biri uchun HR AMALIY nima qilib yopishini ("howToClose") ayt.
 4. HIMOYALANGAN BELGILAR (yosh, jins, millat, din, nikoh holati, homiladorlik, sog'liq) tahlilga KIRMAYDI.
@@ -190,6 +191,7 @@ BO'LIMLAR:
   * Kamida bitta band amaliyotga asoslangan bo'lsin (real loyihada topshiriq, mentor bilan, code/PM review), faqat kurs emas. Ish joyida bajariladigan amaliy mashqni Hilol Nashr kontekstida (ilovalar, release, support, e-kitob) ayt.
 - "dataGaps": faqat haqiqiy va xulosaga ta'sir qiladigan bo'shliqlar, ko'pi bilan 4 ta. «Boshqalar bilan qiyoslab bo'lmaydi», «oldingi urinish yo'q» kabi o'z-o'zidan tushunarli narsalarni yozma.
 - "swotStrategy": yuqoridagi SWOT bo'limiga qarang.
+- "keyConcerns": faqat haqiqatan shubhali kalitlar (bo'lmasa bo'sh massiv); kalit bo'yicha hukmni baribir kalitga ko'ra yoz.
 - "recommendation": 2–4 gap, formuladagi toifaga mos aniq tavsiya; "recommendationReasons": 3–5 band, har biri dalilga tayangan.`;
 
   const comps = [...a.competencies].sort((x, y) => (x.level ?? 0) - x.target - ((y.level ?? 0) - y.target));

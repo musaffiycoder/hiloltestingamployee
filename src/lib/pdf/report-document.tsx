@@ -460,6 +460,19 @@ export function ReportDocument({ r }: { r: ReportData }) {
               <Text style={[s.muted, { marginTop: 5 }]}>Yakuniy qaror HR da. Xulosa toifasi va ballar formuladan olingan; AI matni asos va tavsiya.</Text>
             </Section>
 
+            {(a.keyConcerns?.length ?? 0) > 0 && (
+              <Section title="Javob kaliti bo'yicha e'tibor (HR tekshirsin)">
+                <View style={s.card}>
+                  {a.keyConcerns.map((k, i) => (
+                    <Text key={i} style={{ marginBottom: 3 }}>
+                      <Text style={{ fontWeight: 700 }}>Savol {k.question}: </Text>
+                      {k.concern}
+                    </Text>
+                  ))}
+                </View>
+              </Section>
+            )}
+
             {(a.dataGaps?.length ?? 0) > 0 && (
               <Section title="Ishonchlilikni oshirish uchun" minAhead={90}>
                 {a.dataGaps.map((g, i) => {

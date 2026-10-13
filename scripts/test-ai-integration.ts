@@ -52,6 +52,7 @@ const stub: AiClient & { gradeA: number; gradeB: number; analysisCalls: number; 
         ],
         dataGaps: [{ gap: "HR konteksti yo'q", why: "real natija bilan solishtirib bo'lmaydi", howToClose: "HR kontekst maydonini to'ldiring" }],
         swotStrategy: "SWOT xulosasi.",
+        keyConcerns: [],
         recommendation: "Formuladagi xulosa toifasiga mos tavsiya.",
         recommendationReasons: ["dalil 1"],
       };

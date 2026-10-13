@@ -225,6 +225,22 @@ export function AnalysisView({ analysis, isEmployee }: { analysis: StoredAnalysi
         </Card>
       </section>
 
+      {(a.keyConcerns?.length ?? 0) > 0 && (
+        <section>
+          <SectionTitle>Javob kaliti bo'yicha e'tibor (HR tekshirsin)</SectionTitle>
+          <Card className="p-4 text-[15px]">
+            <p className="text-tx2">AI hukmni kalitga ko'ra yozdi; quyidagi savollarning kaliti shubhali tuyuldi.</p>
+            <ul className="mt-2 flex flex-col gap-1.5">
+              {a.keyConcerns.map((k, i) => (
+                <li key={i}>
+                  <b className="font-semibold">Savol {k.question}:</b> {k.concern}
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </section>
+      )}
+
       {a.dataGaps.length > 0 && (
         <section>
           <SectionTitle>Ishonchlilikni oshirish uchun</SectionTitle>
