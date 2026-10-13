@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { Card, Pill, SectionTitle } from "@/components/ui";
@@ -22,7 +23,9 @@ export default async function InvitesPage() {
     }),
     db.assessment.findMany({ orderBy: { createdAt: "desc" }, take: 50, include: { position: true } }),
   ]);
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "";
+  const base = host ? `${h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https")}://${host}` : "";
 
   return (
     <div className="flex flex-col gap-6">

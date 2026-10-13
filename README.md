@@ -24,4 +24,11 @@ npm test                    # skoring mantiqi testlari
 - `data/` — **git'ga kiritilmaydi**: `competencies.json` (talablar matritsasi) va `questions-backend.ts` (javob kalitlari bor savollar). Tafsilot: `data/README.md`
 
 ## Deploy
-Ilova: Vercel. Ma'lumotlar bazasi: Neon (Postgres). Vercel'da `DATABASE_URL` (Neon pooled), `AUTH_SECRET`, `NEXT_PUBLIC_APP_URL` o'rnatiladi; migratsiya: `npx prisma migrate deploy`.
+Ilova: **Vercel** (funksiyalar `iad1`, `vercel.json`). Ma'lumotlar bazasi: **Neon** (Postgres, `us-east-2` — shu hududga yaqin).
+
+Vercel'da (Production) o'rnatiladigan o'zgaruvchilar: `DATABASE_URL` (pooled), `DATABASE_URL_UNPOOLED`, `AUTH_SECRET` (yangi, lokal bilan bir xil emas).
+Migratsiya deploydan oldin qo'lda: `npx prisma migrate deploy` (`DATABASE_URL_UNPOOLED` orqali). Taklif havolalari so'rov manzilidan quriladi, shuning uchun alohida URL o'zgaruvchisi kerak emas.
+
+```bash
+vercel deploy --prod
+```

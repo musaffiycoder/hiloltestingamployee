@@ -2,6 +2,7 @@
 
 import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
@@ -50,6 +51,14 @@ export async function createInvite(_: InviteState, form: FormData): Promise<Invi
   });
   await db.auditLog.create({ data: { actorId: user.id, action: "invite.create", entity: "Assessment", meta: { positionId: position.id } } });
   revalidatePath("/hr/takliflar");
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? "";
-  return { link: `${base}/t/${token}` };
+  return { link: `${await baseUrl()}/t/${token}` };
+}
+
+/** Joriy so'rov manzilidan asosiy URL (Vercel, custom domen va lokal uchun bir xil ishlaydi). */
+async function baseUrl() {
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  if (!host) return process.env.NEXT_PUBLIC_APP_URL ?? "";
+  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  return `${proto}://${host}`;
 }
