@@ -97,6 +97,35 @@ assert.ok(p.system.includes("swotStrategy") && p.system.includes("resources"));
 const withCtx = analysisPrompt({ ...base, hrContext: "Rahbar: oxirgi chorakda 2 ta incident" });
 assert.ok(withCtx.user.includes("<<<NOMZOD_MATNI") && withCtx.user.includes("2 ta incident"));
 
+// ---- sifat: faktlar va tekshiruv
+import { competencyDigest, validateAnalysis } from "../src/lib/ai/quality";
+const dg = competencyDigest(base).join("\n");
+assert.ok(dg.includes("H3: savol 1 (daraja 2, XATO)") && dg.includes("hammasi xato"), "xato savol va naqsh faktlarda");
+const mixed = competencyDigest({
+  competencies: base.competencies,
+  questions: [
+    { ...base.questions[0], comp: "H3 x", n: 1, level: 2, score: 0 },
+    { ...base.questions[0], comp: "H3 x", n: 2, level: 4, score: 1 },
+  ],
+}).join("\n");
+assert.ok(mixed.includes("NOMUVOFIQ"), "oson xato, qiyin to'g'ri = nomuvofiq naqsh");
+const goodA = {
+  executiveSummary: "Shartli mos: umumiy 71%, talab 78%. Keyingi qadam amaliy topshiriq bo'yicha ishlash va qayta tekshiruv.",
+  overallNarrative: "x".repeat(40),
+  strengths: ["a", "b", "c"], weaknesses: ["a", "b", "c"], opportunities: ["a", "b", "c"], threats: ["a", "b", "c"],
+  answerPatterns: { difficulty: "d", distractors: "x", time: "t", comparison: "c", reliability: "r" },
+  competencyInsights: base.competencies.map((c) => ({ code: c.code, name: c.name, analysis: "a", evidence: "e", reliability: "r", nextStep: "n" })),
+  errorDiagnostics: [{ question: 1, competency: "H3", chose: "x", shows: "y", fix: "z" }],
+  interviewQuestions: [1, 2, 3, 4, 5].map((i) => ({ question: `q${i}`, verifies: "v", lookFor: "l" })),
+  roleRisks: ["r"],
+  developmentPlan: [1, 2, 3].map((i) => ({ area: `a${i}`, recommendation: "r", format: "f", courseSuggestion: "c", resources: [{ kind: "k", title: "t", provider: "p", why: "w" }, { kind: "k", title: "t", provider: "p", why: "w" }], estimatedDuration: "d", horizon: "0–30 kun", successMetric: "m", priority: i })),
+  dataGaps: [], swotStrategy: "s".repeat(90), keyConcerns: [], recommendation: "Shartli mos — reja bilan.", recommendationReasons: ["r"],
+};
+assert.deepEqual(validateAnalysis(goodA, base), [], "yaroqli tahlil");
+const badA = { ...goodA, competencyInsights: goodA.competencyInsights.slice(1), errorDiagnostics: [{ question: 2, competency: "S2", chose: "x", shows: "y", fix: "z" }], executiveSummary: "Natija yaxshi, davom etamiz va keyingi bosqichga o'tamiz deb o'ylayman bu holatda." };
+const bi = validateAnalysis(badA, base);
+assert.ok(bi.some((x) => x.includes("yetishmaydi")) && bi.some((x) => x.includes("savol 2 xato emas")) && bi.some((x) => x.includes("xulosa toifasi")), bi.join(" | "));
+
 // ---- foiz tekshiruvi
 assert.deepEqual(findUnknownPercents(["Natija 71% edi, o'rtacha 64%."], [71, 64, 78]), []);
 assert.deepEqual(findUnknownPercents(["Taxminan 83% o'sishi mumkin"], [71, 64]), ["83%"]);

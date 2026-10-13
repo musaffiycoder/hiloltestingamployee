@@ -87,12 +87,13 @@ export async function finishAttempt(token: string) {
   // Nomzod kutib o'tirmaydi (after) — natija tayyor bo'lganda HR sahifasida paydo bo'ladi.
   const attemptId = ctx.attempt.id;
   after(async () => {
+    const deadline = Date.now() + 285_000;
     try {
       const { aiConfigured } = await import("@/lib/ai/client");
       if (!aiConfigured()) return;
       const { generateAnalysis, gradeOpenAnswers } = await import("@/lib/ai/review");
       await gradeOpenAnswers(attemptId);
-      await generateAnalysis(attemptId);
+      await generateAnalysis(attemptId, { deadline });
     } catch (err) {
       console.error("auto AI pipeline failed", err);
     }

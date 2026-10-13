@@ -7,6 +7,7 @@ import { aiEffort, aiModels, callJson, type AiClient } from "./client";
 import { analysisJsonSchema, analysisSchema, gradeJsonSchema, gradeSchema, type StoredAnalysis } from "./schemas";
 import { analysisPrompt, findUnknownPercents, gradePrompt, MIN_OPEN_ANSWER_CHARS, type AnalysisInput } from "./prompts";
 import { combineGrades } from "./combine";
+import { validateAnalysis } from "./quality";
 
 type Opt = string | { text: string; points?: number; flag?: boolean };
 const optText = (o: Opt) => (typeof o === "string" ? o : o.text);
@@ -266,23 +267,55 @@ export async function buildAnalysisInput(attemptId: string): Promise<{ input: An
   return { input, allowedPercents, answers: ordered.length, cohortN: cohort?.n ?? 0 };
 }
 
+export type AnalysisOptions = {
+  client?: AiClient;
+  /** Jami vaqt chegarasi (epoch ms). Standart: hozir + 285 s. */
+  deadline?: number;
+  /** Faqat natijani qaytaradi, bazaga yozmaydi (solishtirish skripti uchun). */
+  save?: boolean;
+  effort?: "low" | "medium" | "high" | "xhigh" | "max";
+};
+
 /** 3-bosqich: chuqur tahlil. Natijani `AttemptResult.analysis` ga yozadi. */
-export async function generateAnalysis(attemptId: string, client?: AiClient) {
+export async function generateAnalysis(attemptId: string, clientOrOpts?: AiClient | AnalysisOptions) {
+  const opts: AnalysisOptions =
+    clientOrOpts && "messages" in clientOrOpts ? { client: clientOrOpts } : ((clientOrOpts as AnalysisOptions | undefined) ?? {});
+  const deadline = opts.deadline ?? Date.now() + 285_000;
   const { input, allowedPercents, answers, cohortN } = await buildAnalysisInput(attemptId);
   const p = analysisPrompt(input);
-  const res = await callJson({
-    model: aiModels().analysis,
-    system: p.system,
-    user: p.user,
-    jsonSchema: analysisJsonSchema,
-    parse: (x) => analysisSchema.parse(x),
-    maxTokens: 40000,
-    stream: true,
-    effort: aiEffort().analysis,
-    timeoutMs: 285_000,
-    retries: 0,
-    client,
-  });
+  const effort = opts.effort ?? aiEffort().analysis;
+
+  const run = (eff: typeof effort, user: string, timeoutMs: number) =>
+    callJson({
+      model: aiModels().analysis,
+      system: p.system,
+      user,
+      jsonSchema: analysisJsonSchema,
+      parse: (x) => analysisSchema.parse(x),
+      maxTokens: 40000,
+      stream: true,
+      effort: eff,
+      timeoutMs,
+      retries: 0,
+      client: opts.client,
+    });
+
+  let res = await run(effort, p.user, Math.max(30_000, Math.min(200_000, deadline - Date.now() - 2_000)));
+  let issues = validateAnalysis(res.data, input);
+  let escalated = false;
+
+  // Sifat darvozasi: yaroqsiz bo'lsa va vaqt qolgan bo'lsa — `high` bilan, kamchiliklarni ko'rsatib qayta yozdiramiz
+  const left = deadline - Date.now();
+  if (issues.length > 0 && effort !== "high" && left > 70_000) {
+    const feedback = `${p.user}\n\nOLDINGI JAVOBDAGI KAMCHILIKLAR (tuzat, qolgan qismini saqla):\n${issues.map((x) => `- ${x}`).join("\n")}`;
+    const retry = await run("high", feedback, left - 3_000);
+    const retryIssues = validateAnalysis(retry.data, input);
+    if (retryIssues.length <= issues.length) {
+      res = { ...retry, inputTokens: res.inputTokens + retry.inputTokens, outputTokens: res.outputTokens + retry.outputTokens };
+      issues = retryIssues;
+      escalated = true;
+    }
+  }
 
   const a = res.data;
   const texts = [
@@ -307,13 +340,18 @@ export async function generateAnalysis(attemptId: string, client?: AiClient) {
   const stored: StoredAnalysis = {
     ...a,
     developmentPlan: a.developmentPlan.slice().sort((x, y) => x.priority - y.priority),
-    warnings: unknown.length ? [`Matnda formulada yo'q foiz uchradi: ${unknown.join(", ")} — tekshirib ko'ring`] : [],
+    warnings: [
+      ...(unknown.length ? [`Matnda formulada yo'q foiz uchradi: ${unknown.join(", ")} — tekshirib ko'ring`] : []),
+      ...issues.map((x) => `Tekshiruv: ${x}`),
+    ],
     generatedFrom: { answers, cohortN },
   };
 
-  await db.attemptResult.update({
-    where: { attemptId },
-    data: { analysis: stored as unknown as object, analysisAt: new Date(), analysisModel: res.model },
-  });
-  return { stored, inputTokens: res.inputTokens, outputTokens: res.outputTokens, model: res.model };
+  if (opts.save !== false) {
+    await db.attemptResult.update({
+      where: { attemptId },
+      data: { analysis: stored as unknown as object, analysisAt: new Date(), analysisModel: res.model },
+    });
+  }
+  return { stored, inputTokens: res.inputTokens, outputTokens: res.outputTokens, model: res.model, issues, escalated };
 }

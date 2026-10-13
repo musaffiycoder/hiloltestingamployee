@@ -2,6 +2,8 @@
 // PROMPT-TEST-TAHLIL.md — raqamlarni formula hisoblaydi, AI faqat matn yozadi; javob matni,
 // qiyinlik, tanlangan noto'g'ri variant, vaqt va qiyoslash promptga kiradi; guardrail'lar.
 
+import { competencyDigest } from "./quality";
+
 export const MIN_OPEN_ANSWER_CHARS = 15;
 
 /** Nomzod yozgan matn "ishonchsiz kirish": ajratuvchi ichida beriladi va ajratuvchi belgilari zararsizlantiriladi. */
@@ -161,6 +163,12 @@ QANDAY TAHLIL QILISH:
 - Test sharoiti (vaqt, fokus yo'qotish, paste, juda tez javoblar): faqat NEYTRAL signal sifatida ayt, ayblama. Natijaga ta'siri bo'lsa (masalan, ko'p savolga 10 soniyadan kam sarflangan) — natija ishonchliligini baholashda hisobga ol.
 - HR KONTEKSTI berilgan bo'lsa (real ish natijalari, rahbar bahosi), test natijasi bilan solishtir: mos kelishi yoki farqini va nimani anglatishini yoz. U ishonchsiz ichki manba emas, lekin test o'zi o'lchamaydi — farqni tushuntir.
 
+NAMUNA (faqat chuqurlik va uslub uchun; raqam, savol va kompetensiyani nusxalama):
+competencyInsights elementi: {"code":"H3","name":"…","analysis":"Daraja 3, talab 4 (−1). Indeksning vazifasi (savol 16, daraja 2) noto'g'ri tanlangan, ammo qulflash (savol 18, daraja 4) to'g'ri — bilim parcha-parcha: amaliy mexanizmni biladi, asosiy tushuncha esa chalkash. Bu production'da sekin so'rovni tez topa olmaslikka olib keladi.","evidence":"Savol 16 (XATO, tanlov: «jadval nusxasi»), savol 18 (to'g'ri).","reliability":"o'rta: 3 ta savol, ikkitasi bir mavzuda","nextStep":"EXPLAIN bilan 3 ta real so'rovni tahlil qildirib, natijani mentor bilan ko'rish."}
+
+ICHKI TEKSHIRUV (javob berishdan oldin jimgina bajar):
+(a) FAKTLAR bo'limidagi har bir xato savol tahlilda e'tiborga olinganmi; (b) iqtibos keltirilgan savol raqamlari haqiqatan shu kompetensiyaga tegishlimi va hukm (to'g'ri/xato) kalitga mosmi; (c) NOMUVOFIQ naqshli kompetensiyada «bilmaydi» deb qat'iy xulosa yozilmaganmi; (d) xulosa toifasiga zid gap yo'qmi; (e) barcha kompetensiyalar competencyInsights da bormi; (f) har bir tavsiya aniq kamchilikka bog'langanmi.
+
 HAJM VA USLUB (muhim: tahlil 3 daqiqadan oshmasligi kerak):
 - Har bir band ixcham: 1–2 gap, ortiqcha kirish va takrorsiz. SWOT bandlari — 1–2 gap, dalil bilan. competencyInsights.analysis — 3 gapgacha, evidence/nextStep — 1 gap.
 - errorDiagnostics ko'pi bilan 6 ta, interviewQuestions aynan 5 ta, developmentPlan.resources — har bandga 2–3 ta.
@@ -217,6 +225,12 @@ BO'LIMLAR:
     lines.push(
       `- ${c.code} ${c.name} [${c.type}${c.critical ? ", KRITIK" : ""}, vazn ${c.weight}%]: daraja ${c.level ?? "—"} / talab ${c.target} (farq ${gap}), javoblar: ${c.answered}, ishonchlilik: ${c.reliability}${c.cohortLevel !== null ? `, boshqalar o'rtachasi: ${c.cohortLevel.toFixed(1)}` : ""}`,
     );
+  }
+  const digest = competencyDigest(a);
+  if (digest.length) {
+    lines.push("");
+    lines.push("FAKTLAR (formula bilan hisoblangan; qayta hisoblama, tahlil shularga tayansin):");
+    lines.push(...digest);
   }
   lines.push("");
   lines.push("TEST SHAROITI:");

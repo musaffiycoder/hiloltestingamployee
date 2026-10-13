@@ -8,7 +8,8 @@ import type { AiClient } from "../src/lib/ai/client";
 
 const TOKEN = "itest" + Math.random().toString(36).slice(2, 12);
 
-const stub: AiClient & { gradeA: number; gradeB: number; analysisCalls: number; efforts: Set<string>; unknownPct: number } = {
+const stub: AiClient & { gradeA: number; gradeB: number; analysisCalls: number; efforts: Set<string>; unknownPct: number; retryPrompt: string } = {
+  retryPrompt: "",
   unknownPct: 0,
   gradeA: 0,
   gradeB: 0,
@@ -34,6 +35,7 @@ const stub: AiClient & { gradeA: number; gradeB: number; analysisCalls: number; 
         return { stop_reason: "end_turn", content: [{ type: "text", text: JSON.stringify(out) }], usage: { input_tokens: 400, output_tokens: 60 } };
       }
       stub.analysisCalls++;
+      if (user.includes("OLDINGI JAVOBDAGI KAMCHILIKLAR")) stub.retryPrompt = user;
       // Promptda uchramaydigan foizni tanlaymiz — «o'ylab topilgan raqam» holatini aniq hosil qilish uchun
       const present = new Set([...user.matchAll(/(\d+)\s*%/g)].map((m) => Number(m[1])));
       stub.unknownPct = [37, 41, 59, 83, 91, 17].find((n) => !present.has(n)) ?? 7;
@@ -142,14 +144,18 @@ async function main() {
 
     // --- 3-bosqich
     const an = await generateAnalysis(attempt.id, stub);
-    assert.equal(stub.analysisCalls, 1);
+    // Stub qasddan yaroqsiz (kam band, kompetensiyalar yetishmaydi): sifat darvozasi `high` bilan qayta urinadi
+    assert.equal(stub.analysisCalls, 2, "yaroqsiz tahlil → bitta qayta urinish");
+    assert.ok(stub.retryPrompt.includes("competencyInsights da kompetensiyalar yetishmaydi"), "kamchiliklar qayta so'rovga yoziladi");
+    assert.equal(an.escalated, true);
+    assert.ok(an.stored.warnings.some((w) => w.startsWith("Tekshiruv:")), "qolgan kamchiliklar ogohlantirish bo'ladi");
     assert.equal(an.stored.developmentPlan[0].priority, 1);
     assert.ok(an.stored.warnings.some((w) => w.includes(`${stub.unknownPct}%`)), "formulada yo'q foiz ogohlantirilishi kerak");
     const saved = await db.attemptResult.findUniqueOrThrow({ where: { attemptId: attempt.id } });
     assert.ok(saved.analysis && saved.analysisAt && saved.analysisModel === "claude-opus-5-5");
     const after = await db.attemptResult.findUniqueOrThrow({ where: { attemptId: attempt.id } });
     assert.equal(after.overallPct, saved.overallPct);
-    assert.deepEqual([...stub.efforts].sort(), ["high"], "baholash va tahlil `high` effort bilan");
+    assert.deepEqual([...stub.efforts].sort(), ["high", "medium"], "baholash high, tahlil medium (+ darvozada high)");
 
     console.log("ai-integration: OK", { verdict: saved.verdict, pct: saved.overallPct, summary: { ...summary } });
     if (process.env.KEEP) console.log("KEEP attempt:", attempt.id, "assessment:", a.id);

@@ -15,12 +15,16 @@ export const aiConfigured = () => Boolean(process.env.ANTHROPIC_API_KEY);
 /** Standart model: claude-opus-5-5. Arzonroq model uchun env orqali almashtiriladi (qaror — loyiha egasiniki). */
 export type Effort = "low" | "medium" | "high" | "xhigh" | "max";
 
-/** Tahlil/baholash chuqurligi. Standart `high`: aniqlik ustuvor, lekin 60 s server chegarasiga sig'adi. */
+/**
+ * Tahlil chuqurligi standarti `medium` (narx/tezlik), sifat esa faktlar bloki, ichki tekshiruv va
+ * natijani tekshirish (validateAnalysis) + yaroqsiz bo'lsa `high` bilan qayta urinish orqali ushlab turiladi.
+ * Baholovchi (ochiq javob) `high` — u arzon va aniqlik muhim.
+ */
 export function aiEffort(): { analysis: Effort; grader: Effort } {
   const ok = (v: string | undefined): v is Effort => !!v && ["low", "medium", "high", "xhigh", "max"].includes(v);
   const a = process.env.ANTHROPIC_ANALYSIS_EFFORT;
   const g = process.env.ANTHROPIC_GRADER_EFFORT;
-  return { analysis: ok(a) ? a : "high", grader: ok(g) ? g : "high" };
+  return { analysis: ok(a) ? a : "medium", grader: ok(g) ? g : "high" };
 }
 
 export function aiModels() {
