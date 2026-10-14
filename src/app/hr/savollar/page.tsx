@@ -26,13 +26,14 @@ export default async function QuestionBankPage({ searchParams }: PageProps<"/hr/
     ...(pos ? { competency: { position: { code: pos } } } : {}),
     ...(lvl >= 1 && lvl <= 5 ? { level: lvl } : {}),
     ...(q ? { stem: { contains: q, mode: "insensitive" } } : {}),
-    ...(st ? { status: st } : {}),
+    // Bekor qilingan (RETIRED) savollar testga tushmaydi — faqat shu filtr tanlanganda ko'rinadi
+    ...(st ? { status: st } : { status: { not: "RETIRED" } }),
   };
 
   const [positions, questions, total, draftCount] = await Promise.all([
     db.position.findMany({
       orderBy: { title: "asc" },
-      select: { code: true, title: true, competencies: { select: { _count: { select: { questions: true } } } } },
+      select: { code: true, title: true, competencies: { select: { _count: { select: { questions: { where: { status: { not: "RETIRED" } } } } } } } },
     }),
     db.question.findMany({
       where,

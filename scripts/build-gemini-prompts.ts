@@ -8,7 +8,7 @@ type Pos = { id: string; title: string; card: string; competencies: Comp[] };
 
 const ROOT = path.resolve(__dirname, "..");
 const KARTALAR = path.resolve(ROOT, "..", "kartalar");
-const TOTAL = 30; // kompetensiyalar uchun; +5 ta qadriyat savoli (V1) = jami 35
+const TOTAL = 35; // kompetensiyalar uchun; +5 ta qadriyat savoli (V1) = jami 40
 // Notion yo'riqnomalarida faqat 3 (Yaxshi) va 4 (Professional) talab qilinadi — savollar faqat shu ikki darajada.
 const VALUE_LEVELS = [3, 3, 4, 4, 4];
 const FULL = TOTAL + VALUE_LEVELS.length;
@@ -17,8 +17,18 @@ const MAX_OPEN = 6;
 const data = JSON.parse(fs.readFileSync(path.join(ROOT, "data/competencies.json"), "utf8")) as { positions: Pos[] };
 
 /** Savollar sonini vazn bo'yicha taqsimlash: kamida 2 (kritikda 3), jami TOTAL. */
+const isAI = (c: Comp) => /\bAI\b/.test(c.name);
+/** AI kompetensiyasi: bilim, prompt qoidalari, prompt yozish, AI javobini tekshirish, xavfsiz foydalanish. */
+const AI_SLOTS: { level: number; type: string; aspect: string }[] = [
+  { level: 3, type: "MCQ_SINGLE", aspect: "AI bilimi va qoidalari" },
+  { level: 3, type: "MCQ_MULTI", aspect: "prompt qoidalari (yaxshi promptlarni tanlash)" },
+  { level: 4, type: "OPEN", aspect: "A. prompt yozish" },
+  { level: 4, type: "MCQ_MULTI", aspect: "B. AI javobidagi yashirin xatolarni topish" },
+  { level: 4, type: "SITUATIONAL", aspect: "C. xavfsiz va mas'uliyatli foydalanish" },
+];
+
 function quotas(comps: Comp[]): Record<string, number> {
-  const min = (c: Comp) => (c.critical ? 3 : 2);
+  const min = (c: Comp) => (isAI(c) ? AI_SLOTS.length : c.critical ? 3 : 2);
   const sumW = comps.reduce((s, c) => s + c.weight, 0);
   const q: Record<string, number> = {};
   const frac: Record<string, number> = {};
@@ -53,7 +63,7 @@ function levelsFor(target: number, n: number): number[] {
 function slotsFor(pos: Pos) {
   const comps = pos.competencies.filter((c) => c.id !== "V1");
   const q = quotas(comps);
-  type Slot = { comp: Comp; level: number; type: string };
+  type Slot = { comp: Comp; level: number; type: string; aspect?: string };
   const slots: Slot[] = [];
   for (const c of comps) for (const l of levelsFor(c.target, q[c.id])) slots.push({ comp: c, level: l, type: "" });
 
@@ -88,6 +98,13 @@ function slotsFor(pos: Pos) {
       const cand = mine.filter((s) => s.type === "MCQ_SINGLE" && s.level >= 3).sort((a, b) => b.level - a.level)[0];
       if (cand) cand.type = "SITUATIONAL";
     }
+  }
+  // AI kompetensiyasi uchun qat'iy tuzilma (5 ta savol, har biri alohida jihatni o'lchaydi)
+  const ai = comps.find(isAI);
+  if (ai) {
+    const mine = slots.filter((s) => s.comp.id === ai.id);
+    // talab 3 bo'lsa hamma AI savoli ham 3-darajada (yo'riqnomadan yuqori daraja so'ralmaydi)
+    AI_SLOTS.forEach((a, i) => mine[i] && Object.assign(mine[i], { type: a.type, aspect: a.aspect, level: ai.target < 4 ? 3 : a.level }));
   }
   const v1 = pos.competencies.find((c) => c.id === "V1");
   if (v1) for (const l of VALUE_LEVELS) slots.push({ comp: v1, level: l, type: "SITUATIONAL" });
@@ -175,7 +192,7 @@ function build(pos: Pos, num: number, onlySlots?: ReturnType<typeof slotsFor>, e
   const totalSec = slotsFor(pos).reduce((s, x) => s + TIME[x.type], 0);
 
   const rows = slots
-    .map((s, i) => `${String(i + 1).padStart(2, "0")}. competency="${s.comp.id}" (${s.comp.name}) · level=${s.level} · type=${s.type}${s.comp.critical ? " · KRITIK" : ""}`)
+    .map((s, i) => `${String(i + 1).padStart(2, "0")}. competency="${s.comp.id}" (${s.comp.name}) · level=${s.level} · type=${s.type}${s.comp.critical ? " · KRITIK" : ""}${s.aspect ? ` · jihat: ${s.aspect}` : ""}`)
     .join("\n");
   const catalog = pos.competencies
     .map((c) => `- ${c.id} = ${c.name} [${c.type}, talab ${c.target}, vazn ${c.weight}%${c.critical ? ", KRITIK" : ""}]`)
@@ -197,7 +214,7 @@ Test ham **nomzodni qabul qilish**, ham **mavjud xodimni baholash** uchun ishlat
 ${POSITION_NOTES[pos.id] ? `## LAVOZIMGA XOS ESLATMA\n\n${POSITION_NOTES[pos.id]}\n\n` : ""}## PLATFORMA IMKONIYATLARI (muhim)
 
 - Nomzod savollarni **ixtiyoriy tartibda** yechadi: qiyinini o'tkazib, keyin qaytib kelishi mumkin. Shuning uchun **har bir savol mustaqil** bo'lsin: «oldingi savoldagi kod», «yuqoridagi vaziyat» kabi bog'liqlik yozma. Kontekst kerak bo'lsa, savolning o'zida to'liq keltir.
-- Bir testda jami ${FULL} ta savol bo'ladi (30 ta kompetensiya + 5 ta qadriyat). Taxminiy umumiy vaqt: ${Math.round(totalSec / 60)} daqiqa.
+- Bir testda jami ${FULL} ta savol bo'ladi (35 ta kompetensiya + 5 ta qadriyat). Taxminiy umumiy vaqt: ${Math.round(totalSec / 60)} daqiqa.
 
 ## LAVOZIM KOMPETENSIYALARI
 
@@ -293,7 +310,13 @@ Maydonlar: position (doim "${pos.id}"), competency (${pos.competencies.map((c) =
 14. Faqat o'zbek tilida (lotin yozuvi); texnik atamalar inglizcha qolishi mumkin. Savol matnida o'zbekcha tabiiy, ish joyidagi til ishlat.
 15. Haqiqiy parol, token, API kalit, shaxsiy ma'lumot yozma — faqat soxta namunalar (masalan sk_test_XXXX, example.com).
 16. Bir-biriga o'xshash yoki bir mavzuni takrorlovchi savollar bo'lmasin. Mavzular kompetensiya ichida ham xilma-xil bo'lsin.
-17. AI kompetensiyasi (nomida «AI» bor) bo'lsa — kartadagi A (prompt yozish → OPEN), B (AI javobidagi yashirin xatoni topish → MCQ_MULTI yoki OPEN, savolda AI javobi to'liq keltiriladi), C (maxfiy ma'lumotni AI ga bermaslik → SITUATIONAL) bo'limlariga bo'lib yoz.
+17. AI kompetensiyasi (nomida «AI» bor) — 5 ta savol, har biri boshqa jihatni o'lchaydi (blueprint tartibida):
+   (Lavozim talabi 3 bo'lsa, quyidagi hamma savollar level 3 bo'ladi — murakkablikni shunga moslab tanla.)
+   - level 3 MCQ_SINGLE — **AI bilimi**: tushuncha va qoidalarni amalda qo'llash (hallucination nima va qanday ushlanadi, kontekst oynasi cheklovi, nega AI eskirgan API/kutubxona taklif qiladi, kompaniyaning AI'dan foydalanish qoidalari). Ta'rif yodlatma — real holatda qaysi qaror to'g'riligini so'ra.
+   - level 3 MCQ_MULTI — **prompt qoidalari**: lavozim masalasi uchun bir nechta prompt yoki prompt bo'laklari ber; qaysilari yaxshi (rol, kontekst, cheklov, kutilgan format, misol, natijani tekshirish so'rovi) ekanini tanlat.
+   - level 4 OPEN — **A. prompt yozish**: aniq ish masalasi ber, nomzod o'zi prompt yozadi; rubrikada kontekst, cheklov, format, misol, maxfiylik va natijani tekshirish mezonlari bo'lsin.
+   - level 4 MCQ_MULTI — **B. AI natijasini tekshirish**: AI javobini to'liq keltir (kod/matn/reja), ichiga 3 ta yashirin xato (uydirma, mantiq, xavfsizlik) qo'y; nomzod ularni topadi.
+   - level 4 SITUATIONAL — **C. xavfsiz va mas'uliyatli foydalanish**: bosim ostida maxfiy ma'lumot, AI natijasini tekshirmay topshirish yoki AI ishini o'ziniki deb ko'rsatish vasvasasi.
 18. OPEN savol rubrikasi: har band aniq tekshiriladi; «yaxshi yozilgan», «mantiqli» kabi mavhum band yozma. Kamida bitta band «xavfli/xato yondashuvdan qochgan» turidagi bo'lsin.
 
 ## O'Z-O'ZINI TEKSHIRISH (javobda ko'rsatma — faqat ichki)
@@ -336,13 +359,17 @@ if (missingArgIdx !== -1) {
   const [code, file] = [process.argv[missingArgIdx + 1], process.argv[missingArgIdx + 2]];
   const pos = data.positions.find((p) => p.id === code);
   if (!pos) throw new Error("lavozim topilmadi: " + code);
+  // AI_ONLY=1: faqat AI kompetensiyasi, joylar daraja + tur bo'yicha solishtiriladi
+  const aiOnly = !!process.env.AI_ONLY;
+  const key = (c: string, l: number, t: string) => (aiOnly ? `${c}:${l}:${t}` : `${c}:${l}`);
   const have = new Map<string, number>();
-  for (const q of JSON.parse(fs.readFileSync(file, "utf8")) as { competency: string; level: number }[]) {
-    const k = `${q.competency}:${q.level}`;
+  for (const q of JSON.parse(fs.readFileSync(file, "utf8")) as { competency: string; level: number; type: string }[]) {
+    const k = key(q.competency, q.level, q.type);
     have.set(k, (have.get(k) ?? 0) + 1);
   }
   const need = slotsFor(pos).filter((s) => {
-    const k = `${s.comp.id}:${s.level}`;
+    if (aiOnly && !isAI(s.comp)) return false;
+    const k = key(s.comp.id, s.level, s.type);
     const left = have.get(k) ?? 0;
     if (left > 0) { have.set(k, left - 1); return false; }
     return true;
@@ -352,7 +379,7 @@ if (missingArgIdx !== -1) {
     const i = need.findIndex((s) => `${s.comp.id}:${s.level}` === sk);
     if (i !== -1) need.splice(i, 1);
   }
-  const name = `${code}-qoshimcha.md`;
+  const name = aiOnly ? `${code}-ai-qoshimcha.md` : `${code}-qoshimcha.md`;
   const existingStems = (JSON.parse(fs.readFileSync(file, "utf8")) as { stem: string }[]).map((q) => q.stem.replace(/\s+/g, " ").slice(0, 110) + "…");
   fs.writeFileSync(path.join(outDir, name), build(pos, 0, need, existingStems));
   console.log(name, need.length, "yetishmayotgan joy:", need.map((s) => `${s.comp.id}L${s.level}${s.type[0]}`).join(" "));
