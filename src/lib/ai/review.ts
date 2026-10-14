@@ -1,5 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
+import { costUsd } from "./pricing";
 import { computeAttempt } from "@/lib/attempt";
 import { aiEffort, aiModels, callJson, type AiClient } from "./client";
 import {
@@ -96,7 +97,16 @@ export async function gradeOpenAnswers(attemptId: string, client?: AiClient): Pr
   await Promise.all(Array.from({ length: Math.min(4, todo.length) }, worker));
 
   await computeAttempt(attemptId);
+  await logUsage(attemptId, "grade", aiModels().grader, summary.inputTokens, summary.outputTokens);
   return summary;
+}
+
+/** AI sarfini qayd etish (analitika). Xato asosiy jarayonni to'xtatmaydi. */
+async function logUsage(attemptId: string, kind: "grade" | "analysis", model: string, inputTokens: number, outputTokens: number) {
+  if (inputTokens + outputTokens === 0) return;
+  try {
+    await db.aiUsage.create({ data: { attemptId, kind, model, inputTokens, outputTokens, costUsd: costUsd(model, inputTokens, outputTokens) } });
+  } catch {}
 }
 
 export async function buildAnalysisInput(attemptId: string): Promise<{ input: AnalysisInput; allowedPercents: number[]; answers: number; cohortN: number }> {
@@ -373,5 +383,6 @@ export async function generateAnalysis(attemptId: string, clientOrOpts?: AiClien
       data: { analysis: stored as unknown as object, analysisAt: new Date(), analysisModel: res.model },
     });
   }
+  await logUsage(attemptId, "analysis", res.model, res.inputTokens, res.outputTokens);
   return { stored, inputTokens: res.inputTokens, outputTokens: res.outputTokens, model: res.model, issues, escalated };
 }

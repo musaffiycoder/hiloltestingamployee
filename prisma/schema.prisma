@@ -173,6 +173,7 @@ model Attempt {
   result     AttemptResult?
   signals    IntegritySignal[]
   comments   Comment[]
+  aiUsage    AiUsage[]
 }
 
 model Response {
@@ -287,4 +288,21 @@ model CalibrationRating {
   rater    User     @relation(fields: [raterId], references: [id], onDelete: Cascade)
 
   @@unique([responseId, raterId])
+}
+
+/// AI chaqiruvlari sarfi (analitika: xarajatlar). Har baholash/tahlil uchun bitta yozuv.
+model AiUsage {
+  id           String   @id @default(cuid())
+  attemptId    String?
+  /// "grade" — ochiq javoblarni baholash; "analysis" — to'liq AI tahlil.
+  kind         String
+  model        String
+  inputTokens  Int
+  outputTokens Int
+  costUsd      Float
+  at           DateTime @default(now())
+
+  attempt Attempt? @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  @@index([at])
 }
