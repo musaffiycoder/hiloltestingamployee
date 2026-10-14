@@ -5,7 +5,7 @@ const base = {
   position: z.string().min(1, "position (lavozim kodi) majburiy"),
   competency: z.string().min(1, "competency (kompetensiya kodi) majburiy"),
   level: z.number().int().min(1).max(5),
-  stem: z.string().trim().min(10, "stem kamida 10 belgi").max(1500),
+  stem: z.string().trim().min(10, "stem kamida 10 belgi").max(4000),
   explanation: z.string().trim().max(1000).optional(),
   timeLimitSec: z.number().int().min(15).max(900).optional(),
   status: z.enum(["ACTIVE", "DRAFT"]).optional(),

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { finishAttempt, logSignal, saveResponse } from "../actions";
 import { Check, ChevronLeft, ChevronRight, Flag, LayoutGrid } from "lucide-react";
 import { Ico } from "@/components/ui";
+import { RichText, isRich } from "@/components/rich-text";
 
 export type RunnerQuestion = {
   id: string;
@@ -218,7 +219,14 @@ export function Runner({
             )}
           </button>
         </div>
-        <h1 className="mt-2 px-1 text-[22px] font-semibold leading-snug">{q.stem}</h1>
+        {isRich(q.stem) ? (
+          <>
+            <h1 className="sr-only">Savol {index + 1}</h1>
+            <RichText text={q.stem} className="mt-2 px-1 text-[17px] leading-relaxed" />
+          </>
+        ) : (
+          <h1 className="mt-2 px-1 text-[22px] font-semibold leading-snug">{q.stem}</h1>
+        )}
         {q.multi && q.type !== "OPEN" && <p className="mt-1 px-1 text-[15px] text-tx2">Bir nechtasini tanlang.</p>}
 
         {q.type === "OPEN" ? (
@@ -228,8 +236,8 @@ export function Runner({
               onChange={(e) => setAnswers((p) => ({ ...p, [q.id]: { ...p[q.id], text: e.target.value } }))}
               onBlur={() => persist(q, a)}
               onPaste={() => void logSignal(token, "paste")}
-              rows={8}
-              maxLength={5000}
+              rows={q.stem.length > 600 ? 14 : 8}
+              maxLength={8000}
               className="w-full rounded-2xl bg-card p-4 text-[17px] leading-relaxed outline-none focus:ring-2 focus:ring-br/40"
               placeholder="Javobingizni yozing…"
               aria-label="Javob"

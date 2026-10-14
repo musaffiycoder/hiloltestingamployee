@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { RichText } from "@/components/rich-text";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { Card, Pill, SectionTitle } from "@/components/ui";
@@ -92,7 +93,7 @@ export default async function CalibrationPage() {
         ) : (
           <Card className="p-4">
             <div className="text-[11px] font-semibold uppercase tracking-wide text-tx2">Savol · qiyinlik {next.question.level}/5</div>
-            <p className="mt-1 text-[17px] font-semibold">{next.question.stem}</p>
+            <RichText text={next.question.stem} className="mt-1 text-[16px]" />
             {rubric.length > 0 && (
               <div className="mt-3">
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-tx2">Rubrika</div>

@@ -31,7 +31,7 @@ export async function startAttempt(token: string, form: FormData) {
 const answerSchema = z.object({
   questionId: z.string().min(1),
   selected: z.union([z.number().int().min(0).max(20), z.array(z.number().int().min(0).max(20)).max(20), z.null()]).optional(),
-  text: z.string().max(5000).optional(),
+  text: z.string().max(8000).optional(),
   timeMs: z.number().int().min(0).max(60 * 60 * 1000).optional(),
 });
 

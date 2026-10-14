@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { RichText, isRich } from "@/components/rich-text";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
@@ -353,6 +354,12 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
                             <ChevronRight size={16} aria-hidden className="shrink-0 text-tx2 transition-transform group-open:rotate-90" />
                           </summary>
                           <div className="flex flex-col gap-3 bg-soft/50 px-4 py-3">
+                            {isRich(r.question.stem) && (
+                              <div>
+                                <div className="text-[11px] font-semibold uppercase tracking-wide text-tx2">Savol to'liq</div>
+                                <RichText text={r.question.stem} className="mt-1 text-[15px]" />
+                              </div>
+                            )}
                             <div>
                               <div className="text-[11px] font-semibold uppercase tracking-wide text-tx2">Nomzod javobi</div>
                               <div className="mt-1 whitespace-pre-wrap text-[15px]">{answerText(r)}</div>
