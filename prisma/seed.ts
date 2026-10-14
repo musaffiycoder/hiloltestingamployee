@@ -13,7 +13,7 @@ for (const line of readFileSync(resolve(__dirname, "../.env"), "utf8").split("\n
 const prisma = new PrismaClient();
 
 type JsonComp = { id: string; name: string; type: "soft" | "hard"; target: number; weight: number; critical: boolean; derived?: boolean };
-type JsonPos = { id: string; title: string; card: string; competencies: JsonComp[] };
+type JsonPos = { id: string; title: string; card: string; department?: string; competencies: JsonComp[] };
 
 async function main() {
   const dataDir = resolve(__dirname, "../data");
@@ -26,8 +26,8 @@ async function main() {
   for (const p of matrix.positions) {
     const pos = await prisma.position.upsert({
       where: { code: p.id },
-      update: { title: p.title, cardFile: p.card },
-      create: { code: p.id, title: p.title, cardFile: p.card },
+      update: { title: p.title, cardFile: p.card, ...(p.department ? { department: p.department } : {}) },
+      create: { code: p.id, title: p.title, cardFile: p.card, ...(p.department ? { department: p.department } : {}) },
     });
     let order = 0;
     for (const c of p.competencies) {

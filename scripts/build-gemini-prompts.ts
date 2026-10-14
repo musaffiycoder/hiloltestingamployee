@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 type Comp = { id: string; name: string; type: "soft" | "hard"; target: number; weight: number; critical: boolean };
-type Pos = { id: string; title: string; card: string; competencies: Comp[] };
+type Pos = { id: string; title: string; card: string; department?: string; competencies: Comp[] };
 
 const ROOT = path.resolve(__dirname, "..");
 const KARTALAR = path.resolve(ROOT, "..", "kartalar");
@@ -169,12 +169,21 @@ const VALUE_THEMES: Record<string, string[]> = {
     "Foydalanuvchining shaxsiy ma'lumotlari va akkaunt ma'lumotlari maxfiyligi (hamkasbga ham ortiqcha bermaslik)",
     "Qo'pol yoki bosimli foydalanuvchiga ham xushmuomala, rost va vakolat doirasida javob berish",
   ],
+  smm_menejer: [
+    "Diniy mazmun va brend tasdig'idan o'tmagan ssenariy, matn yoki videoni joylamaslik (trend, muddat yoki rahbar bosimida ham)",
+    "Kontent natijasi va hisobot raqamlari haqida rost ma'lumot (raqamni bo'rttirmaslik, yomon natijani yashirmaslik)",
+    "Ustoz, mehmon va face roziligisiz tasvir yoki ovozdan (shu jumladan AI bilan) foydalanmaslik; litsenziyasiz musiqa, rasm, shrift ishlatmaslik",
+    "Diniy savolga o'zi hukm chiqarmaslik; izoh va xabarlarga qo'pol yoki tekshirilmagan javob bermaslik",
+    "Akkaunt va parollarni himoya qilish, korxona kanalini shaxsiy maqsadda ishlatmaslik, maxfiy ma'lumotni (e'lon qilinmagan kitob, aksiya, narx) oshkor qilmaslik yoki ruxsatsiz AI'ga kiritmaslik",
+  ],
 };
 
 /** Lavozimga xos qo'shimcha ko'rsatma (prompt boshiga qo'shiladi). */
 const POSITION_NOTES: Record<string, string> = {
   bosh_pm:
     "**Bosh PM va oddiy PM farqi:** Bosh PM boshqa PMlarni **boshqarmaydi**, ularga bo'ysundirmaydi va baholamaydi (PMlar bo'lim boshlig'iga hisobot beradi). Uning vazifalari PM bilan deyarli bir xil, faqat qo'shimcha ma'muriy-texnik vazifalari bor: domen, AWS S3, Apple sertifikat va provisioning, GitLab va asosiy tizimlarning ma'muriy huquqlari, Firebase. Shuning uchun: (1) PM bilan umumiy vaziyatlar (sprint, talab, smoke test, release) PM savollari kabi bo'lsin; (2) «PMlarni boshqarish, baholash, ustuvorlik berish» vaziyatlari yozilmasin; (3) Karta jadvalidagi «PMlarni o'stiradi, mentorlik» kabi 5-daraja ko'rsatkichlari faqat tengdosh darajasidagi tajriba ulashish deb tushunilsin; (4) ma'muriy-texnik vazifalar (kirish huquqi, kalit, sertifikat, domen) bo'yicha savollar ko'proq bo'lsin; (5) «Loyihalar portfeli» — Bosh PMning o'ziga biriktirilgan bir nechta loyihasi (boshqa PMlarning loyihalari emas), «yetakchilik» va «ish yukini baholash» — faqat o'z loyihasiga biriktirilgan dasturchi va dizayner doirasida; (6) «Loyihalararo muammolar» — o'z loyihalari orasidagi va umumiy texnik tizimlar (GitLab, sertifikat, domen, S3) bilan bog'liq xavflarni oldindan ko'rib, bo'lim boshlig'iga hisobot berish.",
+  smm_menejer:
+    "**SMM menejer — Marketing bo'limi, dasturlash emas.** Vaziyatlar Hilol Nashr ijtimoiy tarmoqlari (Instagram, Telegram, TikTok, Facebook, YouTube Shorts) atrofida bo'lsin: kitob chiqishi, aksiya, tadbir, face va ustoz bilan syomka, Production (videograf-montajor, grafik dizayner) bilan ishlash, izohlar, Google Sheets hisobot, UTM. Kontent ma'rifiy va diniy mazmunli: har bir matn va video diniy mazmun tekshiruvchisi va bevosita rahbar (marketolog) tasdig'idan o'tadi; fatvo/hukm so'raladigan savolga SMM menejer o'zi javob bermaydi, ustozga uzatadi. Savollarda haqiqiy diniy hukm yoki oyat/hadis matnini o'ylab topma — kerak bo'lsa «diniy savol» deb umumiy tasvirla. Analitika savollarida aniq raqamlar bilan hisob-kitob ber (ER = (layk + izoh + saqlash + ulashish) ÷ reach, reja bajarilishi = chiqqan ÷ rejadagi) va formulalar (SUMIF, COUNTIF, XLOOKUP, QUERY, pivot) amaliy vaziyatda bo'lsin.",
   pm:
     "**PM va Bosh PM:** Bosh PM lavozimi PM bilan deyarli bir xil (u ham boshqa PMlarni boshqarmaydi), shu sabab savollar ikkala lavozim uchun ham mos bo'ladigan umumiy PM vaziyatlariga tayansin.",
 };
@@ -207,7 +216,7 @@ function build(pos: Pos, num: number, onlySlots?: ReturnType<typeof slotsFor>, e
 
 ## ROL VA MAQSAD
 
-Sen — psixometrika va ${pos.title} sohasi bo'yicha tajribali test tuzuvchi mutaxassissan. Quyida Hilol Nashr (Dasturlash bo'limi) uchun **${pos.title}** lavozimining baholash kartasi berilgan. Shu kartaga tayanib, **aynan ${FULL_N} ta** savoldan iborat bitta test tuz.
+Sen — psixometrika va ${pos.title} sohasi bo'yicha tajribali test tuzuvchi mutaxassissan. Quyida Hilol Nashr (${pos.department ?? "Dasturlash bo'limi"}) uchun **${pos.title}** lavozimining baholash kartasi berilgan. Shu kartaga tayanib, **aynan ${FULL_N} ta** savoldan iborat bitta test tuz.
 
 Test ham **nomzodni qabul qilish**, ham **mavjud xodimni baholash** uchun ishlatiladi. Savollar real ish vaziyatlarini o'lchashi, yodlab olib bo'lmaydigan va taxmin qilib topib bo'lmaydigan bo'lishi shart. Test egasi AVVALGI AI tuzgan savollardan norozi bo'lgan: «to'g'ri javob doim eng uzun va eng batafsil, qolganlari qisqa va ochiq-oydin xato» edi. Bunday savol yozma.
 
