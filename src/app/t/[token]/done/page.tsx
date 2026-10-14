@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getAssessmentByToken } from "@/lib/attempt-access";
+import { Check } from "lucide-react";
 
 export const metadata: Metadata = { title: "Rahmat", robots: { index: false, follow: false } };
 
@@ -13,7 +14,7 @@ export default async function DonePage({ params }: PageProps<"/t/[token]/done">)
     <main className="mesh-bg flex min-h-screen items-center justify-center px-5">
       <div className="w-full max-w-sm text-center">
         <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-ok-t text-4xl text-ok" aria-hidden>
-          ✓
+          <Check size={40} strokeWidth={2.6} />
         </div>
         <h1 className="text-[28px] font-bold leading-tight">Rahmat, {a.subjectName.split(" ")[0]}!</h1>
         <p className="mt-3 text-[17px] text-tx2">

@@ -53,7 +53,6 @@ assert.equal(calibrationStats(good.slice(0, 5)).ready, false, "namuna kam");
 const base: AnalysisInput = {
   mode: "RECRUITING",
   positionTitle: "Backend dasturchisi",
-  verdictLabel: "Shartli mos",
   overallPct: 71,
   requiredPct: 78,
   weightedLevel: 3.6,
@@ -110,7 +109,7 @@ const mixed = competencyDigest({
 }).join("\n");
 assert.ok(mixed.includes("NOMUVOFIQ"), "oson xato, qiyin to'g'ri = nomuvofiq naqsh");
 const goodA = {
-  executiveSummary: "Shartli mos: umumiy 71%, talab 78%. Keyingi qadam amaliy topshiriq bo'yicha ishlash va qayta tekshiruv.",
+  executiveSummary: "Umumiy moslik 71%, talab 78%. Keyingi qadam amaliy topshiriq bo'yicha ishlash va qayta tekshiruv.",
   overallNarrative: "x".repeat(40),
   strengths: ["a", "b", "c"], weaknesses: ["a", "b", "c"], opportunities: ["a", "b", "c"], threats: ["a", "b", "c"],
   answerPatterns: { difficulty: "d", distractors: "x", time: "t", comparison: "c", reliability: "r" },
@@ -119,12 +118,12 @@ const goodA = {
   interviewQuestions: [1, 2, 3, 4, 5].map((i) => ({ question: `q${i}`, verifies: "v", lookFor: "l" })),
   roleRisks: ["r"],
   developmentPlan: [1, 2, 3].map((i) => ({ area: `a${i}`, recommendation: "r", format: "f", courseSuggestion: "c", resources: [{ kind: "k", title: "t", provider: "p", why: "w" }, { kind: "k", title: "t", provider: "p", why: "w" }], estimatedDuration: "d", horizon: "0–30 kun", successMetric: "m", priority: i })),
-  dataGaps: [], swotStrategy: "s".repeat(90), keyConcerns: [], recommendation: "Shartli mos — reja bilan.", recommendationReasons: ["r"],
+  dataGaps: [], swotStrategy: "s".repeat(90), keyConcerns: [], recommendation: "Rivojlanish rejasi bilan keyingi bosqichga.", recommendationReasons: ["r"],
 };
 assert.deepEqual(validateAnalysis(goodA, base), [], "yaroqli tahlil");
-const badA = { ...goodA, competencyInsights: goodA.competencyInsights.slice(1), errorDiagnostics: [{ question: 2, competency: "S2", chose: "x", shows: "y", fix: "z" }], executiveSummary: "Natija yaxshi, davom etamiz va keyingi bosqichga o'tamiz deb o'ylayman bu holatda." };
+const badA = { ...goodA, competencyInsights: goodA.competencyInsights.slice(1), errorDiagnostics: [{ question: 2, competency: "S2", chose: "x", shows: "y", fix: "z" }], executiveSummary: "Nomzod mos emas, chunki natija talabdan past va keyingi bosqichga o'tkazmaymiz." };
 const bi = validateAnalysis(badA, base);
-assert.ok(bi.some((x) => x.includes("yetishmaydi")) && bi.some((x) => x.includes("savol 2 xato emas")) && bi.some((x) => x.includes("xulosa toifasi")), bi.join(" | "));
+assert.ok(bi.some((x) => x.includes("yetishmaydi")) && bi.some((x) => x.includes("savol 2 xato emas")) && bi.some((x) => x.includes("toifa ishlatilgan")), bi.join(" | "));
 
 // ---- foiz tekshiruvi
 assert.deepEqual(findUnknownPercents(["Natija 71% edi, o'rtacha 64%."], [71, 64, 78]), []);
@@ -183,7 +182,7 @@ const args = { model: "claude-opus-5-5", system: "s", user: "u", jsonSchema: gra
 
   // analysis sxemasi namunasi
   const analysis = {
-    executiveSummary: "Shartli mos: umumiy 71%, talab 78%. H3 bo'yicha daraja 3, talab 4. Keyingi qadam — SQL bo'yicha amaliy topshiriq.",
+    executiveSummary: "Umumiy moslik 71%, talab 78%. H3 bo'yicha daraja 3, talab 4. Keyingi qadam — SQL bo'yicha amaliy topshiriq.",
     overallNarrative: "Nomzod umumiy 71% natija ko'rsatdi; talab 78%. H3 bo'yicha daraja 3, talab 4.",
     strengths: ["S2 Mas'uliyat: 4/4"], weaknesses: ["H3: 3/4"], opportunities: ["SQL kursi"], threats: ["Production sekin so'rovlar"],
     answerPatterns: { difficulty: "d", distractors: "x", time: "t", comparison: "o'rtacha 64%", reliability: "o'rta" },
@@ -194,7 +193,7 @@ const args = { model: "claude-opus-5-5", system: "s", user: "u", jsonSchema: gra
     developmentPlan: [{ area: "H3", recommendation: "r", format: "mentorlik", courseSuggestion: "SQL optimizatsiya kursi turi", estimatedDuration: "4 hafta", horizon: "0–30 kun", successMetric: "qayta testda daraja 4", priority: 1, resources: [{ kind: "rasmiy hujjat", title: "PostgreSQL EXPLAIN", provider: "postgresql.org", why: "indeks tanlashni mashq qiladi" }] }],
     swotStrategy: "Kuchli tomonlar orqali kamchilikni yopish rejasi.",
     keyConcerns: [],
-    dataGaps: [], recommendation: "Shartli mos — SQL bo'yicha reja bilan.", recommendationReasons: ["H3 talabdan 1 daraja past"],
+    dataGaps: [], recommendation: "SQL bo'yicha reja bilan keyingi bosqichga.", recommendationReasons: ["H3 talabdan 1 daraja past"],
   };
   assert.equal(analysisSchema.safeParse(analysis).success, true);
   const k1 = Object.keys((analysisPart1JsonSchema as { properties: object }).properties);

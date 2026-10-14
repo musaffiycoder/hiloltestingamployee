@@ -4,11 +4,10 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { computeAttempt } from "@/lib/attempt";
-import { Card, LevelChip, Pill, SectionTitle, VerdictChip } from "@/components/ui";
+import { Card, LevelChip, Pill, SectionTitle, Ico } from "@/components/ui";
 import { Radar, ScoreRing } from "@/components/svg-charts";
-import { QUESTION_TYPE_LABELS, VERDICTS } from "@/lib/labels";
+import { QUESTION_TYPE_LABELS } from "@/lib/labels";
 import { shortDate, timeAgo } from "@/lib/format";
-import type { VerdictKey } from "@/lib/scoring";
 import { addComment, setDecision } from "./actions";
 import { OverrideButton } from "./override";
 import { AiPanel } from "./ai-panel";
@@ -17,6 +16,7 @@ import { ContextForm } from "./context-form";
 import { AutoRefresh } from "./auto-refresh";
 import { aiConfigured } from "@/lib/ai/client";
 import type { StoredAnalysis } from "@/lib/ai/schemas";
+import { ArrowUp, Check, ChevronLeft, ChevronRight, CircleCheck, Flag, Hourglass, ShieldAlert } from "lucide-react";
 
 export const metadata: Metadata = { title: "Nomzod natijasi" };
 // AI tahlil server action'i shu marshrutda ishlaydi (Fluid Compute: 300 s gacha)
@@ -59,13 +59,10 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
   if (!attempt || !attempt.result) notFound();
 
   const { assessment, result } = attempt;
-  const verdict = result.verdict as VerdictKey;
   const scoreByComp = new Map(attempt.scores.map((s) => [s.competencyId, s.level]));
   const askedComp = new Set(attempt.responses.map((r) => r.question.competencyId));
   const comps = assessment.position.competencies.filter((c) => askedComp.has(c.id));
 
-  const wSum = comps.reduce((s, c) => s + c.weight, 0) || 1;
-  const requiredPct = Math.round((comps.reduce((s, c) => s + c.target * c.weight, 0) / (5 * wSum)) * 100);
   const durationMin = attempt.finishedAt
     ? Math.max(1, Math.round((attempt.finishedAt.getTime() - attempt.startedAt.getTime()) / 60000))
     : null;
@@ -137,12 +134,12 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
   return (
     <div className="flex flex-col gap-6">
       <Link href="/hr/natijalar" className="inline-flex items-center gap-1 text-[17px] text-brd print:hidden">
-        <span aria-hidden className="text-2xl leading-none">‹</span> Nomzodlar
+        <ChevronLeft size={22} aria-hidden className="-ml-1.5" /> Nomzodlar
       </Link>
 
       {/* Profil sarlavhasi (iOS) */}
       <section className="flex flex-col items-center gap-3 text-center">
-        <ScoreRing pct={result.overallPct} threshold={requiredPct} size={132} />
+        <ScoreRing pct={result.overallPct} size={132} />
         <div>
           <h2 className="text-[28px] font-bold leading-tight">{assessment.subjectName}</h2>
           <p className="mt-0.5 text-[15px] text-tx2">
@@ -150,12 +147,17 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
             {durationMin ? ` · ${durationMin} daqiqa` : ""}
           </p>
         </div>
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <VerdictChip verdict={verdict} />
-          <span className="text-[13px] font-medium text-tx2">Talab: {requiredPct}%</span>
-        </div>
         <div className="flex flex-wrap justify-center gap-2">
-          {result.needsReview && <Pill tone="warn">◔ Qo'lda ko'rib chiqish kerak — natija vaqtinchalik</Pill>}
+          {flags.length > 0 && (
+            <Pill tone="bad">
+              <Ico icon={Flag} size={13} className="mr-1 fill-current" />
+              {flags.length} ta qizil bayroq
+            </Pill>
+          )}
+          {result.needsReview && <Pill tone="warn">
+              <Ico icon={Hourglass} size={13} className="mr-1" />
+              Qo'lda ko'rib chiqish kerak — natija vaqtinchalik
+            </Pill>}
           {result.decision === "ADVANCE" && <Pill tone="ok">Keyingi bosqichga</Pill>}
           {result.decision === "REJECT" && <Pill tone="bad">Rad etildi</Pill>}
         </div>
@@ -191,13 +193,13 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
 
       {result.criticalFail && (
         <div role="alert" className="flex items-start gap-3 rounded-2xl bg-bad-t p-4 text-[15px] text-bad">
-          <span aria-hidden className="text-lg leading-none">⛨</span>
+          <ShieldAlert size={18} aria-hidden className="shrink-0" />
           <div>
             <b className="font-semibold">Kritik kompetensiya talabdan past</b>
             {critLow.length > 0 && (
               <> — {critLow.map((r) => `${r.c.code} (${r.c.name}) ${r.level} / ${r.c.target}`).join(", ")}</>
             )}
-            . Avtomatik «{VERDICTS.MOS_EMAS.label}». Yakuniy qaror HR da.
+            . Bu ogohlantirish — yakuniy qaror HR da.
           </div>
         </div>
       )}
@@ -238,7 +240,10 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
                   <div className="flex flex-wrap justify-center gap-4 text-[13px] text-tx2">
                     <span><b className="text-br">━</b> Natija</span>
                     <span><b className="text-navy">╌</b> Talab darajasi</span>
-                    <span>⛨ kritik</span>
+                    <span>
+                      <Ico icon={ShieldAlert} size={12} className="mr-0.5" />
+                      kritik
+                    </span>
                   </div>
                 </Card>
               </section>
@@ -255,7 +260,10 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
                             <div className="flex items-baseline gap-2">
                               <span className="shrink-0 font-mono text-xs text-tx2">{c.code}</span>
                               <span className="text-[15px] font-medium leading-snug">{c.name}</span>
-                              {c.critical && <span className="text-xs text-bad" title="Kritik">⛨</span>}
+                              {c.critical && <span className="text-bad" title="Kritik">
+                                  <Ico icon={ShieldAlert} size={13} />
+                                  <span className="sr-only">kritik</span>
+                                </span>}
                             </div>
                             <div className="relative mt-2 h-1.5 rounded-full bg-soft">
                               <div className="h-full rounded-full bg-br" style={{ width: `${((level ?? 0) / 5) * 100}%` }} />
@@ -286,13 +294,16 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
                 <Card>
                   {flags.length === 0 ? (
                     <p className="flex items-center gap-2 px-4 py-3.5 text-[15px] font-medium text-ok">
-                      <span aria-hidden>✓</span> Qizil bayroqlar yo'q
+                      <Ico icon={CircleCheck} className="mr-1" /> Qizil bayroqlar yo'q
                     </p>
                   ) : (
                     <ul>
                       {flags.map((f, i) => (
                         <li key={i} className={`px-4 py-3 ${i < flags.length - 1 ? "border-b border-line" : ""}`}>
-                          <div className="text-[15px] font-semibold text-bad">✕ {f.t}</div>
+                          <div className="text-[15px] font-semibold text-bad">
+                            <Ico icon={Flag} size={14} className="mr-1 fill-current" />
+                            {f.t}
+                          </div>
                           <div className="mt-0.5 text-[15px]">«{f.q}»</div>
                           {f.question && <div className="mt-1 text-[13px] text-tx2">Savol: {f.question}</div>}
                         </li>
@@ -331,7 +342,7 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
                             >
                               {score === null ? "—" : `${Math.round(score * 100)}%`}
                             </span>
-                            <span aria-hidden className="text-tx2 transition-transform group-open:rotate-90">›</span>
+                            <ChevronRight size={16} aria-hidden className="shrink-0 text-tx2 transition-transform group-open:rotate-90" />
                           </summary>
                           <div className="flex flex-col gap-3 bg-soft/50 px-4 py-3">
                             <div>
@@ -348,7 +359,10 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
                                 <div className="text-[11px] font-semibold uppercase tracking-wide text-tx2">
                                   AI asosi · ishonch {Math.round((r.confidence ?? 0) * 100)}%
                                   {(r.confidence ?? 1) < 0.6 && <span className="ml-2 text-warn">ko'rib chiqing</span>}
-                                  {r.flagged && <span className="ml-2 text-bad">⚑ baholovchiga ko'rsatma urinishi</span>}
+                                  {r.flagged && <span className="ml-2 text-bad">
+                                    <Ico icon={Flag} size={12} className="mr-0.5 fill-current" />
+                                    baholovchiga ko'rsatma urinishi
+                                  </span>}
                                 </div>
                                 <p className="mt-1">{r.rationale}</p>
                               </div>
@@ -452,7 +466,7 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
                         ))}
                       </div>
                       <p className="mt-2 text-[13px] text-tx2">
-                        Savol 1 → {ordered.length} · o'rtacha {Math.floor(avgTime / 60000)}:
+                        Savol 1–{ordered.length} · o'rtacha {Math.floor(avgTime / 60000)}:
                         {String(Math.round((avgTime % 60000) / 1000)).padStart(2, "0")}
                       </p>
                     </>
@@ -474,7 +488,7 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
                           }`}
                         >
                           <span>{SIGNAL_LABEL[type] ?? type}</span>
-                          <span className="font-semibold tabular-nums text-tx2">× {n}</span>
+                          <span className="font-semibold tabular-nums text-tx2">{n} marta</span>
                         </li>
                       ))}
                     </ul>
@@ -530,7 +544,7 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
                 <ul>
                   {plan.map((p, i) => (
                     <li key={p} className={`flex gap-3 px-4 py-3 text-[15px] ${i < plan.length - 1 ? "border-b border-line" : ""}`}>
-                      <span className="text-ok" aria-hidden>✓</span>
+                      <Check size={16} strokeWidth={2.6} className="shrink-0 text-ok" aria-hidden />
                       {p}
                     </li>
                   ))}
@@ -564,10 +578,10 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
                   className="min-h-10 flex-1 resize-none rounded-[20px] bg-soft px-4 py-2 text-[15px] outline-none"
                 />
                 <button
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brf text-lg font-bold text-onbr"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brf text-onbr"
                   aria-label="Yuborish"
                 >
-                  ↑
+                  <ArrowUp size={18} strokeWidth={2.6} aria-hidden />
                 </button>
               </form>
             </Card>

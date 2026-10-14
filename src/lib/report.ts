@@ -1,7 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { computeAttempt } from "@/lib/attempt";
-import { VERDICTS, levelName } from "@/lib/labels";
+import { levelName } from "@/lib/labels";
 import type { VerdictKey } from "@/lib/scoring";
 import type { StoredAnalysis } from "@/lib/ai/schemas";
 
@@ -19,7 +19,6 @@ export type ReportData = {
   requiredPct: number;
   weightedLevel: number | null;
   verdict: VerdictKey;
-  verdictLabel: string;
   criticalFail: boolean;
   needsReview: boolean;
   decision: string | null;
@@ -135,7 +134,6 @@ export async function loadReport(attemptId: string): Promise<ReportData | null> 
     requiredPct,
     weightedLevel,
     verdict: result.verdict as VerdictKey,
-    verdictLabel: VERDICTS[result.verdict as VerdictKey].label,
     criticalFail: result.criticalFail,
     needsReview: result.needsReview,
     decision: result.decision,

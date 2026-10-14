@@ -1,21 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Search, SearchX } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ResultsView, type Row } from "./results-view";
 
-type VKey = "all" | "mos" | "shartli" | "dev" | "no" | "review" | "critical";
+type VKey = "all" | "flags" | "critical" | "review";
 type ModeKey = "all" | "RECRUITING" | "EVALUATION";
 
 const VERDICT_FILTERS: { key: VKey; label: string; test: (r: Row) => boolean }[] = [
   { key: "all", label: "Barchasi", test: () => true },
-  { key: "mos", label: "Mos", test: (r) => r.verdict === "MOS" },
-  { key: "shartli", label: "Shartli mos", test: (r) => r.verdict === "SHARTLI_MOS" },
-  { key: "dev", label: "Rivojlantirish kerak", test: (r) => r.verdict === "RIVOJLANTIRISH" },
-  { key: "no", label: "Mos emas", test: (r) => r.verdict === "MOS_EMAS" },
+  { key: "flags", label: "Qizil bayroqli", test: (r) => r.flags > 0 },
+  { key: "critical", label: "Kritik kompetensiya past", test: (r) => r.criticalFail },
   { key: "review", label: "Ko'rib chiqish kerak", test: (r) => r.needsReview },
-  { key: "critical", label: "Kritik past", test: (r) => r.criticalFail },
 ];
 
 const MODES: { key: ModeKey; label: string }[] = [
@@ -110,7 +107,7 @@ export function Explorer({ rows, initialFilter }: { rows: Row[]; initialFilter: 
 
       {shown.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-2xl bg-card p-10 text-center">
-          <div className="text-4xl text-tx2" aria-hidden>◔</div>
+          <SearchX size={34} strokeWidth={1.8} className="text-tx2" aria-hidden />
           <div className="text-[17px] font-semibold">{rows.length === 0 ? "Hali natija yo'q" : "Mos natija topilmadi"}</div>
           <p className="text-[15px] text-tx2">
             {rows.length === 0 ? "Birinchi taklifni yuboring — natijalar shu yerda paydo bo'ladi." : "Filtr yoki qidiruvni o'zgartirib ko'ring."}

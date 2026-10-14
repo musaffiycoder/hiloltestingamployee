@@ -2,6 +2,8 @@
 
 import { useActionState, useRef } from "react";
 import { changePassword, createUser, type FormState } from "./actions";
+import { CircleCheck } from "lucide-react";
+import { Ico } from "@/components/ui";
 
 const row = "flex min-h-[48px] items-center gap-3 px-4";
 const lbl = "w-32 shrink-0 text-[17px]";
@@ -9,7 +11,10 @@ const ctl = "min-w-0 flex-1 bg-transparent text-right text-[17px] outline-none p
 
 function Result({ s }: { s: FormState }) {
   if (s.error) return <p role="alert" className="px-4 text-[13px] font-medium text-bad">{s.error}</p>;
-  if (s.ok) return <p role="status" className="px-4 text-[13px] font-medium text-ok">✓ {s.message}</p>;
+  if (s.ok) return <p role="status" className="px-4 text-[13px] font-medium text-ok">
+        <Ico icon={CircleCheck} className="mr-1" />
+        {s.message}
+      </p>;
   return null;
 }
 

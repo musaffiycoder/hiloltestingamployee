@@ -55,9 +55,9 @@ export function Radar({ axes, series }: { axes: RadarAxis[]; series: RadarSeries
             textAnchor={anchor}
             style={{ fill: "var(--tx2)", fontSize: 11, fontWeight: 700 }}
           >
-            <title>{a.name}</title>
+            <title>{a.critical ? `${a.name} (kritik)` : a.name}</title>
             {a.code}
-            {a.critical ? " ⛨" : ""}
+            {a.critical && <tspan style={{ fill: "var(--bad)" }}>*</tspan>}
           </text>
         );
       })}

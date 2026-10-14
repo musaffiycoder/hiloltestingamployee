@@ -1,5 +1,10 @@
-import { LEVEL_COLORS, VERDICTS, levelName } from "@/lib/labels";
-import type { VerdictKey } from "@/lib/scoring";
+import { LEVEL_COLORS, levelName } from "@/lib/labels";
+import type { LucideIcon } from "lucide-react";
+
+/** Matn ichidagi kichik ikonka: barcha joyda bir xil Lucide to'plami, o'lcham va chiziq qalinligi. */
+export function Ico({ icon: I, size = 15, className = "" }: { icon: LucideIcon; size?: number; className?: string }) {
+  return <I size={size} strokeWidth={2.2} aria-hidden className={`inline-block shrink-0 align-[-0.15em] ${className}`} />;
+}
 
 /** iOS "inset grouped" konteyner: soya yo'q, fon farqi bilan ajraladi. */
 export function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -30,19 +35,6 @@ export function LevelChip({ level }: { level: number | null }) {
     >
       <span className="text-sm font-bold tabular-nums">{level % 1 ? level.toFixed(1) : level}</span>
       <span className="hidden sm:inline">{levelName(level)}</span>
-    </span>
-  );
-}
-
-export function VerdictChip({ verdict }: { verdict: VerdictKey }) {
-  const v = VERDICTS[verdict];
-  return (
-    <span
-      className="inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-xs font-semibold"
-      style={{ background: v.bg, color: v.fg }}
-    >
-      <span aria-hidden>{v.icon}</span>
-      {v.label}
     </span>
   );
 }

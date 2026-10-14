@@ -1,8 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { computeAttempt } from "@/lib/attempt";
-import { VERDICTS } from "@/lib/labels";
-import type { VerdictKey } from "@/lib/scoring";
 import { aiEffort, aiModels, callJson, type AiClient } from "./client";
 import {
   analysisPart1JsonSchema,
@@ -219,7 +217,6 @@ export async function buildAnalysisInput(attemptId: string): Promise<{ input: An
     positionCode: assessment.position.code,
     mode: assessment.mode,
     positionTitle: assessment.position.title,
-    verdictLabel: VERDICTS[result.verdict as VerdictKey].label,
     overallPct: result.overallPct,
     requiredPct,
     weightedLevel: (() => {

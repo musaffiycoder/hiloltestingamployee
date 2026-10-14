@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
-import { Card, LevelChip, SectionTitle } from "@/components/ui";
+import { Card, LevelChip, SectionTitle, Ico } from "@/components/ui";
+import { ShieldAlert } from "lucide-react";
 
 export const metadata: Metadata = { title: "Lavozim kartalari" };
 
@@ -53,7 +54,8 @@ export default async function PositionsPage() {
                             )}
                             {c.critical && (
                               <span title="Kritik kompetensiya" className="ml-2 text-xs font-semibold text-bad">
-                                ⛨ kritik
+                                <Ico icon={ShieldAlert} size={12} className="mr-0.5" />
+                                kritik
                               </span>
                             )}
                           </div>

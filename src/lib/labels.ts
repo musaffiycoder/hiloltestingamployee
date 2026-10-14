@@ -14,13 +14,6 @@ export function levelName(level: number | null) {
   return LEVEL_NAMES[Math.min(5, Math.max(1, Math.round(level)))];
 }
 
-export const VERDICTS: Record<VerdictKey, { label: string; icon: string; bg: string; fg: string }> = {
-  MOS: { label: "Mos", icon: "✓", bg: "var(--ok-t)", fg: "var(--ok)" },
-  SHARTLI_MOS: { label: "Shartli mos", icon: "◐", bg: "var(--warn-t)", fg: "var(--warn)" },
-  RIVOJLANTIRISH: { label: "Rivojlantirish kerak", icon: "▲", bg: "var(--tint)", fg: "var(--brd)" },
-  MOS_EMAS: { label: "Mos emas", icon: "✕", bg: "var(--bad-t)", fg: "var(--bad)" },
-};
-
 export const QUESTION_TYPE_LABELS: Record<string, string> = {
   MCQ_SINGLE: "Bitta javobli test",
   MCQ_MULTI: "Ko'p javobli test",

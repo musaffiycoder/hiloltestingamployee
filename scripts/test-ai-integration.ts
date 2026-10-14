@@ -70,8 +70,11 @@ async function main() {
     include: { competency: true },
     orderBy: [{ competency: { sortOrder: "asc" } }, { level: "asc" }],
   });
-  const opens = questions.filter((q) => q.type === "OPEN");
-  assert.ok(opens.length >= 2, "kamida 2 ta ochiq savol kerak (seed)");
+  const allOpens = questions.filter((q) => q.type === "OPEN");
+  assert.ok(allOpens.length >= 2, "kamida 2 ta ochiq savol kerak (seed)");
+  // Bankda ochiq savollar ko'p bo'lishi mumkin — test aynan ikkitasi bilan ishlaydi
+  const opens = allOpens.slice(0, 2);
+  const usedQs = questions.filter((q) => q.type !== "OPEN" || opens.includes(q));
 
   // Qisqa-javob yo'lini tekshirish uchun vaqtinchalik 3-chi ochiq savol (DRAFT, testlarda ishlatilmaydi)
   const tmpQ = await db.question.create({
@@ -83,15 +86,16 @@ async function main() {
   const a = await db.assessment.create({
     data: { token: TOKEN, positionId: pos.id, mode: "RECRUITING", subjectName: "ITEST Nomzod", status: "SUBMITTED" },
   });
-  const allIds = [...questions.map((q) => q.id), tmpQ.id];
+  const allIds = [...usedQs.map((q) => q.id), tmpQ.id];
   const attempt = await db.attempt.create({
     data: { assessmentId: a.id, startedAt: new Date(Date.now() - 40 * 60000), finishedAt: new Date(), consentAt: new Date(), questionIds: allIds },
   });
   try {
-    for (const q of questions) {
+    for (const q of usedQs) {
       let payload: object;
       if (q.id === opens[0].id) payload = { selected: null, text: "Darhol PMga yozaman, sababini tahlil qilaman va tuzatish rejasini taklif qilaman." };
       else if (q.id === opens[1].id) payload = { selected: null, text: "KELISHMAYMIZ: ikki baholovchi turlicha baholaydigan murakkab javob matni." };
+      else if (q.type === "OPEN") payload = { selected: null, text: "Vazifani bosqichlarga bo'lib, mas'ullarni belgilayman va natijani tekshiraman." };
       else if (q.type === "MCQ_MULTI") payload = { selected: (q.answerKey as { correct: number[] }).correct };
       else if (q.type === "SITUATIONAL") payload = { selected: 1 };
       else payload = { selected: (q.answerKey as { correct: number }).correct };

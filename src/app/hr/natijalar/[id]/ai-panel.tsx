@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { runAnalysis, runGrading, type AiActionResult } from "./actions";
+import { Check, X } from "lucide-react";
+import { Ico } from "@/components/ui";
 
 export function AiPanel({
   attemptId,
@@ -76,7 +78,7 @@ export function AiPanel({
       </div>
       {log.map((l, i) => (
         <p key={i} role={l.ok ? "status" : "alert"} className={`px-1 text-[15px] font-medium ${l.ok ? "text-ok" : "text-bad"}`}>
-          {l.ok ? "✓ " : "✕ "}
+          <Ico icon={l.ok ? Check : X} size={13} className="mr-1" />
           {l.message}
         </p>
       ))}

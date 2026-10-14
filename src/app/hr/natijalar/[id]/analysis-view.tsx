@@ -1,5 +1,6 @@
-import { Card, SectionTitle } from "@/components/ui";
+import { Card, SectionTitle, Ico } from "@/components/ui";
 import type { StoredAnalysis } from "@/lib/ai/schemas";
+import { ChevronRight, TriangleAlert } from "lucide-react";
 
 type Gap = string | { gap: string; why?: string; howToClose?: string };
 
@@ -12,7 +13,10 @@ export function AnalysisView({ analysis, isEmployee }: { analysis: StoredAnalysi
       {a.warnings.length > 0 && (
         <div role="alert" className="rounded-2xl bg-warn-t p-4 text-[15px] text-warn">
           {a.warnings.map((w) => (
-            <p key={w}>⚠︎ {w}</p>
+            <p key={w}>
+              <Ico icon={TriangleAlert} className="mr-1" />
+              {w}
+            </p>
           ))}
         </div>
       )}
@@ -71,7 +75,7 @@ export function AnalysisView({ analysis, isEmployee }: { analysis: StoredAnalysi
                 <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
                   <span className="font-mono text-xs text-tx2">{c.code}</span>
                   <span className="flex-1 text-[15px] font-medium">{c.name}</span>
-                  <span aria-hidden className="text-lg text-tx2 transition-transform group-open:rotate-90">›</span>
+                  <ChevronRight size={18} aria-hidden className="shrink-0 text-tx2 transition-transform group-open:rotate-90" />
                 </summary>
                 <div className="flex flex-col gap-2 bg-soft/50 px-4 py-3 text-[15px] leading-relaxed">
                   <p>{c.analysis}</p>

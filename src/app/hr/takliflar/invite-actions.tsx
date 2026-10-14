@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { cancelInvite } from "./actions";
+import { Check } from "lucide-react";
 
 export function InviteActions({ id, link, status }: { id: string; link: string; status: string }) {
   const router = useRouter();
@@ -21,7 +22,7 @@ export function InviteActions({ id, link, status }: { id: string; link: string; 
         }}
         className="h-9 rounded-full px-3 text-[15px] font-medium text-brd"
       >
-        {copied ? "✓" : "Nusxa"}
+        {copied ? <Check size={16} strokeWidth={2.6} aria-label="Nusxalandi" /> : "Nusxa"}
       </button>
       {canCancel && (
         <button

@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { Pill } from "@/components/ui";
 import { QuestionForm, type FormInitial } from "../question-form";
+import { ChevronLeft } from "lucide-react";
 
 export const metadata: Metadata = { title: "Savolni tahrirlash" };
 
@@ -55,7 +56,7 @@ export default async function EditQuestionPage({ params }: PageProps<"/hr/savoll
   return (
     <div className="flex flex-col gap-5">
       <Link href="/hr/savollar" className="inline-flex items-center gap-1 text-[17px] text-brd">
-        <span aria-hidden className="text-2xl leading-none">‹</span> Savollar banki
+        <ChevronLeft size={22} aria-hidden className="-ml-1.5" /> Savollar banki
       </Link>
       <div className="flex flex-wrap items-center gap-2">
         <h2 className="text-[28px] font-bold leading-tight">Savolni tahrirlash</h2>

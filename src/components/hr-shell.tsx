@@ -3,20 +3,21 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  BarChart3,
-  BookOpenCheck,
-  ClipboardList,
+  ChartColumn,
+  ClipboardCheck,
+  IdCard,
   LayoutDashboard,
+  Library,
   LogOut,
   Moon,
   PanelLeftClose,
   PanelLeftOpen,
   Scale,
   Plus,
+  Send,
   Settings,
   SlidersHorizontal,
   Sun,
-  UserCheck,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -25,14 +26,14 @@ type NavItem = { href: string; label: string; short: string; icon: LucideIcon; s
 
 const NAV: NavItem[] = [
   { href: "/hr", label: "Bosh sahifa", short: "Bosh", icon: LayoutDashboard },
-  { href: "/hr/natijalar", label: "Natijalar", short: "Natijalar", icon: UserCheck },
+  { href: "/hr/natijalar", label: "Natijalar", short: "Natijalar", icon: ClipboardCheck },
   { href: "/hr/xodimlar", label: "Xodimlar", short: "Xodimlar", icon: Users },
-  { href: "/hr/lavozimlar", label: "Lavozim kartalari", short: "Lavozimlar", icon: ClipboardList },
-  { href: "/hr/savollar", label: "Savollar banki", short: "Savollar", icon: BookOpenCheck },
-  { href: "/hr/takliflar", label: "Takliflar", short: "Takliflar", icon: Plus },
+  { href: "/hr/lavozimlar", label: "Lavozim kartalari", short: "Lavozimlar", icon: IdCard },
+  { href: "/hr/savollar", label: "Savollar banki", short: "Savollar", icon: Library },
+  { href: "/hr/takliflar", label: "Takliflar", short: "Takliflar", icon: Send },
   { href: "/hr/kalibrlash", label: "Kalibrlash", short: "Kalibrlash", icon: Scale },
   { href: "/hr/konstruktor", label: "Test konstruktori", short: "Konstruktor", icon: SlidersHorizontal, soon: true },
-  { href: "/hr/analitika", label: "Analitika", short: "Analitika", icon: BarChart3, soon: true },
+  { href: "/hr/analitika", label: "Analitika", short: "Analitika", icon: ChartColumn, soon: true },
   { href: "/hr/sozlamalar", label: "Sozlamalar", short: "Sozlamalar", icon: Settings },
 ];
 
@@ -177,8 +178,8 @@ export function HrShell({
               className="flex h-10 w-10 items-center justify-center rounded-full text-brd hover:bg-soft"
               aria-label="Mavzuni almashtirish"
             >
-              <Sun size={20} className="hidden [:root[data-theme=dark]_&]:block" />
-              <Moon size={20} className="block [:root[data-theme=dark]_&]:hidden" />
+              <Sun size={20} className="theme-ic-sun" aria-hidden />
+              <Moon size={20} className="theme-ic-moon" aria-hidden />
             </button>
             <Link
               href="/hr/takliflar"
@@ -192,7 +193,7 @@ export function HrShell({
                 aria-label="Chiqish"
                 title={user.email}
               >
-                <LogOut size={20} />
+                <LogOut size={20} aria-hidden />
               </button>
             </form>
           </div>

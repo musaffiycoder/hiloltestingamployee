@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { VerdictChip } from "@/components/ui";
-import { VERDICTS } from "@/lib/labels";
+import { Ico } from "@/components/ui";
 import type { VerdictKey } from "@/lib/scoring";
+import { Check, ChevronRight, Flag, Hourglass } from "lucide-react";
 
 export type Row = {
   attemptId: string;
@@ -33,7 +33,7 @@ function SelectDot({ on, label, onClick }: { on: boolean; label: string; onClick
         on ? "border-brf bg-brf text-onbr" : "border-tx2/50"
       }`}
     >
-      {on ? "✓" : ""}
+      {on ? <Check size={14} strokeWidth={3} aria-hidden /> : null}
     </button>
   );
 }
@@ -67,7 +67,6 @@ export function ResultsView({ rows, view }: { rows: Row[]; view: "table" | "card
         <ul className="overflow-hidden rounded-2xl bg-card">
           {rows.map((r, i) => {
             const on = sel.includes(r.attemptId);
-            const v = VERDICTS[r.verdict];
             return (
               <li
                 key={r.attemptId}
@@ -87,8 +86,16 @@ export function ResultsView({ rows, view }: { rows: Row[]; view: "table" | "card
                     </span>
                     <span className="block truncate text-[13px] text-tx2">
                       {r.position} · {r.date}
-                      {r.flags > 0 && <span className="font-semibold text-bad"> · ⚑ {r.flags}</span>}
-                      {r.flags === 0 && r.needsReview && <span className="font-semibold text-warn"> · ◔ ko'rib chiqish</span>}
+                      {r.flags > 0 && <span className="font-semibold text-bad">
+                          {" · "}
+                          <Ico icon={Flag} size={13} className="mr-0.5 fill-current" />
+                          {r.flags}
+                        </span>}
+                      {r.flags === 0 && r.needsReview && <span className="font-semibold text-warn">
+                          {" · "}
+                          <Ico icon={Hourglass} size={13} className="mr-0.5" />
+                          ko'rib chiqish
+                        </span>}
                     </span>
                   </span>
                   <span className="hidden w-28 items-center gap-2 md:flex" aria-hidden>
@@ -96,16 +103,10 @@ export function ResultsView({ rows, view }: { rows: Row[]; view: "table" | "card
                       <span className="block h-full rounded-full bg-br" style={{ width: `${r.pct}%` }} />
                     </span>
                   </span>
-                  <span className="hidden sm:block">
-                    <VerdictChip verdict={r.verdict} />
-                  </span>
                   <span className="text-right">
                     <span className="block text-[17px] font-semibold tabular-nums">{Math.round(r.pct)}%</span>
-                    <span className="block text-[11px] font-semibold sm:hidden" style={{ color: v.fg }}>
-                      {v.label}
-                    </span>
                   </span>
-                  <span aria-hidden className="text-lg text-tx2">›</span>
+                  <ChevronRight size={18} aria-hidden className="shrink-0 text-tx2" />
                 </Link>
               </li>
             );
@@ -135,16 +136,24 @@ export function ResultsView({ rows, view }: { rows: Row[]; view: "table" | "card
                       <div className="truncate text-[13px] text-tx2">{r.position}</div>
                     </div>
                   </div>
-                  <div className="mt-4 flex items-end justify-between">
-                    <VerdictChip verdict={r.verdict} />
+                  <div className="mt-4 flex items-end justify-between gap-3">
+                    <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-soft" aria-hidden>
+                      <span className="block h-full rounded-full bg-br" style={{ width: `${r.pct}%` }} />
+                    </span>
                     <b className="text-[28px] font-bold leading-none tabular-nums">{Math.round(r.pct)}%</b>
                   </div>
                   {(r.flags > 0 || r.needsReview) && (
                     <div className="mt-2 text-[13px] font-semibold">
                       {r.flags > 0 ? (
-                        <span className="text-bad">⚑ {r.flags} qizil bayroq</span>
+                        <span className="text-bad">
+                          <Ico icon={Flag} size={13} className="mr-1 fill-current" />
+                          {r.flags} qizil bayroq
+                        </span>
                       ) : (
-                        <span className="text-warn">◔ ko'rib chiqish kerak</span>
+                        <span className="text-warn">
+                          <Ico icon={Hourglass} size={13} className="mr-1" />
+                          ko'rib chiqish kerak
+                        </span>
                       )}
                     </div>
                   )}

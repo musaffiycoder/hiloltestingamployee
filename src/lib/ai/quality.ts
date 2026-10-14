@@ -63,7 +63,7 @@ export function validateAnalysis(a: Analysis, input: AnalysisInput): string[] {
   if (a.developmentPlan.some((d) => d.resources.length < 2)) issues.push("developmentPlan har bandida kamida 2 ta resources bo'lishi kerak");
   if (!a.swotStrategy || a.swotStrategy.length < 80) issues.push("swotStrategy juda qisqa");
 
-  const label = input.verdictLabel.toLowerCase();
-  if (!a.executiveSummary.toLowerCase().includes(label)) issues.push(`executiveSummary da xulosa toifasi («${input.verdictLabel}») aytilmagan`);
+  if (/\bmos emas\b|shartli mos|o'tmadi|o'tish chegara/i.test(`${a.executiveSummary} ${a.recommendation}`))
+    issues.push("Matnda «mos / mos emas» kabi toifa ishlatilgan — natija faqat foiz va darajalar bilan beriladi");
   return issues;
 }

@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* iOS tuzilma (system font, grouped list, tab bar) + loyihaning asl ranglari: krem/navy va sabzi-rang tint. */
+/* iOS tuzilma (system font, grouped list, tab bar) + loyihaning asl ranglari: krem/navy va sabzi-rang tint; tungi rejim — iliq qora va sabzi-rang. */
 :root {
   --bg: #f8f5ee;
   --card: #ffffff;
@@ -30,58 +30,77 @@
 }
 
 :root[data-theme="dark"] {
-  --bg: #0a1828;
-  --card: #142a42;
-  --soft: #1b3652;
-  --line: rgba(255, 255, 255, 0.14);
-  --tx: #f2ebdd;
-  --tx2: #a9b7c6;
+  --bg: #0c0c0d;
+  --card: #17171a;
+  --soft: #222226;
+  --line: rgba(255, 255, 255, 0.12);
+  --tx: #f5f1ea;
+  --tx2: #a8a29a;
   --br: #ff8a3d;
   --brd: #ff9d5e;
   --brf: #ff8a3d;
   --onbr: #1a0c02;
-  --tint: #3a1d0c;
-  --navy: #f2ebdd;
+  --tint: #2e1709;
+  --navy: #f5f1ea;
   --ok: #5cbf82;
-  --ok-t: #16382a;
+  --ok-t: #132a1d;
   --warn: #f0a24a;
-  --warn-t: #3a2a10;
+  --warn-t: #2f220f;
   --bad: #f08080;
-  --bad-t: #3f1c22;
-  --glass: rgba(20, 42, 66, 0.86);
-  --glass-line: rgba(255, 255, 255, 0.14);
+  --bad-t: #33181b;
+  --glass: rgba(23, 23, 26, 0.86);
+  --glass-line: rgba(255, 255, 255, 0.12);
   --mesh:
-    radial-gradient(60% 40% at 15% 0%, #12365c 0, transparent 70%),
-    radial-gradient(50% 40% at 100% 30%, #0f2a4a 0, transparent 70%), #0a1828;
+    radial-gradient(60% 40% at 15% 0%, rgba(255, 138, 61, 0.09) 0, transparent 70%),
+    radial-gradient(50% 40% at 100% 30%, rgba(255, 138, 61, 0.04) 0, transparent 70%), #0c0c0d;
   color-scheme: dark;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0a1828;
-    --card: #142a42;
-    --soft: #1b3652;
-    --line: rgba(255, 255, 255, 0.14);
-    --tx: #f2ebdd;
-    --tx2: #a9b7c6;
+    --bg: #0c0c0d;
+    --card: #17171a;
+    --soft: #222226;
+    --line: rgba(255, 255, 255, 0.12);
+    --tx: #f5f1ea;
+    --tx2: #a8a29a;
     --br: #ff8a3d;
     --brd: #ff9d5e;
     --brf: #ff8a3d;
     --onbr: #1a0c02;
-    --tint: #3a1d0c;
-    --navy: #f2ebdd;
+    --tint: #2e1709;
+    --navy: #f5f1ea;
     --ok: #5cbf82;
-    --ok-t: #16382a;
+    --ok-t: #132a1d;
     --warn: #f0a24a;
-    --warn-t: #3a2a10;
+    --warn-t: #2f220f;
     --bad: #f08080;
-    --bad-t: #3f1c22;
-    --glass: rgba(20, 42, 66, 0.86);
-    --glass-line: rgba(255, 255, 255, 0.14);
+    --bad-t: #33181b;
+    --glass: rgba(23, 23, 26, 0.86);
+    --glass-line: rgba(255, 255, 255, 0.12);
     --mesh:
-      radial-gradient(60% 40% at 15% 0%, #12365c 0, transparent 70%),
-      radial-gradient(50% 40% at 100% 30%, #0f2a4a 0, transparent 70%), #0a1828;
+      radial-gradient(60% 40% at 15% 0%, rgba(255, 138, 61, 0.09) 0, transparent 70%),
+      radial-gradient(50% 40% at 100% 30%, rgba(255, 138, 61, 0.04) 0, transparent 70%), #0c0c0d;
     color-scheme: dark;
+  }
+}
+
+/* Mavzu tugmasi: hozirgi rejimga mos ikonka (tizim rejimi ham hisobga olinadi). */
+.theme-ic-sun {
+  display: none;
+}
+:root[data-theme="dark"] .theme-ic-sun {
+  display: block;
+}
+:root[data-theme="dark"] .theme-ic-moon {
+  display: none;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-ic-sun {
+    display: block;
+  }
+  :root:not([data-theme="light"]) .theme-ic-moon {
+    display: none;
   }
 }
 

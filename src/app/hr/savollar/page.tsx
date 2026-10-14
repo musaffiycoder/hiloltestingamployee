@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { FilterLink as Link } from "@/components/filter-link";
-import { Search } from "lucide-react";
+import { Check, ChevronRight, Flag, Search } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { Card, LevelChip, Pill, SectionTitle } from "@/components/ui";
@@ -180,7 +180,7 @@ export default async function QuestionBankPage({ searchParams }: PageProps<"/hr/
                           )}
                         </span>
                       </span>
-                      <span aria-hidden className="text-lg text-tx2 transition-transform group-open:rotate-90">›</span>
+                      <ChevronRight size={18} aria-hidden className="shrink-0 text-tx2 transition-transform group-open:rotate-90" />
                     </summary>
                     <div className="bg-soft/50 px-4 py-3">
                       {opts.length > 0 && (
@@ -194,11 +194,14 @@ export default async function QuestionBankPage({ searchParams }: PageProps<"/hr/
                                 className={`flex items-start gap-3 px-3 py-2.5 text-[15px] ${k < opts.length - 1 ? "border-b border-line" : ""}`}
                               >
                                 <span className={`mt-0.5 w-4 shrink-0 text-center font-bold ${isCorrect ? "text-ok" : "text-transparent"}`} aria-hidden>
-                                  ✓
+                                  <Check size={16} strokeWidth={2.6} />
                                 </span>
                                 <span className="flex-1">{text(o)}</span>
                                 {pts !== undefined && <span className="text-[13px] font-semibold text-tx2">{pts} ball</span>}
-                                {typeof o === "object" && o.flag && <span className="text-[13px] font-semibold text-bad">⚑</span>}
+                                {typeof o === "object" && o.flag && <span className="text-bad" title="Qizil bayroq">
+                                    <Flag size={14} strokeWidth={2.4} className="fill-current" aria-hidden />
+                                    <span className="sr-only">qizil bayroq</span>
+                                  </span>}
                               </li>
                             );
                           })}

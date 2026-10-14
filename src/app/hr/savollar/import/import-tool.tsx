@@ -3,6 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { commitImport, previewImport, type PreviewResult } from "../actions";
+import { Check, ChevronRight, CircleCheck, CircleX, Info, TriangleAlert } from "lucide-react";
+import { Ico } from "@/components/ui";
 
 export function ImportTool({ prompt }: { prompt: string }) {
   const router = useRouter();
@@ -38,7 +40,7 @@ export function ImportTool({ prompt }: { prompt: string }) {
       <details className="overflow-hidden rounded-2xl bg-card">
         <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3.5 text-[17px] [&::-webkit-details-marker]:hidden">
           <span>Gemini uchun tayyor prompt</span>
-          <span aria-hidden className="text-tx2">›</span>
+          <ChevronRight size={16} aria-hidden className="shrink-0 text-tx2" />
         </summary>
         <div className="border-t border-line p-4">
           <pre className="max-h-72 overflow-auto whitespace-pre-wrap rounded-xl bg-soft p-3 font-mono text-[12px] leading-relaxed">{prompt}</pre>
@@ -50,7 +52,13 @@ export function ImportTool({ prompt }: { prompt: string }) {
             }}
             className="mt-3 h-10 rounded-full bg-tint px-5 text-[15px] font-semibold text-brd"
           >
-            {copied ? "Nusxalandi ✓" : "Promptni nusxalash"}
+            {copied ? (
+              <>
+                Nusxalandi <Ico icon={Check} />
+              </>
+            ) : (
+              "Promptni nusxalash"
+            )}
           </button>
         </div>
       </details>
@@ -98,7 +106,10 @@ export function ImportTool({ prompt }: { prompt: string }) {
           {preview.batchWarnings.length > 0 && (
             <ul className="rounded-2xl bg-warn-t px-4 py-3 text-[15px]">
               {preview.batchWarnings.map((w) => (
-                <li key={w.code} className="py-1">⚠︎ {w.message}</li>
+                <li key={w.code} className="py-1">
+                  <Ico icon={TriangleAlert} className="mr-1" />
+                  {w.message}
+                </li>
               ))}
             </ul>
           )}
@@ -107,7 +118,9 @@ export function ImportTool({ prompt }: { prompt: string }) {
             {preview.items.map((it, i) => (
               <li key={it.index} className={`px-4 py-3 ${i < preview.items.length - 1 ? "border-b border-line" : ""}`}>
                 <div className="flex items-start gap-3">
-                  <span className={`mt-0.5 text-lg ${it.ok ? "text-ok" : "text-bad"}`} aria-hidden>{it.ok ? "✓" : "✕"}</span>
+                  <span className={`mt-0.5 ${it.ok ? "text-ok" : "text-bad"}`} aria-hidden>
+                    {it.ok ? <CircleCheck size={18} /> : <CircleX size={18} />}
+                  </span>
                   <div className="min-w-0 flex-1">
                     <div className="text-[15px] font-medium">{it.index + 1}. {it.title || "(matn yo'q)"}</div>
                     <div className="text-[13px] text-tx2">{it.where}{it.duplicate ? " · takror (bazada bor)" : ""}</div>
@@ -116,7 +129,8 @@ export function ImportTool({ prompt }: { prompt: string }) {
                     ))}
                     {it.warnings.map((w) => (
                       <div key={w.code} className={`mt-1 text-[13px] ${w.severity === "warn" ? "text-warn" : "text-tx2"}`}>
-                        {w.severity === "warn" ? "⚠︎" : "ⓘ"} {w.message}
+                        <Ico icon={w.severity === "warn" ? TriangleAlert : Info} className="mr-1" />
+                        {w.message}
                       </div>
                     ))}
                   </div>

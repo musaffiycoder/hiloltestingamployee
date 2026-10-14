@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { overrideResponse } from "./actions";
+import { Check, CircleCheck } from "lucide-react";
+import { Ico } from "@/components/ui";
 
 const SCORES = [0, 0.25, 0.5, 0.75, 1];
 const REASONS = ["Rubrika bo'yicha", "Avto-baho xato", "Qo'shimcha kontekst", "Boshqa"];
@@ -39,7 +41,8 @@ export function OverrideButton({ responseId, current }: { responseId: string; cu
       </button>
       {done && (
         <div role="status" className="glass fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-full px-4 py-2 text-[15px] font-medium md:bottom-6">
-          O'zgarish saqlandi ✓ · tarixda qayd etildi
+          <Ico icon={CircleCheck} className="mr-1" />
+          O'zgarish saqlandi · tarixda qayd etildi
         </div>
       )}
       {open && (
@@ -104,7 +107,7 @@ export function OverrideButton({ responseId, current }: { responseId: string; cu
                         className="flex min-h-12 w-full items-center justify-between px-4 text-left text-[17px]"
                       >
                         {r}
-                        <span aria-hidden className={`text-lg font-bold text-brd ${reason === r ? "" : "opacity-0"}`}>✓</span>
+                        <Check size={18} strokeWidth={2.6} aria-hidden className={`shrink-0 text-brd ${reason === r ? "" : "opacity-0"}`} />
                       </button>
                     </li>
                   ))}

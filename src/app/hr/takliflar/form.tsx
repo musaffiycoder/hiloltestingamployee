@@ -2,6 +2,8 @@
 
 import { useActionState, useState } from "react";
 import { createInvite, type InviteState } from "./actions";
+import { Check } from "lucide-react";
+import { Ico } from "@/components/ui";
 
 const row = "flex min-h-[48px] items-center gap-3 px-4";
 const lbl = "w-28 shrink-0 text-[17px]";
@@ -73,7 +75,13 @@ export function InviteForm({ positions }: { positions: { id: string; title: stri
               }}
               className="h-9 shrink-0 rounded-full bg-card px-4 text-[15px] font-semibold text-brd"
             >
-              {copied ? "Nusxalandi ✓" : "Nusxalash"}
+              {copied ? (
+                <>
+                  Nusxalandi <Ico icon={Check} />
+                </>
+              ) : (
+                "Nusxalash"
+              )}
             </button>
           </div>
         </div>

@@ -34,12 +34,6 @@ const C = {
   badT: "#FBDDDA",
 };
 
-const VERDICT_COLOR: Record<string, { fg: string; bg: string }> = {
-  MOS: { fg: C.ok, bg: C.okT },
-  SHARTLI_MOS: { fg: C.warn, bg: C.warnT },
-  RIVOJLANTIRISH: { fg: C.brd, bg: C.tint },
-  MOS_EMAS: { fg: C.bad, bg: C.badT },
-};
 
 const s = StyleSheet.create({
   page: { backgroundColor: C.cream, paddingTop: 36, paddingBottom: 48, paddingHorizontal: 36, fontFamily: "Inter", fontSize: 9.5, color: C.tx, lineHeight: 1.45 },
@@ -96,7 +90,7 @@ function Bullets({ items, color = C.tx2 }: { items: string[]; color?: string }) 
   );
 }
 
-function ScoreRing({ pct, required, color }: { pct: number; required: number; color: string }) {
+function ScoreRing({ pct, color }: { pct: number; color: string }) {
   const size = 118;
   const r = 48;
   const cx = size / 2;
@@ -108,19 +102,15 @@ function ScoreRing({ pct, required, color }: { pct: number; required: number; co
     const large = p > 50 ? 1 : 0;
     return `M ${cx} ${cy - r} A ${r} ${r} 0 ${large} 1 ${x.toFixed(2)} ${y.toFixed(2)}`;
   };
-  const ra = (required / 100) * Math.PI * 2 - Math.PI / 2;
-  const tx = (rr: number) => cx + rr * Math.cos(ra);
-  const ty = (rr: number) => cy + rr * Math.sin(ra);
   return (
     <View style={{ width: size, alignItems: "center" }}>
       <Svg width={size} height={size}>
         <Circle cx={cx} cy={cy} r={r} stroke="#EFE8DA" strokeWidth={10} fill="none" />
         <Path d={arc(pct)} stroke={color} strokeWidth={10} fill="none" strokeLinecap="round" />
-        <Line x1={tx(r - 9)} y1={ty(r - 9)} x2={tx(r + 9)} y2={ty(r + 9)} stroke={C.navy} strokeWidth={2} />
       </Svg>
       <View style={{ position: "absolute", top: 0, left: 0, width: size, height: size, alignItems: "center", justifyContent: "center" }}>
         <Text style={{ fontSize: 26, fontWeight: 700, color: C.navy, lineHeight: 1 }}>{Math.round(pct)}%</Text>
-        <Text style={{ fontSize: 7.5, color: C.tx2, marginTop: 5, lineHeight: 1 }}>talab {Math.round(required)}%</Text>
+        <Text style={{ fontSize: 7.5, color: C.tx2, marginTop: 5, lineHeight: 1 }}>umumiy moslik</Text>
       </View>
     </View>
   );
@@ -191,7 +181,7 @@ function CompRow({ c }: { c: ReportData["competencies"][number] }) {
 
 export function ReportDocument({ r }: { r: ReportData }) {
   const a = r.analysis;
-  const vc = VERDICT_COLOR[r.verdict] ?? VERDICT_COLOR.RIVOJLANTIRISH;
+  const vc = { fg: C.br, bg: C.tint };
   const isEmp = r.mode === "EVALUATION";
   const comps = [...r.competencies].sort((x, y) => (x.level ?? 0) - x.target - ((y.level ?? 0) - y.target));
   const insights = a?.competencyInsights ?? [];
@@ -215,21 +205,20 @@ export function ReportDocument({ r }: { r: ReportData }) {
 
         <View style={[s.row, { marginTop: 14, gap: 14 }]}>
           <View style={[s.card, { width: 150, alignItems: "center", paddingVertical: 14 }]}>
-            <ScoreRing pct={r.overallPct} required={r.requiredPct} color={vc.fg} />
-            <Text style={[s.chip, { color: vc.fg, backgroundColor: vc.bg, marginTop: 6 }]}>{r.verdictLabel}</Text>
+            <ScoreRing pct={r.overallPct} color={vc.fg} />
           </View>
           <View style={[s.card, { flex: 1 }]}>
             <Text style={s.h3}>Yakuniy baho</Text>
             <View style={[s.row, { marginTop: 8, flexWrap: "wrap" }]}>
               {[
                 ["Umumiy moslik", `${Math.round(r.overallPct)}%`],
-                ["Lavozim talabi", `${r.requiredPct}%`],
+                ["Qizil bayroq", r.redFlags.length ? `${r.redFlags.length} ta` : "yo'q"],
                 ["Vaznli daraja", r.weightedLevel === null ? "—" : `${r.weightedLevel.toFixed(1)} / 5`],
                 ["Kritik kompetensiya", r.criticalFail ? "talabdan past" : "me'yorda"],
               ].map(([k, v]) => (
                 <View key={k} style={{ width: "50%", marginBottom: 8 }}>
                   <Text style={s.muted}>{k}</Text>
-                  <Text style={{ fontSize: 13, fontWeight: 700, color: k === "Kritik kompetensiya" && r.criticalFail ? C.bad : C.navy }}>{v}</Text>
+                  <Text style={{ fontSize: 13, fontWeight: 700, color: (k === "Kritik kompetensiya" && r.criticalFail) || (k === "Qizil bayroq" && r.redFlags.length) ? C.bad : C.navy }}>{v}</Text>
                 </View>
               ))}
             </View>
@@ -457,7 +446,7 @@ export function ReportDocument({ r }: { r: ReportData }) {
                   </View>
                 )}
               </View>
-              <Text style={[s.muted, { marginTop: 5 }]}>Yakuniy qaror HR da. Xulosa toifasi va ballar formuladan olingan; AI matni asos va tavsiya.</Text>
+              <Text style={[s.muted, { marginTop: 5 }]}>Yakuniy qaror HR da. Foiz va darajalar formuladan olingan; AI matni asos va tavsiya.</Text>
             </Section>
 
             {(a.keyConcerns?.length ?? 0) > 0 && (

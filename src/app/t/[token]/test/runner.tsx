@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { finishAttempt, logSignal, saveResponse } from "../actions";
+import { Check, ChevronLeft, ChevronRight, Flag, LayoutGrid } from "lucide-react";
+import { Ico } from "@/components/ui";
 
 export type RunnerQuestion = {
   id: string;
@@ -179,7 +181,7 @@ export function Runner({
           <div className="min-w-0 flex-1">
             <div className="truncate text-[15px] font-semibold">{positionTitle}</div>
             <div className="text-[11px] text-tx2" aria-live="polite">
-              {saving === "saving" ? "Saqlanmoqda…" : saving === "error" ? "Saqlanmadi — qayta urinib ko'ring" : "Saqlandi ✓"}
+              {saving === "saving" ? "Saqlanmoqda…" : saving === "error" ? "Saqlanmadi — qayta urinib ko'ring" : <>Saqlandi <Ico icon={Check} size={12} /></>}
             </div>
           </div>
           <div
@@ -205,7 +207,15 @@ export function Runner({
             aria-pressed={marked.has(q.id)}
             className={`h-8 shrink-0 rounded-full px-3 text-[13px] font-semibold ${marked.has(q.id) ? "bg-brf text-onbr" : "bg-soft text-tx2"}`}
           >
-            {marked.has(q.id) ? "⚑ Belgilandi" : "⚐ Keyinroq qaytaman"}
+            {marked.has(q.id) ? (
+              <>
+                <Ico icon={Flag} size={14} className="mr-1 fill-current" />Belgilandi
+              </>
+            ) : (
+              <>
+                <Ico icon={Flag} size={14} className="mr-1" />Keyinroq qaytaman
+              </>
+            )}
           </button>
         </div>
         <h1 className="mt-2 px-1 text-[22px] font-semibold leading-snug">{q.stem}</h1>
@@ -252,7 +262,7 @@ export function Runner({
                         checked ? "opacity-100" : "opacity-0"
                       }`}
                     >
-                      ✓
+                      <Check size={20} strokeWidth={2.6} />
                     </span>
                   </button>
                 </li>
@@ -271,18 +281,23 @@ export function Runner({
             disabled={index === 0 || pending}
             className="h-11 rounded-full px-3 text-[17px] font-medium text-brd disabled:opacity-30"
           >
-            ‹ Oldingi
+            <Ico icon={ChevronLeft} size={18} /> Oldingi
           </button>
           <button
             onClick={() => setShowMap(true)}
             className="flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-soft text-[15px] font-semibold"
             aria-label="Barcha savollar ro'yxati"
           >
-            <span aria-hidden>▦</span>
+            <LayoutGrid size={18} aria-hidden />
             <span>
               {answeredCount} / {questions.length}
             </span>
-            {marked.size > 0 && <span className="text-brd">⚑ {marked.size}</span>}
+            {marked.size > 0 && (
+              <span className="inline-flex items-center gap-1 text-brd">
+                <Ico icon={Flag} size={14} className="fill-current" />
+                {marked.size}
+              </span>
+            )}
           </button>
           {isLast ? (
             <button
@@ -298,7 +313,7 @@ export function Runner({
               disabled={pending}
               className="h-11 rounded-full bg-brf px-5 text-[17px] font-semibold text-onbr disabled:opacity-50"
             >
-              Keyingi ›
+              Keyingi <Ico icon={ChevronRight} size={18} />
             </button>
           )}
         </div>
@@ -326,7 +341,7 @@ export function Runner({
                     } ${ans ? "bg-tint text-brd" : "bg-soft text-tx"}`}
                   >
                     {i + 1}
-                    {mk && <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-brf text-[9px] text-onbr" aria-hidden>⚑</span>}
+                    {mk && <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-brf text-onbr" aria-hidden><Flag size={9} strokeWidth={3} className="fill-current" /></span>}
                   </button>
                 );
               })}
@@ -334,7 +349,7 @@ export function Runner({
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-tx2">
               <span><span className="mr-1 inline-block h-2.5 w-2.5 rounded bg-tint align-middle" />javob berilgan</span>
               <span><span className="mr-1 inline-block h-2.5 w-2.5 rounded bg-soft align-middle" />javobsiz</span>
-              <span>⚑ keyinroq qaytaman</span>
+              <span><Ico icon={Flag} size={12} className="mr-1 fill-current text-brd" />keyinroq qaytaman</span>
             </div>
             <div className="mt-5 flex flex-col gap-2">
               {nextOpen() !== -1 && (

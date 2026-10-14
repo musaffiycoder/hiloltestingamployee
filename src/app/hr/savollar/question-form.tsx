@@ -4,6 +4,8 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { analyzeQuestion } from "@/lib/question-quality";
 import { deleteQuestion, saveQuestion } from "./actions";
+import { Check, Flag, Info, Plus, TriangleAlert, X } from "lucide-react";
+import { Ico } from "@/components/ui";
 
 export type PositionOpt = { code: string; title: string; competencies: { code: string; name: string }[] };
 type QType = "MCQ_SINGLE" | "MCQ_MULTI" | "SITUATIONAL" | "OPEN";
@@ -227,7 +229,7 @@ export function QuestionForm({ positions, initial }: { positions: PositionOpt[];
                       o.correct ? "border-ok bg-ok text-white" : "border-tx2/50"
                     }`}
                   >
-                    {o.correct ? "✓" : ""}
+                    {o.correct ? <Check size={14} strokeWidth={3} aria-hidden /> : null}
                   </button>
                 ) : (
                   <select
@@ -252,11 +254,12 @@ export function QuestionForm({ positions, initial }: { positions: PositionOpt[];
                   <button
                     type="button"
                     aria-pressed={o.flag}
-                    title="Qizil bayroq: tanlansa avtomatik «Mos emas»"
+                    aria-label="Qizil bayroq"
+                    title="Qizil bayroq: tanlansa natijada ogohlantirish chiqadi"
                     onClick={() => setOpt(i, { flag: !o.flag })}
                     className={`mt-0.5 h-8 shrink-0 rounded-full px-2.5 text-[13px] font-semibold ${o.flag ? "bg-bad-t text-bad" : "bg-soft text-tx2"}`}
                   >
-                    ⚑
+                    <Flag size={15} strokeWidth={2.4} className={o.flag ? "fill-current" : ""} aria-hidden />
                   </button>
                 )}
                 {f.options.length > 3 && (
@@ -264,9 +267,9 @@ export function QuestionForm({ positions, initial }: { positions: PositionOpt[];
                     type="button"
                     aria-label="Variantni o'chirish"
                     onClick={() => set("options", f.options.filter((_, k) => k !== i))}
-                    className="mt-0.5 h-8 shrink-0 px-1 text-xl text-tx2"
+                    className="mt-0.5 flex h-8 shrink-0 items-center px-1 text-tx2"
                   >
-                    ×
+                    <X size={18} aria-hidden />
                   </button>
                 )}
               </li>
@@ -274,7 +277,8 @@ export function QuestionForm({ positions, initial }: { positions: PositionOpt[];
             {f.options.length < 6 && (
               <li className="border-t border-line">
                 <button type="button" onClick={() => set("options", [...f.options, blankOpt()])} className="h-12 w-full px-4 text-left text-[17px] text-brd">
-                  + Variant qo'shish
+                  <Plus size={18} aria-hidden className="mr-1 inline-block align-[-0.2em]" />
+                  Variant qo'shish
                 </button>
               </li>
             )}
@@ -293,15 +297,16 @@ export function QuestionForm({ positions, initial }: { positions: PositionOpt[];
                   className="h-12 min-w-0 flex-1 bg-transparent text-[17px] outline-none placeholder:text-tx2/60"
                 />
                 {f.rubric.length > 2 && (
-                  <button type="button" aria-label="Bandni o'chirish" onClick={() => set("rubric", f.rubric.filter((_, k) => k !== i))} className="text-xl text-tx2">
-                    ×
+                  <button type="button" aria-label="Bandni o'chirish" onClick={() => set("rubric", f.rubric.filter((_, k) => k !== i))} className="flex items-center text-tx2">
+                    <X size={18} aria-hidden />
                   </button>
                 )}
               </li>
             ))}
             <li className="border-t border-line">
               <button type="button" onClick={() => set("rubric", [...f.rubric, ""])} className="h-12 w-full px-4 text-left text-[17px] text-brd">
-                + Band qo'shish
+                <Plus size={18} aria-hidden className="mr-1 inline-block align-[-0.2em]" />
+                Band qo'shish
               </button>
             </li>
           </ul>
@@ -324,7 +329,7 @@ export function QuestionForm({ positions, initial }: { positions: PositionOpt[];
           <ul className="px-4 pb-3 pt-1">
             {warnings.map((w) => (
               <li key={w.code} className="py-1 text-[15px]">
-                <span aria-hidden>{w.severity === "warn" ? "⚠︎ " : "ⓘ "}</span>
+                <Ico icon={w.severity === "warn" ? TriangleAlert : Info} className="mr-1" />
                 {w.message}
               </li>
             ))}

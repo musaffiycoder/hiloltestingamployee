@@ -8,7 +8,7 @@ import type { Row } from "./results-view";
 
 export const metadata: Metadata = { title: "Natijalar" };
 
-const FILTER_KEYS = ["all", "mos", "shartli", "dev", "no", "review", "critical"] as const;
+const FILTER_KEYS = ["all", "flags", "critical", "review"] as const;
 
 export default async function ResultsPage({ searchParams }: PageProps<"/hr/natijalar">) {
   await requireUser();

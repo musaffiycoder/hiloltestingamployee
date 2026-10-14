@@ -4,6 +4,7 @@ import { getAssessmentByToken, isExpired } from "@/lib/attempt-access";
 import { db } from "@/lib/db";
 import { SUPPORTED_TYPES } from "@/lib/labels";
 import { startAttempt } from "./actions";
+import { Check } from "lucide-react";
 
 export const metadata: Metadata = { title: "Baholash testi", robots: { index: false, follow: false } };
 
@@ -82,7 +83,7 @@ export default async function InvitePage({ params, searchParams }: PageProps<"/t
                   "Javoblar avtomatik saqlanadi; uzilsa, havola orqali davom etasiz.",
                 ].map((t, i, arr) => (
                   <li key={t} className="relative flex gap-3 px-4 py-3">
-                    <span className="mt-0.5 text-ok" aria-hidden>✓</span>
+                    <Check size={18} strokeWidth={2.6} className="mt-0.5 shrink-0 text-ok" aria-hidden />
                     <span>{t}</span>
                     {i < arr.length - 1 && <span className="absolute bottom-0 left-11 right-0 h-px bg-line" aria-hidden />}
                   </li>

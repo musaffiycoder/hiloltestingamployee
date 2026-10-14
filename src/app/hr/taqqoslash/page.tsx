@@ -3,10 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
-import { Card, LevelChip, SectionTitle, VerdictChip } from "@/components/ui";
+import { Card, LevelChip, SectionTitle } from "@/components/ui";
 import { Radar } from "@/components/svg-charts";
 import { initials } from "@/lib/format";
-import type { VerdictKey } from "@/lib/scoring";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export const metadata: Metadata = { title: "Taqqoslash" };
 
@@ -34,7 +34,10 @@ export default async function ComparePage({ searchParams }: PageProps<"/hr/taqqo
     return (
       <Card className="p-8 text-center">
         <p className="text-[17px] font-semibold">Faqat bir xil lavozim nomzodlarini taqqoslash mumkin.</p>
-        <Link href="/hr/natijalar" className="mt-3 inline-block text-[17px] text-brd">‹ Nomzodlarga qaytish</Link>
+        <Link href="/hr/natijalar" className="mt-3 inline-flex items-center text-[17px] text-brd">
+          <ChevronLeft size={20} aria-hidden className="-ml-1" />
+          Nomzodlarga qaytish
+        </Link>
       </Card>
     );
   }
@@ -46,7 +49,7 @@ export default async function ComparePage({ searchParams }: PageProps<"/hr/taqqo
   return (
     <div className="flex flex-col gap-6">
       <Link href="/hr/natijalar" className="inline-flex items-center gap-1 text-[17px] text-brd">
-        <span aria-hidden className="text-2xl leading-none">‹</span> Nomzodlar
+        <ChevronLeft size={22} aria-hidden className="-ml-1.5" /> Nomzodlar
       </Link>
 
       <header className="px-1">
@@ -96,9 +99,8 @@ export default async function ComparePage({ searchParams }: PageProps<"/hr/taqqo
                 </span>
                 <span className="min-w-0 flex-1">
                   <b className="block text-[22px] leading-tight tabular-nums">{Math.round(a.result!.overallPct)}%</b>
-                  <VerdictChip verdict={a.result!.verdict as VerdictKey} />
                 </span>
-                <span aria-hidden className="text-lg text-tx2">›</span>
+                <ChevronRight size={18} aria-hidden className="shrink-0 text-tx2" />
               </Link>
               <ul>
                 {comps.map((c, k) => (

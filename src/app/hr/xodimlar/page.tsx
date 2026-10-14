@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
-import { Card, Pill, VerdictChip } from "@/components/ui";
+import { Card, Pill, Ico } from "@/components/ui";
 import { initials, shortDate } from "@/lib/format";
-import type { VerdictKey } from "@/lib/scoring";
+import { ChevronRight, TrendingDown, TrendingUp, UsersRound } from "lucide-react";
 
 export const metadata: Metadata = { title: "Xodimlar baholashi" };
 
@@ -33,7 +33,7 @@ export default async function EmployeesPage() {
   if (groups.size === 0) {
     return (
       <Card className="flex flex-col items-center gap-3 p-10 text-center">
-        <div className="text-4xl text-tx2" aria-hidden>◍</div>
+        <UsersRound size={34} strokeWidth={1.8} className="text-tx2" aria-hidden />
         <div className="text-[17px] font-semibold">Hali xodim baholanmagan</div>
         <p className="max-w-md text-[15px] text-tx2">
           Taklif yaratishda «Xodimni baholash» rejimini tanlang. Natijalar, dinamika va rivojlanish zonalari shu yerda ko'rinadi.
@@ -83,15 +83,13 @@ export default async function EmployeesPage() {
                     <b className="text-[17px] tabular-nums">{Math.round(latest.overallPct)}%</b>
                     {delta !== null && (
                       <span className={`text-[12px] font-semibold ${delta >= 0 ? "text-ok" : "text-warn"}`}>
-                        {delta >= 0 ? "▲ +" : "▼ "}
+                        <Ico icon={delta >= 0 ? TrendingUp : TrendingDown} size={13} className="mr-0.5" />
+                        {delta >= 0 ? "+" : ""}
                         {delta}%
                       </span>
                     )}
-                    <span className="hidden sm:block">
-                      <VerdictChip verdict={latest.verdict as VerdictKey} />
-                    </span>
                   </span>
-                  <span aria-hidden className="text-lg text-tx2">›</span>
+                  <ChevronRight size={18} aria-hidden className="shrink-0 text-tx2" />
                 </Link>
               </li>
             );

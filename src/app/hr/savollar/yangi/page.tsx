@@ -3,6 +3,7 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { QuestionForm } from "../question-form";
+import { ChevronLeft } from "lucide-react";
 
 export const metadata: Metadata = { title: "Yangi savol" };
 
@@ -17,7 +18,7 @@ export default async function NewQuestionPage({ searchParams }: PageProps<"/hr/s
   return (
     <div className="flex flex-col gap-5">
       <Link href="/hr/savollar" className="inline-flex items-center gap-1 text-[17px] text-brd">
-        <span aria-hidden className="text-2xl leading-none">‹</span> Savollar banki
+        <ChevronLeft size={22} aria-hidden className="-ml-1.5" /> Savollar banki
       </Link>
       <h2 className="text-[28px] font-bold leading-tight">Yangi savol</h2>
       <QuestionForm
