@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getAssessmentByToken, isExpired } from "@/lib/attempt-access";
-import { db } from "@/lib/db";
-import { SUPPORTED_TYPES } from "@/lib/labels";
+import { getPositionPlan } from "@/lib/test-config";
 import { startAttempt } from "./actions";
 import { Check } from "lucide-react";
 
@@ -16,23 +15,11 @@ export default async function InvitePage({ params, searchParams }: PageProps<"/t
   if (a.status === "SUBMITTED") redirect(`/t/${token}/done`);
 
   const expired = isExpired(a);
-  const [questionCount, sections] = await Promise.all([
-    db.question.count({
-      where: { status: "ACTIVE", type: { in: [...SUPPORTED_TYPES] }, competency: { positionId: a.positionId } },
-    }),
-    db.competency.count({ where: { positionId: a.positionId, questions: { some: { status: "ACTIVE" } } } }),
-  ]);
-  const minutes = Math.max(
-    5,
-    Math.round(
-      ((
-        await db.question.aggregate({
-          where: { status: "ACTIVE", type: { in: [...SUPPORTED_TYPES] }, competency: { positionId: a.positionId } },
-          _sum: { timeLimitSec: true },
-        })
-      )._sum.timeLimitSec ?? 0) / 60,
-    ),
-  );
+  // Konstruktor sozlamasi bo'yicha: savollar soni, bo'limlar va taxminiy vaqt
+  const plan = await getPositionPlan(a.positionId);
+  const questionCount = plan.total;
+  const sections = plan.competencies.filter((c) => c.count > 0).length;
+  const minutes = Math.max(5, plan.timeLimitMin ?? plan.estimatedMin);
   const resuming = a.status === "STARTED";
 
   const infoRows: [string, string][] = [

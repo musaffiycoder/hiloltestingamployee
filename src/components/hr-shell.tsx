@@ -32,7 +32,7 @@ const NAV: NavItem[] = [
   { href: "/hr/savollar", label: "Savollar banki", short: "Savollar", icon: Library },
   { href: "/hr/takliflar", label: "Takliflar", short: "Takliflar", icon: Send },
   { href: "/hr/kalibrlash", label: "Kalibrlash", short: "Kalibrlash", icon: Scale },
-  { href: "/hr/konstruktor", label: "Test konstruktori", short: "Konstruktor", icon: SlidersHorizontal, soon: true },
+  { href: "/hr/konstruktor", label: "Test konstruktori", short: "Konstruktor", icon: SlidersHorizontal },
   { href: "/hr/analitika", label: "Analitika", short: "Analitika", icon: ChartColumn, soon: true },
   { href: "/hr/sozlamalar", label: "Sozlamalar", short: "Sozlamalar", icon: Settings },
 ];
@@ -49,6 +49,7 @@ const TITLES: [string, string][] = [
   ["/hr/takliflar", "Takliflar"],
   ["/hr/kalibrlash", "Kalibrlash"],
   ["/hr/sozlamalar", "Sozlamalar"],
+  ["/hr/konstruktor", "Test konstruktori"],
   ["/hr", "Bosh sahifa"],
 ];
 

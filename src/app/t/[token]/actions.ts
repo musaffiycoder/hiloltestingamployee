@@ -6,7 +6,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { getAssessmentByToken, isExpired } from "@/lib/attempt-access";
 import { computeAttempt } from "@/lib/attempt";
-import { SUPPORTED_TYPES } from "@/lib/labels";
+import { buildQuestionSet } from "@/lib/test-config";
 import { allow } from "@/lib/rate-limit";
 
 export async function startAttempt(token: string, form: FormData) {
@@ -18,17 +18,10 @@ export async function startAttempt(token: string, form: FormData) {
 
   const current = a.attempts[0];
   if (!current || current.finishedAt) {
-    const questions = await db.question.findMany({
-      where: {
-        status: "ACTIVE",
-        type: { in: [...SUPPORTED_TYPES] },
-        competency: { positionId: a.positionId },
-      },
-      include: { competency: { select: { sortOrder: true } } },
-    });
-    questions.sort((x, y) => x.competency.sortOrder - y.competency.sortOrder || x.level - y.level);
+    // Savollar test konstruktori sozlamasi bo'yicha tanlanadi (sozlanmagan bo'lsa — hamma faol savol)
+    const set = await buildQuestionSet(a.positionId);
     await db.attempt.create({
-      data: { assessmentId: a.id, consentAt: new Date(), questionIds: questions.map((q) => q.id) },
+      data: { assessmentId: a.id, consentAt: new Date(), questionIds: set.questionIds, timeLimitSec: set.timeLimitSec },
     });
     await db.assessment.update({ where: { id: a.id }, data: { status: "STARTED" } });
   }

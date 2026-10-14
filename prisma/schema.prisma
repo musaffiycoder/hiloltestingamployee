@@ -80,6 +80,23 @@ model Position {
 
   competencies Competency[]
   assessments  Assessment[]
+  testConfig   TestConfig?
+}
+
+/// Test konstruktori: lavozim testining tarkibi (savollar soni, kompetensiya ulushi, vaqt, tartib).
+model TestConfig {
+  id            String   @id @default(cuid())
+  positionId    String   @unique
+  /// Kompetensiya kodi -> savollar soni. Bo'sh bo'lsa — hamma faol savol.
+  perCompetency Json     @default("{}")
+  /// Umumiy vaqt (daqiqa). null — savollar vaqtining yig'indisi.
+  timeLimitMin  Int?
+  /// "competency" — kompetensiyalar tartibida; "mixed" — aralash.
+  order         String   @default("competency")
+  updatedAt     DateTime @updatedAt
+  updatedById   String?
+
+  position Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
 }
 
 model Competency {
@@ -147,6 +164,8 @@ model Attempt {
   finishedAt   DateTime?
   consentAt    DateTime?
   questionIds  Json      @default("[]")
+  /// Konstruktorda belgilangan umumiy vaqt (soniya); null — savollar vaqti yig'indisi.
+  timeLimitSec Int?
 
   assessment Assessment        @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
   responses  Response[]

@@ -50,7 +50,7 @@ export default async function TestPage({ params }: PageProps<"/t/[token]/test">)
     };
   });
 
-  const totalSec = payload.reduce((s, q) => s + q.timeLimitSec, 0);
+  const totalSec = attempt.timeLimitSec ?? payload.reduce((s, q) => s + q.timeLimitSec, 0);
   const elapsed = Math.floor((Date.now() - attempt.startedAt.getTime()) / 1000);
 
   return (
