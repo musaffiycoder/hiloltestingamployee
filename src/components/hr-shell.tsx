@@ -40,7 +40,7 @@ const NAV: NavItem[] = [
 const PHONE_TABS = [NAV[0], NAV[1], NAV[2], NAV[4], NAV[5]];
 
 const TITLES: [string, string][] = [
-  ["/hr/natijalar/", "Nomzod natijasi"],
+  ["/hr/natijalar/", "Natija"],
   ["/hr/natijalar", "Natijalar"],
   ["/hr/taqqoslash", "Taqqoslash"],
   ["/hr/xodimlar", "Xodimlar"],

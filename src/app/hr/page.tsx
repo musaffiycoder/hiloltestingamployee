@@ -15,13 +15,11 @@ export default async function Dashboard() {
   const user = await requireUser();
   const now = new Date();
   const weekAgo = new Date(now.getTime() - 7 * DAY);
-  const twoWeeksAgo = new Date(now.getTime() - 14 * DAY);
   const soon = new Date(now.getTime() + 3 * DAY);
 
   const [
     statusCounts,
     createdThisWeek,
-    createdPrevWeek,
     needsReview,
     criticalOpen,
     expiring,
@@ -34,7 +32,6 @@ export default async function Dashboard() {
   ] = await Promise.all([
     db.assessment.groupBy({ by: ["status"], _count: true }),
     db.assessment.count({ where: { createdAt: { gte: weekAgo } } }),
-    db.assessment.count({ where: { createdAt: { gte: twoWeeksAgo, lt: weekAgo } } }),
     db.attemptResult.count({ where: { needsReview: true } }),
     db.attemptResult.count({ where: { criticalFail: true, decision: null } }),
     db.assessment.count({ where: { status: { in: ["INVITED", "STARTED"] }, dueAt: { gte: now, lte: soon } } }),
@@ -55,10 +52,9 @@ export default async function Dashboard() {
   const total = invited + started + submitted;
   const active = invited + started;
   const avg = results.length ? results.reduce((s, r) => s + r.overallPct, 0) / results.length : null;
-  const delta = createdThisWeek - createdPrevWeek;
 
   const kpis = [
-    { l: "Faol baholashlar", n: String(active), d: `${delta >= 0 ? "+" : ""}${delta} shu hafta`, trend: delta >= 0 ? "up" : "down", tone: delta >= 0 ? "ok" : "warn" },
+    { l: "Faol baholashlar", n: String(active), d: `shu hafta ${createdThisWeek} ta yangi taklif`, tone: "soft" },
     { l: "Ko'rib chiqish kutmoqda", n: String(needsReview), d: needsReview ? "qo'lda baholash" : "hammasi tayyor", tone: needsReview ? "warn" : "ok" },
     { l: "O'rtacha moslik", n: avg === null ? "—" : `${Math.round(avg)}%`, d: `${results.length} natija`, tone: "soft" },
     { l: "Yakunlangan testlar", n: String(results.length), d: "jami natija", tone: "soft" },
@@ -84,8 +80,23 @@ export default async function Dashboard() {
 
   const actionLabel: Record<string, string> = {
     "invite.create": "Yangi taklif yaratildi",
+    "invite.cancel": "Taklif bekor qilindi",
     "result.decision": "Qaror qayd etildi",
+    "result.context": "Natijaga HR izohi qo'shildi",
+    "result.pdf": "PDF hisobot yuklab olindi",
     "response.review": "Javob qo'lda qayta baholandi",
+    "ai.analysis": "AI tahlil tayyorlandi",
+    "ai.grade": "Ochiq javoblar AI bilan baholandi",
+    "question.create": "Yangi savol qo'shildi",
+    "question.update": "Savol tahrirlandi",
+    "question.delete": "Savol o'chirildi",
+    "question.import": "Savollar import qilindi",
+    "question.status": "Savol holati o'zgartirildi",
+    "question.activate_drafts": "Qoralama savollar faollashtirildi",
+    "testconfig.update": "Test tarkibi o'zgartirildi",
+    "testconfig.reset": "Test tarkibi standartga qaytarildi",
+    "user.create": "Yangi foydalanuvchi qo'shildi",
+    "user.password_change": "Parol almashtirildi",
   };
   const feed = [
     ...recentResults.map((r) => ({
@@ -96,7 +107,7 @@ export default async function Dashboard() {
     })),
     ...recentAudit.map((a) => ({
       at: a.at,
-      t: actionLabel[a.action] ?? a.action,
+      t: actionLabel[a.action] ?? "Tizimda o'zgarish",
       d: a.actor?.name ?? "Tizim",
       href: null as string | null,
     })),

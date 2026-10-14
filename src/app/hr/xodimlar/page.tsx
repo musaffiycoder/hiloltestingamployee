@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { Card, Pill, Ico } from "@/components/ui";
 import { initials, shortDate } from "@/lib/format";
-import { ChevronRight, TrendingDown, TrendingUp, UsersRound } from "lucide-react";
+import { TrendingDown, TrendingUp, UsersRound } from "lucide-react";
 
 export const metadata: Metadata = { title: "Xodimlar baholashi" };
 
@@ -48,54 +48,56 @@ export default async function EmployeesPage() {
   return (
     <div className="flex flex-col gap-4">
       <h2 className="px-1 text-[34px] font-bold leading-tight">Xodimlar</h2>
-      <Card>
-        <ul>
-          {[...groups.values()].map((list, idx, all) => {
-            const [latest, prev] = list;
-            const a = latest.attempt;
-            const delta = prev ? Math.round(latest.overallPct - prev.overallPct) : null;
-            const gaps = a.scores
-              .filter((s) => s.level < s.competency.target)
-              .sort((x, y) => x.level - x.competency.target - (y.level - y.competency.target))
-              .slice(0, 3);
-            return (
-              <li key={latest.id} className={idx < all.length - 1 ? "border-b border-line" : ""}>
-                <Link href={`/hr/natijalar/${a.id}`} className="flex items-center gap-3 px-4 py-3">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-soft text-[13px] font-semibold">
-                    {initials(a.assessment.subjectName)}
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {[...groups.values()].map((list) => {
+          const [latest, prev] = list;
+          const a = latest.attempt;
+          const delta = prev ? Math.round(latest.overallPct - prev.overallPct) : null;
+          const gaps = a.scores
+            .filter((s) => s.level < s.competency.target)
+            .sort((x, y) => x.level - x.competency.target - (y.level - y.competency.target))
+            .slice(0, 3);
+          return (
+            <Link key={latest.id} href={`/hr/natijalar/${a.id}`} className="flex flex-col rounded-2xl bg-card p-4 transition-colors hover:bg-soft/60">
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-soft text-[13px] font-semibold">
+                  {initials(a.assessment.subjectName)}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[17px] font-semibold">{a.assessment.subjectName}</span>
+                  <span className="block truncate text-[13px] text-tx2">
+                    {a.assessment.position.title} · {shortDate(latest.createdAt)}
                   </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[17px] font-semibold">{a.assessment.subjectName}</span>
-                    <span className="block truncate text-[13px] text-tx2">
-                      {a.assessment.position.title} · {shortDate(latest.createdAt)}
+                </span>
+              </div>
+              <div className="mt-4 flex items-end justify-between gap-3">
+                <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-soft" aria-hidden>
+                  <span className="block h-full rounded-full bg-br" style={{ width: `${latest.overallPct}%` }} />
+                </span>
+                <span className="text-right">
+                  <b className="block text-[28px] font-bold leading-none tabular-nums">{Math.round(latest.overallPct)}%</b>
+                  {delta !== null && (
+                    <span className={`text-[12px] font-semibold ${delta >= 0 ? "text-ok" : "text-warn"}`}>
+                      <Ico icon={delta >= 0 ? TrendingUp : TrendingDown} size={13} className="mr-0.5" />
+                      {delta >= 0 ? "+" : ""}
+                      {delta}% oldingidan
                     </span>
-                    {gaps.length > 0 && (
-                      <span className="mt-1.5 flex flex-wrap gap-1.5">
-                        {gaps.map((g) => (
-                          <Pill key={g.id} tone="warn">
-                            {g.competency.code} · {g.level}/{g.competency.target}
-                          </Pill>
-                        ))}
-                      </span>
-                    )}
-                  </span>
-                  <span className="flex flex-col items-end gap-1">
-                    <b className="text-[17px] tabular-nums">{Math.round(latest.overallPct)}%</b>
-                    {delta !== null && (
-                      <span className={`text-[12px] font-semibold ${delta >= 0 ? "text-ok" : "text-warn"}`}>
-                        <Ico icon={delta >= 0 ? TrendingUp : TrendingDown} size={13} className="mr-0.5" />
-                        {delta >= 0 ? "+" : ""}
-                        {delta}%
-                      </span>
-                    )}
-                  </span>
-                  <ChevronRight size={18} aria-hidden className="shrink-0 text-tx2" />
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </Card>
+                  )}
+                </span>
+              </div>
+              {gaps.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {gaps.map((g) => (
+                    <Pill key={g.id} tone="warn">
+                      {g.competency.code} · {g.level}/{g.competency.target}
+                    </Pill>
+                  ))}
+                </div>
+              )}
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }

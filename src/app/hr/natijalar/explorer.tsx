@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Search, SearchX } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ResultsView, type Row } from "./results-view";
 
 type VKey = "all" | "flags" | "critical" | "review";
@@ -26,7 +26,20 @@ export function Explorer({ rows, initialFilter }: { rows: Row[]; initialFilter: 
   const [mode, setMode] = useState<ModeKey>("all");
   const [vf, setVf] = useState<VKey>(initialFilter);
   const [q, setQ] = useState("");
-  const [view, setView] = useState<"table" | "cards">("table");
+  // Standart — kartochka; foydalanuvchi tanlovi brauzerda eslab qolinadi
+  const [view, setViewState] = useState<"table" | "cards">("cards");
+  useEffect(() => {
+    try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (localStorage.getItem("baholash_results_view") === "table") setViewState("table");
+    } catch {}
+  }, []);
+  const setView = (v: "table" | "cards") => {
+    setViewState(v);
+    try {
+      localStorage.setItem("baholash_results_view", v);
+    } catch {}
+  };
 
   const needle = q.trim().toLowerCase();
   const base = useMemo(
@@ -73,8 +86,8 @@ export function Explorer({ rows, initialFilter }: { rows: Row[]; initialFilter: 
         <div className="grid grid-cols-2 rounded-[10px] bg-soft p-0.5 md:ml-auto md:w-56" role="group" aria-label="Ko'rinish">
           {(
             [
-              ["table", "Ro'yxat"],
               ["cards", "Kartochka"],
+              ["table", "Ro'yxat"],
             ] as const
           ).map(([k, l]) => (
             <button

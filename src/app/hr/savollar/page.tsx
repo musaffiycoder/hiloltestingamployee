@@ -61,7 +61,7 @@ export default async function QuestionBankPage({ searchParams }: PageProps<"/hr/
     const key = x.competencyId;
     let g = groups.find((y) => y.key === key);
     if (!g) {
-      g = { key, title: `${x.competency.code} · ${x.competency.name}`, items: [] };
+      g = { key, title: `${pos ? "" : `${x.competency.position.title} · `}${x.competency.code} · ${x.competency.name}`, items: [] };
       groups.push(g);
     }
     g.items.push(x);
@@ -130,8 +130,9 @@ export default async function QuestionBankPage({ searchParams }: PageProps<"/hr/
 
       <div className="flex items-center gap-3">
         <span className="shrink-0 text-[13px] font-semibold uppercase tracking-wide text-tx2">Daraja</span>
-        <div className="grid flex-1 grid-cols-6 rounded-[10px] bg-soft p-0.5 md:max-w-sm" role="group" aria-label="Daraja">
-          {[0, 1, 2, 3, 4, 5].map((l) => (
+        <div className="grid flex-1 grid-cols-3 rounded-[10px] bg-soft p-0.5 md:max-w-xs" role="group" aria-label="Daraja">
+          {/* Notion yo'riqnomalari bo'yicha savollar faqat 3 (Yaxshi) va 4 (Professional) darajada */}
+          {[0, 3, 4].map((l) => (
             <Link
               key={l}
               href={href({ l: l ? String(l) : "" })}

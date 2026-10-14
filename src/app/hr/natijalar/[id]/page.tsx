@@ -134,7 +134,7 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
   return (
     <div className="flex flex-col gap-6">
       <Link href="/hr/natijalar" className="inline-flex items-center gap-1 text-[17px] text-brd print:hidden">
-        <ChevronLeft size={22} aria-hidden className="-ml-1.5" /> Nomzodlar
+        <ChevronLeft size={22} aria-hidden className="-ml-1.5" /> Natijalar
       </Link>
 
       {/* Profil sarlavhasi (iOS) */}
@@ -162,7 +162,15 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
           {result.decision === "REJECT" && <Pill tone="bad">Rad etildi</Pill>}
         </div>
 
-        {canWrite ? (
+        {assessment.mode === "EVALUATION" ? (
+          // Xodim baholashi: nomzodlarga xos «intervyu / rad etish» qarori yo'q
+          <a
+            href={`/hr/natijalar/${attempt.id}/pdf`}
+            className="flex h-[50px] w-full max-w-md items-center justify-center rounded-full bg-brf text-[17px] font-semibold text-onbr print:hidden"
+          >
+            PDF hisobot yuklab olish
+          </a>
+        ) : canWrite ? (
         <div className="flex w-full max-w-md flex-col gap-2 print:hidden">
           <form action={setDecision.bind(null, attempt.id, "ADVANCE")}>
             <button className="h-[50px] w-full rounded-full bg-brf text-[17px] font-semibold text-onbr">

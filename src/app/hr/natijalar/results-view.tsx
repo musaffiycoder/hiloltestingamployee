@@ -133,7 +133,9 @@ export function ResultsView({ rows, view }: { rows: Row[]; view: "table" | "card
                           <span className="ml-2 rounded-full bg-soft px-2 py-0.5 align-middle text-[11px] font-semibold text-tx2">Xodim</span>
                         )}
                       </div>
-                      <div className="truncate text-[13px] text-tx2">{r.position}</div>
+                      <div className="truncate text-[13px] text-tx2">
+                        {r.position} · {r.date}
+                      </div>
                     </div>
                   </div>
                   <div className="mt-4 flex items-end justify-between gap-3">
