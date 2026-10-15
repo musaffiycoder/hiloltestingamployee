@@ -75,3 +75,25 @@ export async function cancelInvite(id: string) {
   revalidatePath("/hr/takliflar");
   return { ok: true as const };
 }
+
+/**
+ * Boshlangan, lekin topshirilmagan testni qayta boshlash: tugallanmagan urinish (javoblari bilan) o'chiriladi,
+ * taklif «yuborilgan» holatiga qaytadi va nomzod shu havola orqali vaqtni noldan boshlaydi.
+ */
+export async function restartInvite(id: string) {
+  const user = await requireWriter();
+  const a = await db.assessment.findUnique({
+    where: { id },
+    select: { status: true, attempts: { where: { finishedAt: null }, select: { id: true, _count: { select: { responses: true } } } } },
+  });
+  if (!a) return { ok: false as const, error: "Taklif topilmadi" };
+  if (a.status !== "STARTED") return { ok: false as const, error: "Faqat jarayondagi testni qayta boshlash mumkin" };
+  const answers = a.attempts.reduce((s, x) => s + x._count.responses, 0);
+  await db.$transaction([
+    db.attempt.deleteMany({ where: { assessmentId: id, finishedAt: null } }),
+    db.assessment.update({ where: { id }, data: { status: "INVITED" } }),
+  ]);
+  await db.auditLog.create({ data: { actorId: user.id, action: "invite.restart", entity: "Assessment", entityId: id, meta: { answers } } });
+  revalidatePath("/hr/takliflar");
+  return { ok: true as const };
+}

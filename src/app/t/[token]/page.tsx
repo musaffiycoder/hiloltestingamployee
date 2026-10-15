@@ -68,7 +68,8 @@ export default async function InvitePage({ params, searchParams }: PageProps<"/t
                 {[
                   "Savollarga o'zingiz javob bering. Bu sizning bilim va ko'nikmangizni o'lchaydi.",
                   "To'g'ri javoblar va ballar test davomida ko'rsatilmaydi.",
-                  "Brauzer oynasidan chiqsangiz, bu qayd etiladi. Test to'xtamaydi.",
+                  `Vaqt «Testni boshlash» bosilgan zahoti boshlanadi va to'xtamaydi: sahifani yopsangiz ham hisoblanaveradi. Testni ${minutes >= 60 ? `${Math.floor(minutes / 60)} soat ${minutes % 60 ? `${minutes % 60} daqiqa ` : ""}` : `${minutes} daqiqa `}bo'sh vaqtingiz bo'lganda, bir o'tirishda boshlang.`,
+                  "Brauzer oynasidan chiqsangiz, bu qayd etiladi.",
                   "Javoblar avtomatik saqlanadi; uzilsa, havola orqali davom etasiz.",
                 ].map((t, i, arr) => (
                   <li key={t} className="relative flex gap-3 px-4 py-3">

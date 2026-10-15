@@ -81,6 +81,7 @@ export default async function Dashboard() {
   const actionLabel: Record<string, string> = {
     "invite.create": "Yangi taklif yaratildi",
     "invite.cancel": "Taklif bekor qilindi",
+    "invite.restart": "Test qayta boshlashga ochildi",
     "result.decision": "Qaror qayd etildi",
     "result.context": "Natijaga HR izohi qo'shildi",
     "result.pdf": "PDF hisobot yuklab olindi",

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { cancelInvite } from "./actions";
+import { cancelInvite, restartInvite } from "./actions";
 import { Check } from "lucide-react";
 
 export function InviteActions({ id, link, status }: { id: string; link: string; status: string }) {
@@ -24,6 +24,22 @@ export function InviteActions({ id, link, status }: { id: string; link: string; 
       >
         {copied ? <Check size={16} strokeWidth={2.6} aria-label="Nusxalandi" /> : "Nusxa"}
       </button>
+      {status === "STARTED" && (
+        <button
+          disabled={pending}
+          onClick={() => {
+            if (!confirm("Testni qayta boshlash imkonini berasizmi?\n\nNomzodning hozirgi javoblari o'chadi, vaqt esa u havolani qayta ochib boshlaganda noldan hisoblanadi.")) return;
+            start(async () => {
+              const r = await restartInvite(id);
+              if (!r.ok) setError(r.error);
+              router.refresh();
+            });
+          }}
+          className="h-9 rounded-full px-3 text-[15px] font-medium text-brd disabled:opacity-40"
+        >
+          Qayta boshlash
+        </button>
+      )}
       {canCancel && (
         <button
           disabled={pending}
