@@ -370,7 +370,7 @@ ${(VALUE_THEMES[pos.id] ?? []).map((t, i) => `${i + 1}. ${t}  — daraja ${VALUE
 **Qadriyat savollari — «kulrang» dilemmalar:**
 - Ikki **qonuniy** maqsad to'qnashsin (muddat va sifat, jamoa manfaati va qoida, rahbar iltimosi va tartib, foydalanuvchiga yordam va maxfiylik). Halol yo'lning aniq **narxi** bo'lsin.
 - Qoidaga zid variant (agar bo'lsa) «oqilona yorliq» ko'rinishida bo'lsin: sohada ko'p qilinadigan, ishonarli asosi bor, «hamma shunday qiladi» deyiladigan qadam. U "flag":true va 1–2 ball oladi. Ochiq yolg'on, o'g'irlik yoki qo'pollik variantini yozma.
-- Kamida 2 ta savolda **hech bir variant qoidani buzmaydi** — farq to'g'ri kanal, vaqt, kimga va qanday aytishda (5 / 4 / 3 / 2 ball).
+- **Aynan 2 ta savolda (1- va 4-mavzu) "flag" umuman ishlatilmaydi** va hech bir variant qoidani buzmaydi; qolgan 3 tasida ko'pi bilan **bitta** flag variant — farq to'g'ri kanal, vaqt, kimga va qanday aytishda (5 / 4 / 3 / 2 ball).
 - 5 ball variant eng uzun, eng «ideal» yoki eng ko'p odamni jalb qiladigan bo'lmasin. Vaa'z ohangidan qoch.
 
 `}${existing.length ? `## ALLAQACHON MAVJUD SAVOLLAR (takrorlama)\n\nQuyidagi mavzular testda bor. Yangi savollar ularni takrorlamasin:\n\n${existing.map((t, i) => `${i + 1}. ${t}`).join("\n")}\n\n` : ""}## SAVOLLAR REJASI (BLUEPRINT) — qat'iy amal qil
@@ -405,14 +405,15 @@ YOMON (sog'lom fikr bilan topiladi):
 «Do'stingiz Hilol Nashr sahifasi statistikasini so'radi. Nima qilasiz?» — A) beraman; B) rahbardan so'rayman; C) yolg'on statistika beraman; D) e'tibor bermayman.
 
 YAXSHI (CALC, level 3 — faqat metrikani biladigan odam topadi):
-«Instagram Reels statistikasi (7 kun): reach 12 400, impressions 15 900, layk 610, izoh 48, saqlash 230, ulashish 112, profilga o'tish 95. Bo'limda ER = (layk + izoh + saqlash + ulashish) ÷ reach. ER nechaga teng?» — A) 6,3% (impressions'ga bo'lingan); B) 5,3% (faqat layk + izoh); C) 8,1% ✔; D) 8,8% (profilga o'tish ham qo'shilgan).
+«Instagram Reels statistikasi (7 kun): reach 12 400, impressions 15 900, layk 610, izoh 48, saqlash 230, ulashish 112, profilga o'tish 95. Bo'limda ER = (layk + izoh + saqlash + ulashish) ÷ reach. ER nechaga teng?» — variantlar: "6,3%", "5,3%", "8,1%", "8,8%"; correct = 2. Har noto'g'ri son qaysi xatodan kelib chiqqani (impressions'ga bo'lingan; faqat layk + izoh; profilga o'tish qo'shilgan) **faqat explanation'da** yoziladi, variant matnida emas.
 
 YAXSHI (OCALC, level 4): 6 ta postning jadvali (reach, ko'rish, saqlash, ulashish, havola bosish, UTM bo'yicha buyurtma) beriladi, bittasi reklamada ko'tarilgan va o'rtachani buzadi; nomzod ER va konversiyani hisoblaydi, reklamaga qaysi organik postni tavsiya qilishini asoslaydi; rubrika: to'g'ri sonlar, reklama postini ajratgani, median ishlatgani, savdoga o'tishni UTM bo'yicha baholagani, aniq qaror.
 
 ## SIFAT QOIDALARI — buzilsa savol yaroqsiz
 
+0. **Variant matnida izoh yozma.** Hisob savolida variant — faqat son/natija («48 daqiqa», «CTR 3,0%; CR 6,0%»); qavs ichida «(… hisobga olinmagan)», «— noto'g'ri», «deb noto'g'ri o'ylanadi» kabi yorliq yoki formula yozish taqiqlanadi — bu to'g'ri javobni ochib qo'yadi. Sabablar faqat "explanation"da.
 1. To'g'ri javob variantlar ichida eng uzun bo'lmasin. Barcha variantlar uzunligi (±20%), gap soni va tafsilot darajasi teng.
-2. To'g'ri javob indeksi MCQ_SINGLE'larda 0–3 ga teng taqsimlansin; bitta indeks 35% dan oshmasin; ketma-ket ikki savolda bir xil indeks bo'lmasin. SITUATIONAL'da 5 ball variant joyi ham aralashsin.
+2. MCQ_MULTI'da to'g'ri javoblar ketma-ket [0,1,2] bo'lib qolmasin — har savolda turli joyda (masalan [1,3,4], [0,2,5]). To'g'ri javob indeksi MCQ_SINGLE'larda 0–3 ga teng taqsimlansin; bitta indeks 35% dan oshmasin; ketma-ket ikki savolda bir xil indeks bo'lmasin. SITUATIONAL'da 5 ball variant joyi ham aralashsin.
 3. «doim», «hech qachon», «faqat», «hammasi», «umuman» kabi mutlaq so'zlar bilan noto'g'ri variantni «bo'yama».
 4. «Hammasi to'g'ri» / «Hech biri» / «A va B» variant yozma.
 5. Variantlar grammatik va uslubiy bir xil, mazmunan haqiqatan farqli.
@@ -422,8 +423,9 @@ YAXSHI (OCALC, level 4): 6 ta postning jadvali (reach, ko'rish, saqlash, ulashis
 9. Diniy hukm, oyat yoki hadis matnini o'ylab topma.
 10. Savollar mavzusi takrorlanmasin; bir kompetensiya ichida ham turli vazifa va vositalarni qamra.
 11. Kompaniyaning ichki qisqartmalarini (P1/P2/P3, ichki shablon yoki jurnal nomlari) izohsiz ishlatma — nomzod ularni bilmasligi mumkin. Ustuvorlikni oddiy so'z bilan yoz: «shoshilinch» (darhol), «muhim» (shu hafta), «oddiy» (navbat bo'yicha).
+14. Kod, log yoki hujjat parchasini uchta backtick (\`\`\`) ichida ber, \`\`\` dan keyin til nomini (text, js, sql) YOZMA. OPEN rubrikasining har bandi 280 belgidan oshmasin.
 12. Jadval ma'lumotini faqat markdown jadval ko'rinishida ber: har qator alohida satrda, sarlavhadan keyin |---| qatori, jadvaldan oldin va keyin bo'sh satr.
-13. AI kompetensiyasi (nomida «AI» bor) — 5 ta savol, blueprint'dagi jihatlar bo'yicha:
+15. AI kompetensiyasi (nomida «AI» bor) — 5 ta savol, blueprint'dagi jihatlar bo'yicha:
    - KNOW — AI bilimi real holatda (hallucination qanday ushlanadi, kontekst cheklovi, nega eskirgan ma'lumot beradi, kompaniya AI qoidalari) — ta'rif emas, qaror;
    - DIAG (prompt qoidalari) — 5–6 ta prompt bo'lagi; qaysilarida aniq xato bor (kontekst yo'q, format yo'q, maxfiy ma'lumot bor, tekshirish so'ralmagan);
    - PRODUCE (prompt yozish) — aniq ish masalasi va materiali; nomzod to'liq prompt yozadi; rubrikada rol, kontekst, cheklov, format, misol, maxfiylik, natijani tekshirish;
@@ -432,7 +434,7 @@ YAXSHI (OCALC, level 4): 6 ta postning jadvali (reach, ko'rish, saqlash, ulashis
 
 ## O'Z-O'ZINI TEKSHIRISH (javobda ko'rsatma — faqat ichki)
 
-Har savol uchun jimgina tekshir: (a) blueprint'dagi competency/level/type/format to'g'rimi; (b) **havaskor testi**dan o'tadimi — sog'lom fikr bilan topilmaydimi; (c) V1 dan tashqari savolda axloqsiz/dangasa variant yo'qmi; (d) har noto'g'ri variant qaysi aniq kasbiy xatodan kelib chiqqanini ayta olasanmi; (e) hisob savollarida javobni qayta hisobladingmi; (f) to'g'ri javob eng uzun emasmi; (g) savol mustaqilmi; (h) JSON sintaksisi to'g'rimi.
+Har savol uchun jimgina tekshir: (a) blueprint'dagi competency/level/type/format to'g'rimi; (b) **havaskor testi**dan o'tadimi — sog'lom fikr bilan topilmaydimi; (c) V1 dan tashqari savolda axloqsiz/dangasa variant yo'qmi; (d) har noto'g'ri variant qaysi aniq kasbiy xatodan kelib chiqqanini ayta olasanmi; (e) hisob savollarida javobni qayta hisobladingmi; (f) to'g'ri javob eng uzun emasmi (SITUATIONAL'da 5 ballik variant ham); variant matnida izoh/yorliq yo'qmi; (g) savol mustaqilmi; (h) JSON sintaksisi to'g'rimi.
 
 ## CHIQISH
 
