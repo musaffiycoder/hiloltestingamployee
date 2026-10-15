@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { RichText, isRich } from "@/components/rich-text";
+import { RichText, isRich, stemPreview } from "@/components/rich-text";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
@@ -339,7 +339,7 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
                         <details key={r.id} className={`group ${i < items.length - 1 ? "border-b border-line" : ""}`}>
                           <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
                             <div className="min-w-0 flex-1">
-                              <div className="line-clamp-2 text-[15px] font-medium">{no}. {r.question.stem}</div>
+                              <div className="line-clamp-2 text-[15px] font-medium">{no}. {stemPreview(r.question.stem)}</div>
                               <div className="mt-0.5 text-[13px] text-tx2">
                                 daraja {r.question.level} · {QUESTION_TYPE_LABELS[r.question.type]}
                               </div>

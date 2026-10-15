@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { RichText, isRich, stemPreview } from "@/components/rich-text";
 import { FilterLink as Link } from "@/components/filter-link";
 import { Check, ChevronRight, Flag, Search } from "lucide-react";
 import { db } from "@/lib/db";
@@ -171,7 +172,7 @@ export default async function QuestionBankPage({ searchParams }: PageProps<"/hr/
                   <details key={x.id} className={`group ${i < g.items.length - 1 ? "border-b border-line" : ""}`}>
                     <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
                       <span className="min-w-0 flex-1">
-                        <span className="line-clamp-2 block text-[15px] font-medium">{x.stem}</span>
+                        <span className="line-clamp-2 text-[15px] font-medium">{stemPreview(x.stem)}</span>
                         <span className="mt-1 flex flex-wrap items-center gap-1.5">
                           <LevelChip level={x.level} />
                           <Pill tone="soft">{QUESTION_TYPE_LABELS[x.type]}</Pill>
@@ -183,7 +184,8 @@ export default async function QuestionBankPage({ searchParams }: PageProps<"/hr/
                       </span>
                       <ChevronRight size={18} aria-hidden className="shrink-0 text-tx2 transition-transform group-open:rotate-90" />
                     </summary>
-                    <div className="bg-soft/50 px-4 py-3">
+                    <div className="flex flex-col gap-3 bg-soft/50 px-4 py-3">
+                      {isRich(x.stem) && <RichText text={x.stem} className="text-[15px]" />}
                       {opts.length > 0 && (
                         <ul className="overflow-hidden rounded-xl bg-card">
                           {opts.map((o, k) => {

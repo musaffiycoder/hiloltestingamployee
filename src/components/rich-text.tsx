@@ -110,7 +110,7 @@ export function RichText({ text, className = "" }: { text: string; className?: s
                   {b.rows.map((r, j) => (
                     <tr key={j} className="border-t border-line">
                       {r.map((c, k) => (
-                        <td key={k} className="px-3 py-2 align-top">
+                        <td key={k} className={`px-3 py-2 align-top ${c.length <= 14 ? "whitespace-nowrap" : ""}`}>
                           {inline(c)}
                         </td>
                       ))}
@@ -131,4 +131,10 @@ export function RichText({ text, className = "" }: { text: string; className?: s
       })}
     </div>
   );
+}
+
+/** Ro'yxat uchun qisqa ko'rinish: birinchi paragraf (jadval/kod belgilarisiz). */
+export function stemPreview(src: string) {
+  const first = parseBlocks(src).find((b) => b.kind === "p");
+  return (first && first.kind === "p" ? first.text : src).replace(/\*\*|`/g, "").replace(/\s+/g, " ").trim();
 }

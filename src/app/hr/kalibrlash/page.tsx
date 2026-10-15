@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { RichText } from "@/components/rich-text";
+import { RichText, stemPreview } from "@/components/rich-text";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { Card, Pill, SectionTitle } from "@/components/ui";
@@ -126,7 +126,7 @@ export default async function CalibrationPage() {
                 return (
                   <li key={x.id + x.src} className={`flex items-center gap-3 px-4 py-3 ${i < arr.length - 1 ? "border-b border-line" : ""}`}>
                     <div className="min-w-0 flex-1">
-                      <div className="line-clamp-2 text-[15px] font-medium">{x.stem}</div>
+                      <div className="line-clamp-2 text-[15px] font-medium">{stemPreview(x.stem)}</div>
                       <div className="text-[13px] text-tx2">{x.src}</div>
                     </div>
                     <span className="text-[15px] tabular-nums text-tx2">AI {pct(x.ai)} · odam {pct(x.human)}</span>

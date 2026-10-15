@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { stemPreview } from "@/components/rich-text";
 import Link from "next/link";
 import { ArrowDownRight, ArrowUpRight, Flag, Info, ShieldAlert, TriangleAlert } from "lucide-react";
 import { requireUser } from "@/lib/auth";
@@ -237,7 +238,7 @@ async function QuestionsTab() {
               {q.flagged.slice(0, 40).map((s, i) => (
                 <li key={s.id} className={i < Math.min(40, q.flagged.length) - 1 ? "border-b border-line" : ""}>
                   <Link href={`/hr/savollar/${s.id}`} className="block px-4 py-3">
-                    <div className="line-clamp-2 text-[15px]">{s.stem}</div>
+                    <div className="line-clamp-2 text-[15px]">{stemPreview(s.stem)}</div>
                     <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-tx2">
                       <span>
                         {s.position} · {s.competency} · {s.level}-daraja · {QUESTION_TYPE_LABELS[s.type] ?? s.type}
@@ -272,7 +273,7 @@ async function QuestionsTab() {
                 <li key={s.id}>
                   <Link href={`/hr/savollar/${s.id}`} className="block">
                     <div className="flex items-baseline justify-between gap-3 text-[13px]">
-                      <span className="min-w-0 truncate">{s.stem}</span>
+                      <span className="min-w-0 truncate">{stemPreview(s.stem)}</span>
                       <b className="shrink-0 tabular-nums">{Math.round((s.avgScore as number) * 100)}%</b>
                     </div>
                     <div className="mt-1">

@@ -421,7 +421,9 @@ YAXSHI (OCALC, level 4): 6 ta postning jadvali (reach, ko'rish, saqlash, ulashis
 8. Haqiqiy parol, token, shaxsiy ma'lumot yozma — faqat soxta namunalar (sk_test_XXXX, example.com).
 9. Diniy hukm, oyat yoki hadis matnini o'ylab topma.
 10. Savollar mavzusi takrorlanmasin; bir kompetensiya ichida ham turli vazifa va vositalarni qamra.
-11. AI kompetensiyasi (nomida «AI» bor) — 5 ta savol, blueprint'dagi jihatlar bo'yicha:
+11. Kompaniyaning ichki qisqartmalarini (P1/P2/P3, ichki shablon yoki jurnal nomlari) izohsiz ishlatma — nomzod ularni bilmasligi mumkin. Ustuvorlikni oddiy so'z bilan yoz: «shoshilinch» (darhol), «muhim» (shu hafta), «oddiy» (navbat bo'yicha).
+12. Jadval ma'lumotini faqat markdown jadval ko'rinishida ber: har qator alohida satrda, sarlavhadan keyin |---| qatori, jadvaldan oldin va keyin bo'sh satr.
+13. AI kompetensiyasi (nomida «AI» bor) — 5 ta savol, blueprint'dagi jihatlar bo'yicha:
    - KNOW — AI bilimi real holatda (hallucination qanday ushlanadi, kontekst cheklovi, nega eskirgan ma'lumot beradi, kompaniya AI qoidalari) — ta'rif emas, qaror;
    - DIAG (prompt qoidalari) — 5–6 ta prompt bo'lagi; qaysilarida aniq xato bor (kontekst yo'q, format yo'q, maxfiy ma'lumot bor, tekshirish so'ralmagan);
    - PRODUCE (prompt yozish) — aniq ish masalasi va materiali; nomzod to'liq prompt yozadi; rubrikada rol, kontekst, cheklov, format, misol, maxfiylik, natijani tekshirish;
