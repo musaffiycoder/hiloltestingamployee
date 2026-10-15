@@ -23,8 +23,12 @@ const parse = (f: string) => {
 const orig = parse(origFile);
 const next = parse(newFile);
 const text = (o: Opt) => (typeof o === "string" ? o : o.text);
-const nums = (s: string) => (s.match(/\d+(?:[.,]\d+)*/g) ?? []).map((x) => x.replace(/[ ,.]/g, "")).sort();
-const LEAK = /yashirin (tuzoq|imkoniyat|bog'liqlik)|\btuzoq\b|\b[345]-darajada\b|yo'riqnoma\w*\s+\d|\bqizil bayroq|\bANIQ\b|[Ѐ-ӿ]/i;
+// Ichki havolalardagi raqamlar (yo'riqnoma bandi, daraja, kompetensiya kodi) ma'noga kirmaydi — solishtirishdan chiqariladi
+const internal = (s: string) =>
+  s.replace(/\d+(?:-, \d+)*(?:- va \d+)?-band\w*/g, "").replace(/\b\d-daraja\w*/g, "").replace(/\b[HSV]\d\b/g, "");
+const nums = (s: string) => (internal(s).match(/\d+(?:[.,]\d+)*/g) ?? []).map((x) => x.replace(/[ ,.]/g, "")).sort();
+const LEAK = /yashirin (tuzoq|imkoniyat|bog'liqlik)|\btuzoq\b|\b[345]-darajada\b|yo'riqnoma\w*\s+\d|\bqizil bayroq/i;
+const LEAK_CS = /\bANIQ\b|[Ѐ-ӿ]/;
 
 const errors: string[] = [];
 const warns: string[] = [];
@@ -44,8 +48,10 @@ next.forEach((n, i) => {
   // Raqamlar: savol + variantlar matnidagi barcha sonlar saqlanishi shart
   const before = nums([o.stem, ...(o.options ?? []).map(text)].join(" ")).join(",");
   const after = nums([n.stem, ...(n.options ?? []).map(text)].join(" ")).join(",");
-  if (before !== after) errors.push(`${id}: raqamlar o'zgargan`);
-  if (LEAK.test([n.stem, ...(n.options ?? []).map(text)].join(" "))) warns.push(`${id}: ichki so'z yoki kirill qolgan`);
+  // ALLOW_NUMS="14,…" — ataylab olib tashlangan raqamli ishora (masalan, tuzoqni ochib qo'ygan gap) uchun
+  const allowNums = (process.env.ALLOW_NUMS ?? "").split(",").includes(String(i + 1));
+  if (before !== after) (allowNums ? warns : errors).push(`${id}: raqamlar o'zgargan${allowNums ? " (ruxsat berilgan)" : ""}`);
+  if ([LEAK, LEAK_CS].some((r) => r.test([n.stem, ...(n.options ?? []).map(text)].join(" ")))) warns.push(`${id}: ichki so'z yoki kirill qolgan`);
   if (o.stem.includes("```") !== n.stem.includes("```") || o.stem.includes("|---") !== n.stem.includes("|---")) errors.push(`${id}: kod bloki/jadval tuzilishi o'zgargan`);
   if (n.options?.length) {
     const L = n.options.map((x) => text(x).length);
