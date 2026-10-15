@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { notFound } from "next/navigation";
 import { getAssessmentByToken } from "@/lib/attempt-access";
 import { Check } from "lucide-react";
@@ -11,7 +12,8 @@ export default async function DonePage({ params }: PageProps<"/t/[token]/done">)
   if (!a) notFound();
   const candidate = a.mode === "RECRUITING";
   return (
-    <main className="mesh-bg flex min-h-screen items-center justify-center px-5">
+    <main className="relative mesh-bg flex min-h-screen items-center justify-center px-5">
+      <ThemeToggle className="absolute right-3 top-3" />
       <div className="w-full max-w-sm text-center">
         <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-ok-t text-4xl text-ok" aria-hidden>
           <Check size={40} strokeWidth={2.6} />

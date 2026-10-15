@@ -5,6 +5,7 @@ import { finishAttempt, logSignal, saveResponse } from "../actions";
 import { Check, ChevronLeft, ChevronRight, Flag, LayoutGrid } from "lucide-react";
 import { Ico } from "@/components/ui";
 import { RichText, isRich } from "@/components/rich-text";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export type RunnerQuestion = {
   id: string;
@@ -191,6 +192,7 @@ export function Runner({
           >
             {fmt(left)}
           </div>
+          <ThemeToggle className="-mr-2" />
         </div>
         <div className="h-0.5 w-full bg-soft" aria-hidden>
           <div className="h-full bg-br transition-[width] duration-300" style={{ width: `${((index + 1) / questions.length) * 100}%` }} />

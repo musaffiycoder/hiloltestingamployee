@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { usePathname } from "next/navigation";
 import {
   ChartColumn,
@@ -9,7 +10,6 @@ import {
   LayoutDashboard,
   Library,
   LogOut,
-  Moon,
   PanelLeftClose,
   PanelLeftOpen,
   Scale,
@@ -17,7 +17,6 @@ import {
   Send,
   Settings,
   SlidersHorizontal,
-  Sun,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -81,16 +80,6 @@ export function HrShell({
     } catch {}
   };
 
-  const toggleTheme = () => {
-    const el = document.documentElement;
-    const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const current = el.dataset.theme ?? (systemDark ? "dark" : "light");
-    const next = current === "dark" ? "light" : "dark";
-    el.dataset.theme = next;
-    try {
-      localStorage.setItem("baholash_theme", next);
-    } catch {}
-  };
 
   const title = TITLES.find(([p]) => pathname.startsWith(p))?.[1] ?? "Baholash";
   const initials = user.name
@@ -175,14 +164,7 @@ export function HrShell({
           <span className="hidden md:block" />
           <h1 className="col-start-2 truncate text-[17px] font-semibold md:col-start-1 md:row-start-1 md:text-left">{title}</h1>
           <div className="col-start-3 flex items-center justify-end gap-1 md:col-start-3">
-            <button
-              onClick={toggleTheme}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-brd hover:bg-soft"
-              aria-label="Mavzuni almashtirish"
-            >
-              <Sun size={20} className="theme-ic-sun" aria-hidden />
-              <Moon size={20} className="theme-ic-moon" aria-hidden />
-            </button>
+            <ThemeToggle />
             <Link
               href="/hr/takliflar"
               className="hidden min-h-9 items-center gap-1 rounded-full bg-brf px-4 text-[15px] font-semibold text-onbr sm:inline-flex"

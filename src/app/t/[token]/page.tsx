@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { notFound, redirect } from "next/navigation";
 import { getAssessmentByToken, isExpired } from "@/lib/attempt-access";
 import { getPositionPlan } from "@/lib/test-config";
@@ -29,7 +30,8 @@ export default async function InvitePage({ params, searchParams }: PageProps<"/t
   ];
 
   return (
-    <main className="mesh-bg min-h-screen px-4 py-10">
+    <main className="relative mesh-bg min-h-screen px-4 py-10">
+      <ThemeToggle className="absolute right-3 top-3" />
       <div className="mx-auto w-full max-w-md">
         <div className="mb-6 px-1">
           <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-[12px] bg-gradient-to-b from-[#ff8a3d] to-[#e5530a] text-2xl font-bold text-white">
