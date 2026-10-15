@@ -21,7 +21,7 @@ export default async function InvitesPage() {
   const [positions, invites] = await Promise.all([
     db.position.findMany({
       orderBy: { title: "asc" },
-      include: { competencies: { select: { _count: { select: { questions: true } } } } },
+      include: { competencies: { select: { _count: { select: { questions: { where: { status: "ACTIVE" } } } } } } },
     }),
     db.assessment.findMany({ orderBy: { createdAt: "desc" }, take: 50, include: { position: true } }),
   ]);

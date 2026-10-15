@@ -30,7 +30,7 @@ export async function createInvite(_: InviteState, form: FormData): Promise<Invi
 
   const position = await db.position.findUnique({
     where: { id: parsed.data.positionId },
-    include: { competencies: { include: { _count: { select: { questions: true } } } } },
+    include: { competencies: { include: { _count: { select: { questions: { where: { status: "ACTIVE" } } } } } } },
   });
   if (!position) return { error: "Lavozim topilmadi" };
   if (position.competencies.every((c) => c._count.questions === 0)) {
