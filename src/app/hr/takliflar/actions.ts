@@ -97,3 +97,23 @@ export async function restartInvite(id: string) {
   revalidatePath("/hr/takliflar");
   return { ok: true as const };
 }
+
+/** Jarayondagi testga vaqt qo'shish (daqiqa). Javoblar va boshlangan vaqt o'zgarmaydi. */
+export async function extendInvite(id: string, minutes: number) {
+  const user = await requireWriter();
+  if (!Number.isInteger(minutes) || minutes < 5 || minutes > 240) return { ok: false as const, error: "5 dan 240 daqiqagacha kiriting" };
+  const attempt = await db.attempt.findFirst({
+    where: { assessmentId: id, finishedAt: null },
+    select: { id: true, timeLimitSec: true, questionIds: true },
+  });
+  if (!attempt) return { ok: false as const, error: "Jarayondagi test topilmadi" };
+  const ids = (attempt.questionIds as string[] | null) ?? [];
+  const base =
+    attempt.timeLimitSec ??
+    (await db.question.findMany({ where: { id: { in: ids } }, select: { timeLimitSec: true } })).reduce((s, q) => s + q.timeLimitSec, 0);
+  const next = base + minutes * 60;
+  await db.attempt.update({ where: { id: attempt.id }, data: { timeLimitSec: next } });
+  await db.auditLog.create({ data: { actorId: user.id, action: "attempt.extend", entity: "Attempt", entityId: attempt.id, meta: { fromSec: base, toSec: next } } });
+  revalidatePath("/hr/takliflar");
+  return { ok: true as const, minutes: Math.round(next / 60) };
+}

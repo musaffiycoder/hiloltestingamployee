@@ -82,6 +82,7 @@ export default async function Dashboard() {
     "invite.create": "Yangi taklif yaratildi",
     "invite.cancel": "Taklif bekor qilindi",
     "invite.restart": "Test qayta boshlashga ochildi",
+    "attempt.extend": "Jarayondagi testga vaqt qo'shildi",
     "result.decision": "Qaror qayd etildi",
     "result.context": "Natijaga HR izohi qo'shildi",
     "result.pdf": "PDF hisobot yuklab olindi",

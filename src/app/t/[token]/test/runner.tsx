@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { finishAttempt, logSignal, saveResponse } from "../actions";
+import { finishAttempt, logSignal, remainingTime, saveResponse } from "../actions";
 import { Check, ChevronLeft, ChevronRight, Flag, LayoutGrid } from "lucide-react";
 import { Ico } from "@/components/ui";
 import { RichText, isRich } from "@/components/rich-text";
@@ -115,9 +115,31 @@ export function Runner({
     const t = setInterval(() => setLeft((s) => Math.max(0, s - 1)), 1000);
     return () => clearInterval(t);
   }, []);
+  // Har daqiqada server bilan solishtirish: HR vaqt qo'shsa, sahifani yangilamasdan ko'rinadi
   useEffect(() => {
-    if (left === 0) submit();
-  }, [left, submit]);
+    const t = setInterval(async () => {
+      try {
+        const r = await remainingTime(token);
+        if (typeof r === "number") setLeft(r);
+      } catch {}
+    }, 60_000);
+    return () => clearInterval(t);
+  }, [token]);
+  useEffect(() => {
+    if (left !== 0 || finished.current) return;
+    // Topshirishdan oldin serverdan tekshiramiz: vaqt uzaytirilgan bo'lsa davom etadi
+    let cancelled = false;
+    remainingTime(token)
+      .then((r) => {
+        if (cancelled) return;
+        if (typeof r === "number" && r > 5) setLeft(r);
+        else submit();
+      })
+      .catch(() => !cancelled && submit());
+    return () => {
+      cancelled = true;
+    };
+  }, [left, submit, token]);
 
   // Fokus yo'qolishi signali (rozilik asosida, neytral)
   useEffect(() => {

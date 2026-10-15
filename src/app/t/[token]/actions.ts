@@ -59,6 +59,17 @@ export async function saveResponse(token: string, input: unknown) {
   return { ok: true as const };
 }
 
+/** Serverdagi qolgan vaqt (soniya): HR testni uzaytirsa, ochiq sahifa ham yangi vaqtni oladi. */
+export async function remainingTime(token: string): Promise<number | null> {
+  const ctx = await activeAttempt(token);
+  if (!ctx) return null;
+  const ids = (ctx.attempt.questionIds as string[] | null) ?? [];
+  const total =
+    ctx.attempt.timeLimitSec ??
+    (await db.question.findMany({ where: { id: { in: ids } }, select: { timeLimitSec: true } })).reduce((sum, q) => sum + q.timeLimitSec, 0);
+  return Math.max(0, Math.floor(total - (Date.now() - ctx.attempt.startedAt.getTime()) / 1000));
+}
+
 export async function logSignal(token: string, type: "focus_lost" | "paste") {
   const ctx = await activeAttempt(token);
   if (!ctx || (type !== "focus_lost" && type !== "paste")) return;
