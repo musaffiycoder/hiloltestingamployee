@@ -16,6 +16,8 @@ export type GradeInput = {
   level: number;
   rubric: string[];
   answer: string;
+  /** HR izohi: namunaviy javob, kutilgan sonlar va tuzoq (nomzodga ko'rsatilmaydi). */
+  explanation?: string | null;
 };
 
 /** Ikki mustaqil baholovchi: A — bandma-band tekshiruvchi, B — avval mazmunni baholab, so'ng rubrikaga solishtiruvchi. */
@@ -36,13 +38,16 @@ QOIDALAR:
 3. Ball: 0, 0.25, 0.5, 0.75 yoki 1. Qoplangan band ulushiga mos; qisman to'g'ri bo'lsa oraliq ball.
 4. "rationale" — 2–3 gap, o'zbek lotin, nomzod so'zidan aniq iqtibos bilan. Shaxsga yoki xarakterga baho berma — faqat javob mazmuniga.
 5. "confidence": javob mazmuni rubrikaga aniq mos kelsa yuqori; javob noaniq, mavzudan chetga chiqqan yoki rubrika yetarli bo'lmasa past (0.6 dan kam).
-6. Himoyalangan belgilar (yosh, jins, millat, din, sog'liq, nikoh holati) baholashga ta'sir qilmaydi.`;
+6. Himoyalangan belgilar (yosh, jins, millat, din, sog'liq, nikoh holati) baholashga ta'sir qilmaydi.
+7. Hisob-kitob bandlari: nomzod soni rubrikadagi kutilgan songa yaxlitlash farqi bilan (±0,1 punkt) mos kelsa — band bajarilgan. Formula/usul to'g'ri, lekin arifmetik xato bo'lsa — qisman. Noto'g'ri maxraj yoki noto'g'ri formula — bajarilmagan.
+8. «Tuzoqni sezdi» turidagi band faqat nomzod tuzoqni o'zi aniq tilga olgan va to'g'ri hal qilgan bo'lsa bajarilgan hisoblanadi.
+9. HR IZOHI — kalitning bir qismi (namunaviy javob va kutilgan qiymatlar); undan rubrikani to'g'ri tushunish uchun foydalan, lekin rubrikada yo'q talab qo'shma.`;
 
   const user = `SAVOL (qiyinlik ${i.level}/5): ${i.stem}
 
 RUBRIKA (indeks bilan):
 ${i.rubric.map((r, k) => `${k}. ${r}`).join("\n")}
-
+${i.explanation ? `\nHR IZOHI (namunaviy javob / kutilgan qiymatlar):\n${i.explanation}\n` : ""}
 NOMZOD JAVOBI:
 ${untrusted(i.answer)}`;
   return { system, user };
@@ -154,7 +159,8 @@ MUTLAQ CHEGARALAR:
 QANDAY TAHLIL QILISH:
 - Asosiy mezon — LAVOZIM TALABI (kriterial baho): nomzod talab darajasiga yetdimi. Boshqalar bilan qiyoslash ikkinchi darajali; qiyoslash ma'lumoti yo'q bo'lsa buni kamchilik deb yozma, talab darajasiga nisbatan tahlil qil.
 - Birinchi o'lchov oldingi natijasi yo'qligi kamchilik emas — bu bazaviy nuqta. Faqat takroriy o'lchovda dinamikani yoz.
-- Qiyinligi 1–2 bo'lgan savolda xato — asosiy bilim teshigi; 4–5 da xato — kutilgan, tanqidiy emas.
+- Savollar faqat 3 (Yaxshi) va 4 (Professional) darajada va ataylab qiyin: hisob-kitob, artefaktdagi xatoni topish, keys va ish natijasi yozish. Talab darajasi 4 bo'lgan kompetensiyada 4-daraja savoldagi xato — talabga yetmaslik belgisi (kutilgan deb hisoblama); talab 3 bo'lsa, 3-daraja savoldagi xato — asosiy bilim teshigi.
+- Ochiq topshiriqlarda (keys, hisob, ish natijasi) rubrika bandlari va AI asosi berilgan: qaysi band bajarilmaganini (masalan, hisob xatosi, tuzoqni sezmagan) aniq ko'rsat.
 - Tanlangan NOTO'G'RI variantning o'zi diagnoz: u qanday chalkashlik yoki odatni ko'rsatadi? («bilmaydi» deb umumlashtirma.)
 - Bir kompetensiyada oson savollar to'g'ri, qiyinlari xato bo'lsa — bilim bor, chuqurligi yetmaydi; oson savollar ham xato bo'lsa — bilim yo'q. Bular turli rejalarni talab qiladi.
 - HARD (kasbiy bilim) va SOFT (xulq/muloqot) natijalarini alohida baholab, o'zaro bog'la (masalan, texnik bilim yuqori, lekin eskalatsiya va muloqot past).

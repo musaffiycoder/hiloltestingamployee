@@ -27,6 +27,7 @@ export type GradingSummary = {
   lowConfidence: number;
   disagreement: number;
   injection: number;
+  failed: number;
   inputTokens: number;
   outputTokens: number;
 };
@@ -37,7 +38,7 @@ export async function gradeOpenAnswers(attemptId: string, client?: AiClient): Pr
     where: { attemptId, question: { type: "OPEN" } },
     include: { question: true },
   });
-  const summary: GradingSummary = { graded: 0, tooShort: 0, noRubric: 0, lowConfidence: 0, disagreement: 0, injection: 0, inputTokens: 0, outputTokens: 0 };
+  const summary: GradingSummary = { graded: 0, tooShort: 0, noRubric: 0, lowConfidence: 0, disagreement: 0, injection: 0, failed: 0, inputTokens: 0, outputTokens: 0 };
 
   const todo = responses.filter((r) => r.scoreSource !== "human" && !r.reviewed);
   const queue = [...todo];
@@ -59,7 +60,7 @@ export async function gradeOpenAnswers(attemptId: string, client?: AiClient): Pr
         continue;
       }
       // Ikki mustaqil baholovchi (A/B): kelishmasa — odamga yo'naltiriladi
-      const input = { stem: r.question.stem, level: r.question.level, rubric, answer: text };
+      const input = { stem: r.question.stem, level: r.question.level, rubric, answer: text, explanation: r.question.explanation };
       const run = (variant: "A" | "B") => {
         const p = gradePrompt(input, variant);
         return callJson({
@@ -68,12 +69,22 @@ export async function gradeOpenAnswers(attemptId: string, client?: AiClient): Pr
           user: p.user,
           jsonSchema: gradeJsonSchema,
           parse: (x) => gradeSchema.parse(x),
-          maxTokens: 2000,
+          maxTokens: 12000,
           effort: aiEffort().grader,
+          // Uzun keys va javoblar (jadval, hisob) uchun: 45 s yetmasligi mumkin
+          timeoutMs: 120_000,
           client,
         });
       };
-      const [ra, rb] = await Promise.all([run("A"), run("B")]);
+      let ra, rb;
+      try {
+        [ra, rb] = await Promise.all([run("A"), run("B")]);
+      } catch (e) {
+        // Bitta javob xatosi butun jarayonni to'xtatmasin: javob odam tekshiruviga qoladi, tahlil davom etadi
+        console.error("grade failed", r.id, (e as Error).message);
+        summary.failed++;
+        continue;
+      }
       const c = combineGrades(ra.data, rb.data);
       await db.response.update({
         where: { id: r.id },
@@ -94,7 +105,8 @@ export async function gradeOpenAnswers(attemptId: string, client?: AiClient): Pr
       summary.outputTokens += ra.outputTokens + rb.outputTokens;
     }
   };
-  await Promise.all(Array.from({ length: Math.min(4, todo.length) }, worker));
+  // Hamma ochiq javob bir vaqtda (8 tagacha): tahlilga vaqt qolishi uchun
+  await Promise.all(Array.from({ length: Math.min(8, todo.length) }, worker));
 
   await computeAttempt(attemptId);
   await logUsage(attemptId, "grade", aiModels().grader, summary.inputTokens, summary.outputTokens);
@@ -143,7 +155,8 @@ export async function buildAnalysisInput(attemptId: string): Promise<{ input: An
       comp: `${q.competency.code} ${q.competency.name}`,
       level: q.level,
       type: q.type,
-      stem: q.stem,
+      // Uzun keys matni tahlil so'rovini og'irlashtirmasin (ochiq savol to'liq qoladi)
+      stem: q.type !== "OPEN" && q.stem.length > 1200 ? `${q.stem.slice(0, 1200)}…` : q.stem,
       score: r.score,
       scoreSource: r.scoreSource,
       rationale: r.rationale,
@@ -254,7 +267,7 @@ export async function buildAnalysisInput(attemptId: string): Promise<{ input: An
     questions,
     timing: { spentMin, avgSec, fastCount: times.filter((t) => t < 20000).length, total: ordered.length },
     conditions: {
-      allowedMin: Math.round(ordered.reduce((x, r) => x + r.question.timeLimitSec, 0) / 60),
+      allowedMin: attempt.timeLimitSec ? Math.round(attempt.timeLimitSec / 60) : Math.round(ordered.reduce((x, r) => x + r.question.timeLimitSec, 0) / 60),
       unanswered: questions.filter((q) => q.type === "OPEN" ? !q.answer?.trim() : q.chosen === undefined).length,
       focusLost: attempt.signals.filter((x) => x.type === "focus_lost").length,
       paste: attempt.signals.filter((x) => x.type === "paste").length,
