@@ -2,6 +2,7 @@
 // Natija: data/gemini/NN-<lavozim>.md (gitignored). Ishga tushirish: npx tsx scripts/build-gemini-prompts.ts
 import fs from "node:fs";
 import path from "node:path";
+import { HUMANIZE_RULES } from "./humanize-rules";
 
 type Comp = { id: string; name: string; type: "soft" | "hard"; target: number; weight: number; critical: boolean };
 type Pos = { id: string; title: string; card: string; department?: string; competencies: Comp[] };
@@ -309,6 +310,11 @@ Qoidalar:
 - **Kamida 8 ta savol** (CALC, OCALC va qisman DIAG/KNOW formatlarida) shu metrikalarni bevosita tekshirsin: ta'rifi va formulasi, qayerda (qaysi vosita/hisobot/ekranda) va qanday o'lchanadi, berilgan ma'lumotdan hisoblash, natijani to'g'ri talqin qilish, qaysi holatda ko'rsatkich chalg'itadi.
 - Raqamlar real ko'rinsin (yumaloq emas: 12 437, 3,8%, 1 h 14 min) va hisoblash kalkulyatorsiz 1–2 daqiqada bajarilsin.
 - Hisob savolida to'g'ri javobni o'zing **ikki marta hisoblab** tekshir.
+
+## INSON TILIDA YOZISH (humanize) — majburiy
+
+Savollar tajribali hamkasb yozganday o'qilishi kerak, AI yozgani sezilmasin:
+${HUMANIZE_RULES}
 
 ## FORMATLAR (blueprint'dagi "format" maydoni)
 
