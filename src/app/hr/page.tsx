@@ -95,6 +95,11 @@ export default async function Dashboard() {
     "question.activate_drafts": "Qoralama savollar faollashtirildi",
     "testconfig.update": "Test tarkibi o'zgartirildi",
     "testconfig.reset": "Test tarkibi standartga qaytarildi",
+    "testconfig.time": "Test vaqti o'zgartirildi",
+    "department.create": "Bo'lim qo'shildi",
+    "department.rename": "Bo'lim nomi o'zgartirildi",
+    "department.delete": "Bo'lim o'chirildi",
+    "position.department": "Test bo'limga biriktirildi",
     "user.create": "Yangi foydalanuvchi qo'shildi",
     "user.password_change": "Parol almashtirildi",
   };

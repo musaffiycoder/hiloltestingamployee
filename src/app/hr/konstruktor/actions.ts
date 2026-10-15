@@ -8,7 +8,7 @@ import { requireWriter } from "@/lib/auth";
 const configSchema = z.object({
   positionId: z.string().min(1),
   perCompetency: z.record(z.string().min(1).max(10), z.number().int().min(0).max(200)),
-  timeLimitMin: z.number().int().min(5).max(300).nullable(),
+  timeLimitMin: z.number().int().min(5).max(600).nullable(),
   order: z.enum(["competency", "mixed"]),
 });
 

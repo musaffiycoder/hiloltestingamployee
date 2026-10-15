@@ -27,7 +27,15 @@ async function main() {
     const pos = await prisma.position.upsert({
       where: { code: p.id },
       update: { title: p.title, cardFile: p.card, ...(p.department ? { department: p.department } : {}) },
-      create: { code: p.id, title: p.title, cardFile: p.card, ...(p.department ? { department: p.department } : {}) },
+      // Yangi lavozim bo'limga bog'lanadi; mavjudining bo'limini HR boshqaradi (update'da tegilmaydi)
+      create: {
+        code: p.id,
+        title: p.title,
+        cardFile: p.card,
+        ...(p.department
+          ? { department: p.department, departmentRef: { connectOrCreate: { where: { name: p.department }, create: { name: p.department } } } }
+          : {}),
+      },
     });
     let order = 0;
     for (const c of p.competencies) {

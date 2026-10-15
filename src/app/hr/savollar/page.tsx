@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { RichText, isRich, stemPreview } from "@/components/rich-text";
 import { FilterLink as Link } from "@/components/filter-link";
-import { Check, ChevronRight, Flag, Search } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Flag, Search } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { Card, LevelChip, Pill, SectionTitle } from "@/components/ui";
 import { ActivateDrafts } from "./activate-drafts";
+import { TestsOverview } from "./tests-overview";
 import { QUESTION_TYPE_LABELS } from "@/lib/labels";
 import type { Prisma } from "@prisma/client";
 
@@ -22,6 +23,9 @@ export default async function QuestionBankPage({ searchParams }: PageProps<"/hr/
   const lvl = typeof sp.l === "string" ? Number(sp.l) : 0;
   const q = typeof sp.q === "string" ? sp.q.trim().slice(0, 80) : "";
   const st = sp.status === "ACTIVE" || sp.status === "DRAFT" || sp.status === "RETIRED" ? sp.status : "";
+
+  // Parametrsiz — bo'limlar bo'yicha test kartalari; qidiruv/filtr yoki ?view=list — savollar ro'yxati
+  if (sp.view !== "list" && !pos && !lvl && !q && !st) return <TestsOverview canWrite={canWrite} />;
 
   const where: Prisma.QuestionWhereInput = {
     ...(pos ? { competency: { position: { code: pos } } } : {}),
@@ -48,7 +52,7 @@ export default async function QuestionBankPage({ searchParams }: PageProps<"/hr/
 
   const href = (patch: Record<string, string | undefined>) => {
     const p = new URLSearchParams();
-    const m = { p: pos, l: lvl ? String(lvl) : "", q, status: st, ...patch };
+    const m = { view: "list", p: pos, l: lvl ? String(lvl) : "", q, status: st, ...patch };
     for (const [k, v] of Object.entries(m)) if (v) p.set(k, v);
     const s = p.toString();
     return `/hr/savollar${s ? `?${s}` : ""}`;
@@ -70,7 +74,11 @@ export default async function QuestionBankPage({ searchParams }: PageProps<"/hr/
 
   return (
     <div className="flex flex-col gap-4">
+      <Link href="/hr/savollar" className="inline-flex items-center gap-1 self-start text-[15px] font-semibold text-brd">
+        <ChevronLeft size={17} aria-hidden /> Testlar
+      </Link>
       <form action="/hr/savollar" className="relative">
+        <input type="hidden" name="view" value="list" />
         {pos && <input type="hidden" name="p" value={pos} />}
         {lvl ? <input type="hidden" name="l" value={lvl} /> : null}
         {st && <input type="hidden" name="status" value={st} />}

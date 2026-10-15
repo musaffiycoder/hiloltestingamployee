@@ -180,7 +180,7 @@ export function BuilderEditor({ plan, readOnly }: { plan: PositionPlan; readOnly
                 <input
                   type="number"
                   min={5}
-                  max={300}
+                  max={600}
                   value={timeMin}
                   disabled={readOnly}
                   onChange={(e) => setTimeMin(Number(e.target.value) || 0)}

@@ -71,12 +71,26 @@ model User {
   ratings     CalibrationRating[]
 }
 
+/// Bo'lim: testlar (lavozimlar) shu bo'yicha guruhlanadi.
+model Department {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  positions Position[]
+}
+
 model Position {
   id         String  @id @default(cuid())
   code       String  @unique
   title      String
   department String  @default("Dasturlash bo'limi")
+  /// Savollar bankidagi guruh (HR qo'shadi va boshqaradi). null — bo'limsiz.
+  departmentId String?
   cardFile   String?
+
+  departmentRef Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
 
   competencies Competency[]
   assessments  Assessment[]
