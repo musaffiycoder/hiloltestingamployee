@@ -41,6 +41,8 @@ export type Evaluation = {
 
 export const PASS_RATIO = 0.7;
 export const HALF_STEP_RATIO = 0.5;
+/** Umumiy ball shundan past bo'lsa — mos emas (to'g'ri javoblar ulushi, %). */
+export const MIN_OVERALL_PCT = 50;
 
 /**
  * Kompetensiya darajasi = ketma-ket (pastdan yuqoriga) ≥70% bo'lgan eng yuqori daraja.
@@ -103,9 +105,14 @@ export function evaluate(
 
   const scored = competencies.filter((c) => c.level !== null);
   const unscored = competencies.filter((c) => c.level === null).map((c) => c.code);
+  // Umumiy ball = kompetensiyalar bo'yicha to'g'ri javob ulushining vaznli o'rtachasi.
+  // Daraja/5 ishlatilmaydi: bank faqat 3–4 darajani sinaydi, shuning uchun u 40–80% oralig'iga siqilib qolardi.
   const wSum = scored.reduce((s, c) => s + c.weight, 0);
-  const overallPct =
-    wSum === 0 ? 0 : (scored.reduce((s, c) => s + (c.level as number) * c.weight, 0) / (5 * wSum)) * 100;
+  const ratioOf = (id: string) => {
+    const arr = itemsByCompetency[id] ?? [];
+    return arr.reduce((s, x) => s + x.score, 0) / arr.length;
+  };
+  const overallPct = wSum === 0 ? 0 : (scored.reduce((s, c) => s + ratioOf(c.id) * c.weight, 0) / wSum) * 100;
 
   const critical = scored.filter((c) => c.critical);
   const criticalFloor = critical.some((c) => (c.level as number) <= 2);
@@ -121,7 +128,7 @@ export function evaluate(
   } else if (criticalFloor) {
     verdict = "MOS_EMAS";
     reasons.push("Kritik kompetensiya 2 va undan past");
-  } else if (scored.length > 0 && overallPct < 50) {
+  } else if (scored.length > 0 && overallPct < MIN_OVERALL_PCT) {
     verdict = "MOS_EMAS";
     reasons.push("Umumiy ball 50% dan past");
   } else if (criticalLow) {

@@ -2,7 +2,7 @@ import "server-only";
 import { db } from "@/lib/db";
 import { computeAttempt } from "@/lib/attempt";
 import { levelName } from "@/lib/labels";
-import type { VerdictKey } from "@/lib/scoring";
+import { PASS_RATIO, type VerdictKey } from "@/lib/scoring";
 import type { StoredAnalysis } from "@/lib/ai/schemas";
 
 type Opt = string | { text: string; points?: number; flag?: boolean };
@@ -73,8 +73,7 @@ export async function loadReport(attemptId: string): Promise<ReportData | null> 
   const levelBy = new Map(attempt.scores.map((s) => [s.competencyId, s.level]));
   const asked = new Set(attempt.responses.map((r) => r.question.competencyId));
   const comps = assessment.position.competencies.filter((c) => asked.has(c.id));
-  const wSum = comps.reduce((s, c) => s + c.weight, 0) || 1;
-  const requiredPct = Math.round((comps.reduce((s, c) => s + c.target * c.weight, 0) / (5 * wSum)) * 100);
+  const requiredPct = Math.round(PASS_RATIO * 100);
   const scored = comps.filter((c) => levelBy.get(c.id) != null);
   const sw = scored.reduce((s, c) => s + c.weight, 0);
   const weightedLevel = sw ? scored.reduce((s, c) => s + (levelBy.get(c.id) as number) * c.weight, 0) / sw : null;

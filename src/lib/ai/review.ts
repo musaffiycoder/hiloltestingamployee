@@ -1,4 +1,5 @@
 import "server-only";
+import { PASS_RATIO } from "@/lib/scoring";
 import { db } from "@/lib/db";
 import { costUsd } from "./pricing";
 import { computeAttempt } from "@/lib/attempt";
@@ -138,8 +139,7 @@ export async function buildAnalysisInput(attemptId: string): Promise<{ input: An
   const levelBy = new Map(attempt.scores.map((s) => [s.competencyId, s.level]));
   const asked = new Set(attempt.responses.map((r) => r.question.competencyId));
   const comps = assessment.position.competencies.filter((c) => asked.has(c.id));
-  const wSum = comps.reduce((s, c) => s + c.weight, 0) || 1;
-  const requiredPct = Math.round((comps.reduce((s, c) => s + c.target * c.weight, 0) / (5 * wSum)) * 100);
+  const requiredPct = Math.round(PASS_RATIO * 100);
 
   const ordered = attempt.responses
     .slice()

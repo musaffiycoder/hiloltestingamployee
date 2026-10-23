@@ -35,7 +35,15 @@ const pass = (l: number) => Array.from({ length: l }, (_, i) => ({ level: i + 1,
 // hammasi talabda -> MOS
 let r = evaluate(defs, { a: pass(3), b: pass(4), c: pass(4) });
 assert.equal(r.verdict, "MOS");
-assert.equal(Math.round(r.overallPct), 76);
+assert.equal(Math.round(r.overallPct), 100);
+
+// umumiy ball = to'g'ri javob ulushining vaznli o'rtachasi (daraja/5 emas)
+r = evaluate(defs, { a: [{ level: 3, score: 1 }, { level: 4, score: 0 }], b: [{ level: 3, score: 0 }, { level: 4, score: 0 }], c: [{ level: 3, score: 1 }, { level: 4, score: 1 }] });
+assert.equal(r.overallPct, 50); // 0.5*20 + 0*40 + 1*40 = 50
+
+// hech narsa topmagan — 0%, 40% emas
+r = evaluate(defs, { a: [{ level: 3, score: 0 }], b: [{ level: 3, score: 0 }], c: [{ level: 3, score: 0 }] });
+assert.equal(r.overallPct, 0);
 
 // kritik 3 (talab 4) -> SHARTLI_MOS
 r = evaluate(defs, { a: pass(3), b: pass(3), c: pass(4) });

@@ -219,7 +219,7 @@ BO'LIMLAR:
   }
   lines.push("");
   lines.push("YAKUNIY NATIJA (formuladan):");
-  lines.push(`- Umumiy moslik: ${pct(a.overallPct)} (lavozim talabi: ${pct(a.requiredPct)})`);
+  lines.push(`- Umumiy ball (to'g'ri javoblarning kompetensiya vazni bo'yicha ulushi): ${pct(a.overallPct)} (daraja o'tish chegarasi: ${pct(a.requiredPct)})`);
   if (a.weightedLevel !== null) lines.push(`- Vaznli o'rtacha daraja: ${a.weightedLevel.toFixed(1)} / 5`);
   if (a.criticalFail) lines.push("- Ogohlantirish: kritik kompetensiya talabdan past");
   if (a.needsReview) lines.push("- Diqqat: ba'zi javoblar hali odam tomonidan tekshirilmagan, natija vaqtinchalik");
