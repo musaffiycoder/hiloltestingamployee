@@ -34,7 +34,7 @@ export default async function TestPage({ params }: { params: Promise<{ code: str
     db.department.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { id: true, name: true } }),
     db.question.count({ where: { status: "DRAFT", competency: { positionId: position.id } } }),
   ]);
-  const minutes = plan.timeLimitMin ?? plan.estimatedMin;
+  const minutes = plan.totalMin;
   const countBy = new Map(plan.competencies.map((c) => [c.id, c]));
   let no = 0;
 
@@ -55,7 +55,7 @@ export default async function TestPage({ params }: { params: Promise<{ code: str
       <div className="grid grid-cols-3 gap-3">
         {[
           { icon: ListChecks, l: "Testda", v: `${plan.total} savol`, d: `bankda ${plan.competencies.reduce((s, c) => s + c.available, 0)} faol` },
-          { icon: Clock3, l: "Vaqt", v: fmtDuration(minutes), d: plan.timeLimitMin ? "qo'lda belgilangan" : "savollar bo'yicha" },
+          { icon: Clock3, l: "Vaqt", v: fmtDuration(minutes), d: `test ${plan.sections.closed.minutes} + yozma ${plan.sections.open.minutes} daq` },
           { icon: Scale, l: "Kompetensiya", v: `${plan.competencies.length}`, d: drafts ? `${drafts} ta qoralama` : "qoralama yo'q" },
         ].map((k) => (
           <Card key={k.l} className="p-4">
@@ -73,8 +73,7 @@ export default async function TestPage({ params }: { params: Promise<{ code: str
         positionId={position.id}
         departmentId={position.departmentId}
         departments={departments}
-        timeLimitMin={plan.timeLimitMin}
-        estimatedMin={plan.estimatedMin}
+        sections={plan.sections}
         readOnly={!canWrite}
       />
       {canWrite && (

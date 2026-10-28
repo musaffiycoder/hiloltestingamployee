@@ -4,11 +4,9 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CircleCheck, Clock3, FolderOpen, TriangleAlert } from "lucide-react";
 import { Card, Ico } from "@/components/ui";
+import { SectionTimeFields, validSectionTimes, type SectionTimes } from "@/components/section-times";
 import { setPositionDepartment, setTestTime, type ActionState } from "../../test-actions";
 
-const seg = (on: boolean) =>
-  `flex h-8 flex-1 items-center justify-center rounded-[8px] px-2 text-[13px] font-semibold ${on ? "bg-card text-tx shadow-sm" : "text-tx2"}`;
-const num = "h-10 w-16 rounded-[10px] bg-soft px-2 text-center text-[17px] tabular-nums outline-none focus:ring-2 focus:ring-br/40";
 
 function Status({ state }: { state: ActionState }) {
   if (!state) return null;
@@ -24,31 +22,24 @@ export function TestSettings({
   positionId,
   departmentId,
   departments,
-  timeLimitMin,
-  estimatedMin,
+  sections,
   readOnly,
 }: {
   positionId: string;
   departmentId: string | null;
   departments: { id: string; name: string }[];
-  timeLimitMin: number | null;
-  estimatedMin: number;
+  sections: Record<"closed" | "open", { count: number; estimatedMin: number; timeMin: number | null }>;
   readOnly: boolean;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [depState, setDepState] = useState<ActionState>(null);
   const [timeState, setTimeState] = useState<ActionState>(null);
-  const [mode, setMode] = useState<"auto" | "manual">(timeLimitMin ? "manual" : "auto");
-  const initial = timeLimitMin ?? estimatedMin;
-  const [h, setH] = useState(Math.floor(initial / 60));
-  const [m, setM] = useState(initial % 60);
-  const total = h * 60 + m;
-  const tooShort = mode === "manual" && total < estimatedMin * 0.7;
+  const [times, setTimes] = useState<SectionTimes>({ closed: sections.closed.timeMin, open: sections.open.timeMin });
 
   const saveTime = () =>
     start(async () => {
-      const r = await setTestTime({ positionId, minutes: mode === "manual" ? total : null });
+      const r = await setTestTime({ positionId, closedMin: times.closed, openMin: times.open });
       setTimeState(r);
       if (r?.ok) router.refresh();
     });
@@ -88,54 +79,12 @@ export function TestSettings({
           <Ico icon={Clock3} size={15} className="mr-1.5 text-brd" />
           Bajarish vaqti
         </span>
-        <div className="flex rounded-[10px] bg-soft p-0.5" role="radiogroup" aria-label="Bajarish vaqti">
-          <button type="button" role="radio" aria-checked={mode === "auto"} disabled={readOnly} onClick={() => setMode("auto")} className={seg(mode === "auto")}>
-            Avtomatik
-          </button>
-          <button type="button" role="radio" aria-checked={mode === "manual"} disabled={readOnly} onClick={() => setMode("manual")} className={seg(mode === "manual")}>
-            Qo&apos;lda
-          </button>
-        </div>
-        <p className="text-[13px] text-tx2">
-          Savollar vaqtining yig&apos;indisi: {Math.floor(estimatedMin / 60)} soat {estimatedMin % 60} daqiqa
-        </p>
-        {mode === "manual" && (
-          <div className="flex items-center gap-2 text-[15px]">
-            <input
-              type="number"
-              min={0}
-              max={10}
-              value={h}
-              disabled={readOnly}
-              onChange={(e) => setH(Math.max(0, Math.min(10, Number(e.target.value) || 0)))}
-              aria-label="Soat"
-              className={num}
-            />
-            soat
-            <input
-              type="number"
-              min={0}
-              max={59}
-              value={m}
-              disabled={readOnly}
-              onChange={(e) => setM(Math.max(0, Math.min(59, Number(e.target.value) || 0)))}
-              aria-label="Daqiqa"
-              className={num}
-            />
-            daqiqa
-          </div>
-        )}
-        {tooShort && (
-          <p className="text-[13px] font-medium text-warn">
-            <Ico icon={TriangleAlert} size={13} className="mr-1" />
-            Savollar uchun tavsiya etilganidan ancha kam — nomzodlar ulgurmasligi mumkin.
-          </p>
-        )}
+        <SectionTimeFields estimates={sections} value={times} onChange={setTimes} readOnly={readOnly} />
         {!readOnly && (
           <button
             type="button"
             onClick={saveTime}
-            disabled={pending || (mode === "manual" && (total < 5 || total > 600))}
+            disabled={pending || !validSectionTimes(times)}
             className="h-10 self-start rounded-full bg-brf px-5 text-[15px] font-semibold text-onbr disabled:opacity-40"
           >
             {pending ? "Saqlanmoqda…" : "Vaqtni saqlash"}

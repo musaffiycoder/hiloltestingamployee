@@ -1,6 +1,8 @@
 // Test konstruktori: lavozim testi tarkibini sozlash va har bir urinish uchun savollarni tanlash.
 import { db } from "@/lib/db";
 import { SUPPORTED_TYPES } from "@/lib/labels";
+import { sectionOf, type Section } from "@/lib/sections";
+import { sectionEstimate } from "@/lib/test-config-math";
 
 export type TestOrder = "competency" | "mixed";
 
@@ -16,17 +18,33 @@ export type CompetencyPlan = {
   count: number;
   /** Bitta savolning o'rtacha vaqti (soniya). */
   avgSec: number;
+  /** Bankdagi faol savollar bo'limlar kesimida va har bo'limda bitta savolning o'rtacha vaqti. */
+  bySection: Record<Section, { available: number; avgSec: number }>;
+};
+
+export type SectionPlan = {
+  /** Testga tushadigan savollar soni (taxminan: kompetensiya ichidagi ulush bo'yicha). */
+  count: number;
+  /** Savollar vaqtining yig'indisi (daqiqa). */
+  estimatedMin: number;
+  /** Konstruktorda qo'lda belgilangan vaqt (daqiqa); null — avtomatik. */
+  timeMin: number | null;
+  /** Amaldagi vaqt (daqiqa). */
+  minutes: number;
 };
 
 export type PositionPlan = {
   positionId: string;
   configured: boolean;
   order: TestOrder;
-  timeLimitMin: number | null;
   competencies: CompetencyPlan[];
   total: number;
-  /** Tanlangan savollar vaqtining taxminiy yig'indisi (daqiqa). */
-  estimatedMin: number;
+  /** Ikki bo'lim: test (yopiq) va yozma (ochiq) savollar — har birining o'z vaqti. */
+  sections: Record<Section, SectionPlan>;
+  /** Ikki bo'lim amaldagi vaqtining yig'indisi (daqiqa). */
+  totalMin: number;
+  /** Qo'lda vaqt belgilanganmi (biror bo'limda). */
+  timeManual: boolean;
 };
 
 type Pool = { id: string; level: number; type: string; timeLimitSec: number; competencyId: string; sortOrder: number };
@@ -59,6 +77,10 @@ export async function getPositionPlan(positionId: string): Promise<PositionPlan>
   const competencies = comps.map((c) => {
     const mine = pool.filter((q) => q.competencyId === c.id);
     const available = mine.length;
+    const part = (sec: Section) => {
+      const qs = mine.filter((q) => sectionOf(q.type) === sec);
+      return { available: qs.length, avgSec: qs.length ? Math.round(qs.reduce((s, q) => s + q.timeLimitSec, 0) / qs.length) : 0 };
+    };
     const wanted = c.code in counts ? counts[c.code] : available;
     return {
       id: c.id,
@@ -69,18 +91,26 @@ export async function getPositionPlan(positionId: string): Promise<PositionPlan>
       available,
       count: Math.min(wanted, available),
       avgSec: available ? Math.round(mine.reduce((s, q) => s + q.timeLimitSec, 0) / available) : 90,
+      bySection: { closed: part("closed"), open: part("open") },
     };
   });
   const total = competencies.reduce((s, c) => s + c.count, 0);
-  const estimatedMin = Math.round(competencies.reduce((s, c) => s + c.count * c.avgSec, 0) / 60);
+  const est = sectionEstimate(competencies, (i) => competencies[i].count);
+  const mk = (sec: Section, timeMin: number | null): SectionPlan => ({
+    ...est[sec],
+    timeMin: est[sec].count ? timeMin : null,
+    minutes: est[sec].count ? (timeMin ?? Math.max(1, est[sec].estimatedMin)) : 0,
+  });
+  const sections = { closed: mk("closed", config?.closedTimeMin ?? null), open: mk("open", config?.openTimeMin ?? null) };
   return {
     positionId,
     configured: !!config,
     order: config?.order === "mixed" ? "mixed" : "competency",
-    timeLimitMin: config?.timeLimitMin ?? null,
     competencies,
     total,
-    estimatedMin,
+    sections,
+    totalMin: sections.closed.minutes + sections.open.minutes,
+    timeManual: config?.closedTimeMin != null || config?.openTimeMin != null,
   };
 }
 
@@ -133,12 +163,19 @@ export async function buildQuestionSet(positionId: string, rnd: () => number = M
     const n = c.code in counts ? Math.min(counts[c.code], mine.length) : mine.length;
     chosen.push(...pickBalanced(mine, n, rnd));
   }
-  const ordered =
-    config?.order === "mixed"
-      ? shuffle(chosen, rnd)
-      : chosen.sort((x, y) => x.sortOrder - y.sortOrder || x.level - y.level);
+  // Avval test (yopiq) savollar, keyin yozma savollar; tartib sozlamasi har bo'lim ichida qo'llanadi.
+  const arrange = (qs: Pool[]) =>
+    config?.order === "mixed" ? shuffle(qs, rnd) : qs.sort((x, y) => x.sortOrder - y.sortOrder || x.level - y.level);
+  const closed = arrange(chosen.filter((q) => sectionOf(q.type) === "closed"));
+  const open = arrange(chosen.filter((q) => sectionOf(q.type) === "open"));
+  const secOf = (qs: Pool[], min: number | null | undefined) =>
+    qs.length === 0 ? 0 : min ? min * 60 : qs.reduce((s, q) => s + q.timeLimitSec, 0);
+  const closedTimeSec = secOf(closed, config?.closedTimeMin);
+  const openTimeSec = secOf(open, config?.openTimeMin);
   return {
-    questionIds: ordered.map((q) => q.id),
-    timeLimitSec: config?.timeLimitMin ? config.timeLimitMin * 60 : null,
+    questionIds: [...closed, ...open].map((q) => q.id),
+    closedTimeSec,
+    openTimeSec,
+    timeLimitSec: closedTimeSec + openTimeSec,
   };
 }

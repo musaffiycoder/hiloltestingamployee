@@ -80,7 +80,7 @@ export async function TestsOverview({ canWrite }: { canWrite: boolean }) {
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {g.items.map((p) => {
                 const plan = plans.get(p.id)!;
-                const minutes = plan.timeLimitMin ?? plan.estimatedMin;
+                const minutes = plan.totalMin;
                 const nDraft = draftsBy.get(p.id) ?? 0;
                 return (
                   <Link key={p.id} href={`/hr/savollar/test/${p.code}`} className="group">
@@ -89,7 +89,7 @@ export async function TestsOverview({ canWrite }: { canWrite: boolean }) {
                         <div className="min-w-0 flex-1">
                           <div className="text-[17px] font-semibold leading-snug">{p.title} testi</div>
                           <div className="mt-0.5 text-[13px] text-tx2">
-                            {plan.timeLimitMin || plan.competencies.some((c) => c.count < c.available) ? "Sozlangan" : "Standart tarkib"}
+                            {plan.timeManual || plan.competencies.some((c) => c.count < c.available) ? "Sozlangan" : "Standart tarkib"}
                             {nDraft ? ` · ${nDraft} ta qoralama` : ""}
                           </div>
                         </div>

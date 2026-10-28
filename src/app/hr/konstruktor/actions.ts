@@ -8,7 +8,8 @@ import { requireWriter } from "@/lib/auth";
 const configSchema = z.object({
   positionId: z.string().min(1),
   perCompetency: z.record(z.string().min(1).max(10), z.number().int().min(0).max(200)),
-  timeLimitMin: z.number().int().min(5).max(600).nullable(),
+  closedTimeMin: z.number().int().min(5).max(600).nullable(),
+  openTimeMin: z.number().int().min(5).max(600).nullable(),
   order: z.enum(["competency", "mixed"]),
 });
 
@@ -18,7 +19,7 @@ export async function saveTestConfig(input: unknown): Promise<SaveState> {
   const user = await requireWriter();
   const p = configSchema.safeParse(input);
   if (!p.success) return { ok: false, message: "Ma'lumot noto'g'ri: qiymatlarni tekshiring" };
-  const { positionId, perCompetency, timeLimitMin, order } = p.data;
+  const { positionId, perCompetency, closedTimeMin, openTimeMin, order } = p.data;
 
   const comps = await db.competency.findMany({ where: { positionId }, select: { code: true } });
   const codes = new Set(comps.map((c) => c.code));
@@ -28,11 +29,11 @@ export async function saveTestConfig(input: unknown): Promise<SaveState> {
 
   await db.testConfig.upsert({
     where: { positionId },
-    create: { positionId, perCompetency, timeLimitMin, order, updatedById: user.id },
-    update: { perCompetency, timeLimitMin, order, updatedById: user.id },
+    create: { positionId, perCompetency, closedTimeMin, openTimeMin, timeLimitMin: null, order, updatedById: user.id },
+    update: { perCompetency, closedTimeMin, openTimeMin, timeLimitMin: null, order, updatedById: user.id },
   });
   await db.auditLog.create({
-    data: { actorId: user.id, action: "testconfig.update", entity: "TestConfig", entityId: positionId, meta: { total, timeLimitMin, order } },
+    data: { actorId: user.id, action: "testconfig.update", entity: "TestConfig", entityId: positionId, meta: { total, closedTimeMin, openTimeMin, order } },
   });
   revalidatePath("/hr/konstruktor");
   return { ok: true, message: `Saqlandi: ${total} ta savol. Yangi testlar shu tarkibda yig'iladi.` };

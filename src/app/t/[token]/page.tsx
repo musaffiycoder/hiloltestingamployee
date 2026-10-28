@@ -19,14 +19,17 @@ export default async function InvitePage({ params, searchParams }: PageProps<"/t
   // Konstruktor sozlamasi bo'yicha: savollar soni, bo'limlar va taxminiy vaqt
   const plan = await getPositionPlan(a.positionId);
   const questionCount = plan.total;
-  const sections = plan.competencies.filter((c) => c.count > 0).length;
-  const minutes = Math.max(5, plan.timeLimitMin ?? plan.estimatedMin);
+  const competencyCount = plan.competencies.filter((c) => c.count > 0).length;
+  const { closed, open } = plan.sections;
+  const minutes = plan.totalMin;
+  const dur = (m: number) => (m >= 60 ? `${Math.floor(m / 60)} soat${m % 60 ? ` ${m % 60} daqiqa` : ""}` : `${m} daqiqa`);
   const resuming = a.status === "STARTED";
 
   const infoRows: [string, string][] = [
-    ["Davomiyligi", `~${minutes} daqiqa`],
-    ["Savollar", String(questionCount)],
-    ["Bo'limlar", String(sections)],
+    ...(closed.count ? ([[`${open.count ? "1. " : ""}Test savollari`, `${closed.count} ta · ${dur(closed.minutes)}`]] as [string, string][]) : []),
+    ...(open.count ? ([[`${closed.count ? "2. " : ""}Yozma savollar`, `${open.count} ta · ${dur(open.minutes)}`]] as [string, string][]) : []),
+    ["Jami vaqt", `~${dur(minutes)}`],
+    ["Kompetensiyalar", String(competencyCount)],
   ];
 
   return (
@@ -68,7 +71,12 @@ export default async function InvitePage({ params, searchParams }: PageProps<"/t
                 {[
                   "Savollarga o'zingiz javob bering. Bu sizning bilim va ko'nikmangizni o'lchaydi.",
                   "To'g'ri javoblar va ballar test davomida ko'rsatilmaydi.",
-                  `Vaqt «Testni boshlash» bosilgan zahoti boshlanadi va to'xtamaydi: sahifani yopsangiz ham hisoblanaveradi. Testni ${minutes >= 60 ? `${Math.floor(minutes / 60)} soat ${minutes % 60 ? `${minutes % 60} daqiqa ` : ""}` : `${minutes} daqiqa `}bo'sh vaqtingiz bo'lganda, bir o'tirishda boshlang.`,
+                  ...(closed.count && open.count
+                    ? [
+                        "Test ikki bo'limdan iborat: avval test savollari, keyin yozma savollar. Har bo'limning o'z vaqti bor. Test savollarini yakunlab yozma bo'limga o'tganingizdan keyin ularga qaytib bo'lmaydi; test bo'limi vaqti tugasa, yozma bo'lim o'zi boshlanadi.",
+                      ]
+                    : []),
+                  `Vaqt «Boshlash» bosilgan zahoti boshlanadi va to'xtamaydi: sahifani yopsangiz ham hisoblanaveradi. Testni ${dur(minutes)} bo'sh vaqtingiz bo'lganda, bir o'tirishda boshlang.`,
                   "Brauzer oynasidan chiqsangiz, bu qayd etiladi.",
                   "Javoblar avtomatik saqlanadi; uzilsa, havola orqali davom etasiz.",
                 ].map((t, i, arr) => (

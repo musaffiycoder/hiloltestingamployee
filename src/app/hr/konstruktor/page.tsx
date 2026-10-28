@@ -41,7 +41,7 @@ export default async function BuilderIndex() {
                           {plan.total} / {bank} savol
                         </span>
                         <span>
-                          <Ico icon={Clock3} size={13} className="mr-1" />~{plan.timeLimitMin ?? plan.estimatedMin} daqiqa
+                          <Ico icon={Clock3} size={13} className="mr-1" />~{plan.sections.closed.minutes} + {plan.sections.open.minutes} daqiqa
                         </span>
                         {plan.order === "mixed" && (
                           <span>

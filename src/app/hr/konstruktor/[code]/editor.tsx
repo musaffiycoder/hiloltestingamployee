@@ -4,7 +4,8 @@ import { useMemo, useState, useTransition } from "react";
 import { CircleCheck, Clock3, ListChecks, Minus, Plus, RotateCcw, Scale, ShieldAlert, TriangleAlert } from "lucide-react";
 import { Button, Card, Ico, SectionTitle } from "@/components/ui";
 import type { PositionPlan } from "@/lib/test-config";
-import { distributeByWeight } from "@/lib/test-config-math";
+import { distributeByWeight, sectionEstimate } from "@/lib/test-config-math";
+import { SectionTimeFields, sectionMinutes, validSectionTimes, type SectionTimes } from "@/components/section-times";
 import { resetTestConfig, saveTestConfig, type SaveState } from "../actions";
 
 const seg = (on: boolean) =>
@@ -13,20 +14,17 @@ const seg = (on: boolean) =>
 export function BuilderEditor({ plan, readOnly }: { plan: PositionPlan; readOnly: boolean }) {
   const [counts, setCounts] = useState<Record<string, number>>(() => Object.fromEntries(plan.competencies.map((c) => [c.code, c.count])));
   const [order, setOrder] = useState(plan.order);
-  const [timeMode, setTimeMode] = useState<"auto" | "manual">(plan.timeLimitMin ? "manual" : "auto");
-  const [timeMin, setTimeMin] = useState(plan.timeLimitMin ?? plan.estimatedMin);
+  const [times, setTimes] = useState<SectionTimes>({ closed: plan.sections.closed.timeMin, open: plan.sections.open.timeMin });
   const bank = plan.competencies.reduce((s, c) => s + c.available, 0);
   const [targetTotal, setTargetTotal] = useState(Math.min(40, bank));
   const [state, setState] = useState<SaveState>(null);
   const [pending, start] = useTransition();
 
   const total = useMemo(() => Object.values(counts).reduce((s, n) => s + n, 0), [counts]);
-  const estMin = useMemo(
-    () => Math.round(plan.competencies.reduce((s, c) => s + (counts[c.code] ?? 0) * c.avgSec, 0) / 60),
-    [counts, plan.competencies],
-  );
+  const est = useMemo(() => sectionEstimate(plan.competencies, (i) => counts[plan.competencies[i].code] ?? 0), [counts, plan.competencies]);
+  const totalMin = sectionMinutes(est, times, "closed") + sectionMinutes(est, times, "open");
+  const manual = times.closed !== null || times.open !== null;
   const missingCritical = plan.competencies.filter((c) => c.critical && c.available > 0 && (counts[c.code] ?? 0) === 0);
-  const tooTight = timeMode === "manual" && timeMin < estMin * 0.7;
 
   const set = (code: string, n: number, max: number) => setCounts((p) => ({ ...p, [code]: Math.max(0, Math.min(max, n)) }));
   const save = () =>
@@ -35,7 +33,8 @@ export function BuilderEditor({ plan, readOnly }: { plan: PositionPlan; readOnly
         await saveTestConfig({
           positionId: plan.positionId,
           perCompetency: counts,
-          timeLimitMin: timeMode === "manual" ? timeMin : null,
+          closedTimeMin: est.closed.count ? times.closed : null,
+          openTimeMin: est.open.count ? times.open : null,
           order,
         }),
       );
@@ -45,7 +44,7 @@ export function BuilderEditor({ plan, readOnly }: { plan: PositionPlan; readOnly
       const r = await resetTestConfig(plan.positionId);
       setCounts(Object.fromEntries(plan.competencies.map((c) => [c.code, c.available])));
       setOrder("competency");
-      setTimeMode("auto");
+      setTimes({ closed: null, open: null });
       setState(r);
     });
 
@@ -55,7 +54,12 @@ export function BuilderEditor({ plan, readOnly }: { plan: PositionPlan; readOnly
       <div className="grid grid-cols-3 gap-3">
         {[
           { icon: ListChecks, l: "Savollar", v: `${total}`, d: `bankda ${bank}` },
-          { icon: Clock3, l: "Vaqt", v: `${timeMode === "manual" ? timeMin : estMin} daq`, d: timeMode === "manual" ? "qo'lda belgilangan" : "savollar bo'yicha" },
+          {
+            icon: Clock3,
+            l: "Vaqt",
+            v: `${totalMin} daq`,
+            d: [est.closed.count && `test ${sectionMinutes(est, times, "closed")}`, est.open.count && `yozma ${sectionMinutes(est, times, "open")}`].filter(Boolean).join(" + ") + (manual ? " · qo'lda" : ""),
+          },
           { icon: Scale, l: "Kompetensiyalar", v: `${plan.competencies.filter((c) => (counts[c.code] ?? 0) > 0).length}`, d: `jami ${plan.competencies.length}` },
         ].map((k) => (
           <Card key={k.l} className="p-4">
@@ -165,39 +169,9 @@ export function BuilderEditor({ plan, readOnly }: { plan: PositionPlan; readOnly
       <section>
         <SectionTitle>Vaqt va tartib</SectionTitle>
         <Card className="flex flex-col gap-4 p-4">
+          <SectionTimeFields estimates={est} value={times} onChange={setTimes} readOnly={readOnly} />
           <div>
-            <div className="mb-1.5 text-[15px] font-semibold">Umumiy vaqt</div>
-            <div className="flex rounded-[10px] bg-soft p-0.5" role="radiogroup" aria-label="Umumiy vaqt">
-              <button type="button" disabled={readOnly} role="radio" aria-checked={timeMode === "auto"} onClick={() => setTimeMode("auto")} className={seg(timeMode === "auto")}>
-                Savollar bo'yicha (~{estMin} daq)
-              </button>
-              <button type="button" disabled={readOnly} role="radio" aria-checked={timeMode === "manual"} onClick={() => setTimeMode("manual")} className={seg(timeMode === "manual")}>
-                Qo'lda belgilash
-              </button>
-            </div>
-            {timeMode === "manual" && (
-              <label className="mt-3 flex items-center gap-2 text-[15px]">
-                <input
-                  type="number"
-                  min={5}
-                  max={600}
-                  value={timeMin}
-                  disabled={readOnly}
-                  onChange={(e) => setTimeMin(Number(e.target.value) || 0)}
-                  className="h-9 w-20 rounded-[10px] bg-soft px-3 text-center text-[17px] tabular-nums outline-none"
-                />
-                daqiqa
-              </label>
-            )}
-            {tooTight && (
-              <p className="mt-2 text-[13px] font-medium text-warn">
-                <Ico icon={TriangleAlert} size={13} className="mr-1" />
-                Vaqt savollar uchun tavsiya etilganidan ancha kam (~{estMin} daq) — nomzodlar ulgurmasligi mumkin.
-              </p>
-            )}
-          </div>
-          <div>
-            <div className="mb-1.5 text-[15px] font-semibold">Savollar tartibi</div>
+            <div className="mb-1.5 text-[15px] font-semibold">Savollar tartibi (har bo&apos;lim ichida)</div>
             <div className="flex rounded-[10px] bg-soft p-0.5" role="radiogroup" aria-label="Savollar tartibi">
               <button type="button" disabled={readOnly} role="radio" aria-checked={order === "competency"} onClick={() => setOrder("competency")} className={seg(order === "competency")}>
                 Kompetensiyalar bo'yicha
@@ -221,7 +195,7 @@ export function BuilderEditor({ plan, readOnly }: { plan: PositionPlan; readOnly
         <p className="px-4 text-[13px] text-tx2">Menejer sifatida sozlamani faqat ko'rishingiz mumkin.</p>
       ) : (
         <div className="flex flex-col gap-2 sm:flex-row">
-          <Button onClick={save} disabled={pending || total < 5} className="sm:flex-1">
+          <Button onClick={save} disabled={pending || total < 5 || !validSectionTimes(times)} className="sm:flex-1">
             {pending ? "Saqlanmoqda…" : `Saqlash · ${total} ta savol`}
           </Button>
           {plan.configured && (

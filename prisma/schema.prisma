@@ -103,8 +103,12 @@ model TestConfig {
   positionId    String   @unique
   /// Kompetensiya kodi -> savollar soni. Bo'sh bo'lsa — hamma faol savol.
   perCompetency Json     @default("{}")
-  /// Umumiy vaqt (daqiqa). null — savollar vaqtining yig'indisi.
+  /// Eski umumiy vaqt (daqiqa) — ishlatilmaydi, o'rniga bo'limlar vaqti.
   timeLimitMin  Int?
+  /// Test (yopiq) savollar bo'limi vaqti, daqiqa. null — savollar vaqtining yig'indisi.
+  closedTimeMin Int?
+  /// Yozma (ochiq) savollar bo'limi vaqti, daqiqa. null — savollar vaqtining yig'indisi.
+  openTimeMin   Int?
   /// "competency" — kompetensiyalar tartibida; "mixed" — aralash.
   order         String   @default("competency")
   updatedAt     DateTime @updatedAt
@@ -180,6 +184,11 @@ model Attempt {
   questionIds  Json      @default("[]")
   /// Konstruktorda belgilangan umumiy vaqt (soniya); null — savollar vaqti yig'indisi.
   timeLimitSec Int?
+  /// Bo'limlar vaqti (soniya): avval test savollari, keyin yozma savollar. null — eski urinish (bitta umumiy vaqt).
+  closedTimeSec Int?
+  openTimeSec   Int?
+  /// Yozma bo'lim boshlangan payt (nomzod o'tgan yoki test bo'limi vaqti tugagan).
+  openStartedAt DateTime?
 
   assessment Assessment        @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
   responses  Response[]

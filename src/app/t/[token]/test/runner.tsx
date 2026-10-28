@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { finishAttempt, logSignal, remainingTime, saveResponse } from "../actions";
+import { useRouter } from "next/navigation";
+import { finishAttempt, logSignal, remainingTime, saveResponse, startOpenSection } from "../actions";
+import { SECTION_LABEL, type Section } from "@/lib/sections";
 import { Check, ChevronLeft, ChevronRight, Flag, LayoutGrid } from "lucide-react";
 import { Ico } from "@/components/ui";
 import { RichText, isRich } from "@/components/rich-text";
@@ -20,6 +22,9 @@ export type RunnerQuestion = {
 
 type Answer = { selected: number | number[] | null; text: string };
 
+/** Joriy bo'lim: avval test savollari, keyin yozma savollar. null — eski urinish (bitta umumiy vaqt). */
+export type RunnerSection = { phase: Section; step: number; steps: number; hasOpen: boolean } | null;
+
 function fmt(sec: number) {
   const m = Math.floor(sec / 60);
   const s = sec % 60;
@@ -31,12 +36,17 @@ export function Runner({
   positionTitle,
   questions,
   remainingSec,
+  section,
 }: {
   token: string;
   positionTitle: string;
   questions: RunnerQuestion[];
   remainingSec: number;
+  section: RunnerSection;
 }) {
+  const router = useRouter();
+  // Test bo'limidan keyin yozma bo'lim bor: «Yakunlash» o'rniga keyingi bo'limga o'tiladi
+  const toOpen = section?.phase === "closed" && section.hasOpen;
   const [index, setIndex] = useState(() => {
     const firstOpen = questions.findIndex((q) => !q.saved);
     return firstOpen === -1 ? 0 : firstOpen;
@@ -55,8 +65,8 @@ export function Runner({
   const startedAt = useRef(0);
   const finished = useRef(false);
 
-  const q = questions[index];
-  const a = answers[q.id];
+  const q = questions[index] as RunnerQuestion | undefined;
+  const a = q ? answers[q.id] : { selected: null, text: "" };
   const isLast = index === questions.length - 1;
   const answeredCount = questions.filter((x) => {
     const v = answers[x.id];
@@ -96,10 +106,26 @@ export function Runner({
     if (finished.current) return;
     finished.current = true;
     startTransition(async () => {
-      await persist(q, answers[q.id]);
+      if (q) await persist(q, answers[q.id]);
       await finishAttempt(token);
     });
   }, [answers, persist, q, token]);
+
+  // Test bo'limini yakunlab yozma savollarga o'tish (ortga qaytilmaydi)
+  const moving = useRef(false);
+  const nextSection = useCallback(() => {
+    if (moving.current || finished.current) return;
+    moving.current = true;
+    startTransition(async () => {
+      if (q) await persist(q, answers[q.id]);
+      const r = await startOpenSection(token);
+      if (r.ok && r.hasOpen) router.refresh();
+      else {
+        finished.current = true;
+        await finishAttempt(token);
+      }
+    });
+  }, [answers, persist, q, router, token]);
 
   useEffect(() => {
     startedAt.current = Date.now();
@@ -120,11 +146,18 @@ export function Runner({
     const t = setInterval(async () => {
       try {
         const r = await remainingTime(token);
-        if (typeof r === "number") setLeft(r);
+        if (!r) return;
+        // Server boshqa bo'limni ko'rsatsa (test bo'limi vaqti tugagan) — sahifa yozma bo'limga o'tadi
+        if (section && r.phase !== section.phase) router.refresh();
+        else setLeft(r.left);
       } catch {}
     }, 60_000);
     return () => clearInterval(t);
-  }, [token]);
+  }, [router, section, token]);
+  // Bo'limda savol yo'q (masalan, yozma savollar vaqti allaqachon tugagan) — yakunlanadi
+  useEffect(() => {
+    if (questions.length === 0) submit();
+  }, [questions.length, submit]);
   useEffect(() => {
     if (left !== 0 || finished.current) return;
     // Topshirishdan oldin serverdan tekshiramiz: vaqt uzaytirilgan bo'lsa davom etadi
@@ -132,14 +165,16 @@ export function Runner({
     remainingTime(token)
       .then((r) => {
         if (cancelled) return;
-        if (typeof r === "number" && r > 5) setLeft(r);
+        if (r && section && r.phase !== section.phase) router.refresh();
+        else if (r && r.left > 5) setLeft(r.left);
+        else if (toOpen) nextSection();
         else submit();
       })
-      .catch(() => !cancelled && submit());
+      .catch(() => !cancelled && (toOpen ? nextSection() : submit()));
     return () => {
       cancelled = true;
     };
-  }, [left, submit, token]);
+  }, [left, nextSection, router, section, submit, toOpen, token]);
 
   // Fokus yo'qolishi signali (rozilik asosida, neytral)
   useEffect(() => {
@@ -160,7 +195,7 @@ export function Runner({
   }, []);
 
   const go = async (next: number) => {
-    if (next < 0 || next >= questions.length) return;
+    if (!q || next < 0 || next >= questions.length) return;
     setShowMap(false);
     await persist(q, a);
     startedAt.current = Date.now();
@@ -173,6 +208,7 @@ export function Runner({
     return !!v && (Array.isArray(v.selected) ? v.selected.length > 0 : v.selected !== null || v.text.trim().length > 0);
   };
   const toggleMark = () =>
+    q &&
     setMarked((prev) => {
       const next = new Set(prev);
       if (next.has(q.id)) next.delete(q.id);
@@ -184,6 +220,7 @@ export function Runner({
     });
 
   const setSelected = (i: number) => {
+    if (!q) return;
     setAnswers((prev) => {
       const cur = prev[q.id];
       if (q.multi) {
@@ -197,13 +234,23 @@ export function Runner({
 
   const warn = left <= 300;
 
+  if (!q) {
+    return (
+      <div className="mesh-bg flex min-h-screen items-center justify-center p-6 text-[17px] text-tx2" role="status">
+        Vaqt tugadi — javoblaringiz yuborilmoqda…
+      </div>
+    );
+  }
+
   return (
     <div className="mesh-bg min-h-screen pb-28">
       {/* iOS navigatsiya paneli + progress */}
       <header className="glass sticky top-0 z-20 border-x-0 border-t-0">
         <div className="mx-auto flex h-12 max-w-2xl items-center gap-3 px-4">
           <div className="min-w-0 flex-1">
-            <div className="truncate text-[15px] font-semibold">{positionTitle}</div>
+            <div className="truncate text-[15px] font-semibold">
+              {section ? `${section.steps > 1 ? `${section.step}/${section.steps}-bo'lim · ` : ""}${SECTION_LABEL[section.phase]}` : positionTitle}
+            </div>
             <div className="text-[11px] text-tx2" aria-live="polite">
               {saving === "saving" ? "Saqlanmoqda…" : saving === "error" ? "Saqlanmadi — qayta urinib ko'ring" : <>Saqlandi <Ico icon={Check} size={12} /></>}
             </div>
@@ -337,7 +384,7 @@ export function Runner({
               disabled={pending}
               className="h-11 rounded-full bg-brf px-5 text-[17px] font-semibold text-onbr disabled:opacity-50"
             >
-              Yakunlash
+              {toOpen ? "Keyingi bo'lim" : "Yakunlash"}
             </button>
           ) : (
             <button
@@ -396,7 +443,8 @@ export function Runner({
                 }}
                 className="h-12 rounded-full bg-brf text-[17px] font-semibold text-onbr"
               >
-                Testni yakunlash{unanswered > 0 ? ` (${unanswered} ta javobsiz)` : ""}
+                {toOpen ? "Yozma savollarga o'tish" : "Testni yakunlash"}
+                {unanswered > 0 ? ` (${unanswered} ta javobsiz)` : ""}
               </button>
             </div>
           </div>
@@ -407,18 +455,22 @@ export function Runner({
         <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-3 sm:items-center" role="dialog" aria-modal="true" aria-labelledby="fin-title">
           <div className="w-full max-w-sm overflow-hidden rounded-[22px] bg-card">
             <div className="p-5 text-center">
-              <h2 id="fin-title" className="text-[17px] font-semibold">Testni yakunlaysizmi?</h2>
+              <h2 id="fin-title" className="text-[17px] font-semibold">
+                {toOpen ? "Yozma savollarga o'tasizmi?" : "Testni yakunlaysizmi?"}
+              </h2>
               <p className="mt-1 text-[15px] text-tx2">
                 {questions.length - answeredCount > 0 ? `${questions.length - answeredCount} ta savol javobsiz qoldi. ` : ""}
-                Yakunlagandan keyin javoblarni o'zgartirib bo'lmaydi.
+                {toOpen
+                  ? "Test savollariga qaytib bo'lmaydi. Yozma savollar uchun alohida vaqt shu zahoti boshlanadi."
+                  : "Yakunlagandan keyin javoblarni o'zgartirib bo'lmaydi."}
               </p>
             </div>
             <div className="grid grid-cols-2 border-t border-line text-[17px]">
               <button onClick={() => setConfirmFinish(false)} className="h-12 border-r border-line font-medium text-brd">
                 Qaytish
               </button>
-              <button onClick={submit} disabled={pending} className="h-12 font-semibold text-brd disabled:opacity-50">
-                {pending ? "Yuborilmoqda…" : "Yakunlash"}
+              <button onClick={toOpen ? nextSection : submit} disabled={pending} className="h-12 font-semibold text-brd disabled:opacity-50">
+                {pending ? "Yuborilmoqda…" : toOpen ? "O'tish" : "Yakunlash"}
               </button>
             </div>
           </div>

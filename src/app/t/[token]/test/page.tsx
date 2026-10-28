@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getAssessmentByToken } from "@/lib/attempt-access";
 import { db } from "@/lib/db";
 import { seededShuffle } from "@/lib/shuffle";
+import { sectionOf, timingOf } from "@/lib/sections";
 import { Runner, type RunnerQuestion } from "./runner";
 
 // Yakunlash bosilganda fon rejimida AI baholash va tahlil ishlaydi (after()).
@@ -50,15 +51,26 @@ export default async function TestPage({ params }: PageProps<"/t/[token]/test">)
     };
   });
 
-  const totalSec = attempt.timeLimitSec ?? payload.reduce((s, q) => s + q.timeLimitSec, 0);
-  const elapsed = Math.floor((Date.now() - attempt.startedAt.getTime()) / 1000);
+  // Ikki bo'lim: avval test savollari, keyin yozma savollar — har birining o'z vaqti.
+  // Eski urinishlarda (bo'limlar vaqti yo'q) hamma savol bitta umumiy vaqt bilan ko'rsatiladi.
+  const timing = timingOf(attempt, payload.reduce((s, q) => s + q.timeLimitSec, 0));
+  const typeOf = new Map(questions.map((q) => [q.id, q.type]));
+  const closedCount = payload.filter((q) => sectionOf(typeOf.get(q.id)!) === "closed").length;
+  const openCount = payload.length - closedCount;
+  const shown = timing.mode === "single" ? payload : payload.filter((q) => sectionOf(typeOf.get(q.id)!) === timing.phase);
 
   return (
     <Runner
+      key={timing.mode === "single" ? "all" : timing.phase}
       token={token}
       positionTitle={a.position.title}
-      questions={payload}
-      remainingSec={Math.max(30, totalSec - elapsed)}
+      questions={shown}
+      remainingSec={Math.max(timing.mode === "sections" && timing.phase === "open" && shown.length === 0 ? 0 : 30, timing.left)}
+      section={
+        timing.mode === "single"
+          ? null
+          : { phase: timing.phase, step: timing.phase === "closed" || closedCount === 0 ? 1 : 2, steps: (closedCount ? 1 : 0) + (openCount ? 1 : 0), hasOpen: openCount > 0 }
+      }
     />
   );
 }

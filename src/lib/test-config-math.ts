@@ -1,4 +1,5 @@
 // Konstruktor hisob-kitoblari (brauzerda ham ishlaydi — bazaga murojaat yo'q).
+import type { Section } from "@/lib/sections";
 
 export type DistItem = { code: string; weight: number; available: number };
 
@@ -42,4 +43,22 @@ export function distributeByWeight(items: DistItem[], total: number): Record<str
     if (!byRem.length) break;
   }
   return out;
+}
+
+/** Kompetensiyadan `count` ta savol olinganda bo'limlarga tushadigan taxminiy soni va vaqti. */
+export function sectionEstimate(comps: { available: number; bySection: Record<Section, { available: number; avgSec: number }> }[], countOf: (i: number) => number) {
+  const out: Record<Section, { count: number; sec: number }> = { closed: { count: 0, sec: 0 }, open: { count: 0, sec: 0 } };
+  comps.forEach((c, i) => {
+    const n = countOf(i);
+    if (!c.available || !n) return;
+    for (const sec of ["closed", "open"] as const) {
+      const share = (n * c.bySection[sec].available) / c.available;
+      out[sec].count += share;
+      out[sec].sec += share * c.bySection[sec].avgSec;
+    }
+  });
+  return {
+    closed: { count: Math.round(out.closed.count), estimatedMin: Math.round(out.closed.sec / 60) },
+    open: { count: Math.round(out.open.count), estimatedMin: Math.round(out.open.sec / 60) },
+  };
 }

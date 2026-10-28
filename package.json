@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx scripts/test-scoring.ts && tsx scripts/test-questions.ts && tsx --conditions=react-server scripts/test-ai.ts",
+    "test": "tsx scripts/test-scoring.ts && tsx scripts/test-sections.ts && tsx scripts/test-questions.ts && tsx --conditions=react-server scripts/test-ai.ts",
     "seed": "tsx prisma/seed.ts",
     "postinstall": "prisma generate",
     "test:integration": "tsx --env-file=.env --conditions=react-server scripts/test-ai-integration.ts"

@@ -68,23 +68,25 @@ export async function setPositionDepartment(positionId: string, departmentId: st
   return { ok: true, message: dep ? `«${dep.name}» bo'limiga biriktirildi` : "Bo'limsiz qoldirildi" };
 }
 
-const timeSchema = z.object({ positionId: z.string().min(1), minutes: z.number().int().min(5).max(600).nullable() });
+const minutes = z.number().int().min(5).max(600).nullable();
+const timeSchema = z.object({ positionId: z.string().min(1), closedMin: minutes, openMin: minutes });
 
-/** Test umumiy vaqti (daqiqa). null — savollar vaqtining yig'indisi. Konstruktordagi savollar tarkibiga tegmaydi. */
+/**
+ * Test bo'limlari vaqti (daqiqa): test (yopiq) savollar va yozma savollar alohida.
+ * null — shu bo'lim savollari vaqtining yig'indisi. Konstruktordagi savollar tarkibiga tegmaydi.
+ */
 export async function setTestTime(input: unknown): Promise<ActionState> {
   const user = await requireWriter();
   const p = timeSchema.safeParse(input);
-  if (!p.success) return { ok: false, message: "Vaqt 5 daqiqadan 10 soatgacha bo'lishi kerak" };
-  const { positionId, minutes } = p.data;
+  if (!p.success) return { ok: false, message: "Har bo'lim vaqti 5 daqiqadan 10 soatgacha bo'lishi kerak" };
+  const { positionId, closedMin, openMin } = p.data;
   const pos = await db.position.findUnique({ where: { id: positionId }, select: { code: true } });
   if (!pos) return { ok: false, message: "Test topilmadi" };
-  await db.testConfig.upsert({
-    where: { positionId },
-    create: { positionId, timeLimitMin: minutes, updatedById: user.id },
-    update: { timeLimitMin: minutes, updatedById: user.id },
-  });
-  await db.auditLog.create({ data: { actorId: user.id, action: "testconfig.time", entity: "TestConfig", entityId: positionId, meta: { minutes } } });
+  const data = { closedTimeMin: closedMin, openTimeMin: openMin, timeLimitMin: null, updatedById: user.id };
+  await db.testConfig.upsert({ where: { positionId }, create: { positionId, ...data }, update: data });
+  await db.auditLog.create({ data: { actorId: user.id, action: "testconfig.time", entity: "TestConfig", entityId: positionId, meta: { closedMin, openMin } } });
   refresh(pos.code);
   revalidatePath("/hr/konstruktor");
-  return { ok: true, message: minutes ? `Saqlandi: ${Math.floor(minutes / 60)} soat ${minutes % 60} daqiqa. Bundan keyin boshlanadigan testlarga qo'llanadi.` : "Avtomatik vaqtga qaytarildi" };
+  const fmt = (m: number | null) => (m === null ? "avtomatik" : `${m} daqiqa`);
+  return { ok: true, message: `Saqlandi: test savollari — ${fmt(closedMin)}, yozma savollar — ${fmt(openMin)}. Bundan keyin boshlanadigan testlarga qo'llanadi.` };
 }

@@ -28,7 +28,7 @@ export function InviteActions({ id, link, status }: { id: string; link: string; 
         <button
           disabled={pending}
           onClick={() => {
-            const v = prompt("Testga necha daqiqa qo'shilsin? (5–240)\n\nNomzodning javoblari saqlanib qoladi, ochiq sahifasi 1 daqiqa ichida yangi vaqtni oladi.", "30");
+            const v = prompt("Testga necha daqiqa qo'shilsin? (5–240)\n\nVaqt nomzod hozir ishlayotgan bo'limga (test yoki yozma savollar) qo'shiladi. Javoblar saqlanib qoladi, ochiq sahifa 1 daqiqa ichida yangi vaqtni oladi.", "30");
             if (!v) return;
             start(async () => {
               const r = await extendInvite(id, Number(v));

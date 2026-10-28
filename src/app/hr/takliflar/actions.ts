@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireWriter } from "@/lib/auth";
+import { SECTION_LABEL, timingOf, type Section } from "@/lib/sections";
 
 const schema = z.object({
   subjectName: z.string().trim().min(2, "Ismni kiriting").max(120),
@@ -98,22 +99,38 @@ export async function restartInvite(id: string) {
   return { ok: true as const };
 }
 
-/** Jarayondagi testga vaqt qo'shish (daqiqa). Javoblar va boshlangan vaqt o'zgarmaydi. */
+/** Jarayondagi testga vaqt qo'shish (daqiqa) — joriy bo'limga. Javoblar va boshlangan vaqt o'zgarmaydi. */
 export async function extendInvite(id: string, minutes: number) {
   const user = await requireWriter();
   if (!Number.isInteger(minutes) || minutes < 5 || minutes > 240) return { ok: false as const, error: "5 dan 240 daqiqagacha kiriting" };
   const attempt = await db.attempt.findFirst({
     where: { assessmentId: id, finishedAt: null },
-    select: { id: true, timeLimitSec: true, questionIds: true },
+    select: { id: true, startedAt: true, timeLimitSec: true, closedTimeSec: true, openTimeSec: true, openStartedAt: true, questionIds: true },
   });
   if (!attempt) return { ok: false as const, error: "Jarayondagi test topilmadi" };
+  const add = minutes * 60;
   const ids = (attempt.questionIds as string[] | null) ?? [];
   const base =
     attempt.timeLimitSec ??
     (await db.question.findMany({ where: { id: { in: ids } }, select: { timeLimitSec: true } })).reduce((s, q) => s + q.timeLimitSec, 0);
-  const next = base + minutes * 60;
-  await db.attempt.update({ where: { id: attempt.id }, data: { timeLimitSec: next } });
-  await db.auditLog.create({ data: { actorId: user.id, action: "attempt.extend", entity: "Attempt", entityId: attempt.id, meta: { fromSec: base, toSec: next } } });
+  const timing = timingOf(attempt, base);
+
+  let data: { timeLimitSec: number; closedTimeSec?: number; openTimeSec?: number };
+  let section: Section | null = null;
+  let sectionSec: number;
+  if (timing.mode === "single") {
+    data = { timeLimitSec: base + add };
+    sectionSec = base + add;
+  } else {
+    section = timing.phase;
+    const key = section === "closed" ? "closedTimeSec" : "openTimeSec";
+    sectionSec = (attempt[key] ?? 0) + add;
+    data = { timeLimitSec: base + add, [key]: sectionSec };
+  }
+  await db.attempt.update({ where: { id: attempt.id }, data });
+  await db.auditLog.create({
+    data: { actorId: user.id, action: "attempt.extend", entity: "Attempt", entityId: attempt.id, meta: { section, addSec: add, toSec: sectionSec } },
+  });
   revalidatePath("/hr/takliflar");
-  return { ok: true as const, minutes: Math.round(next / 60) };
+  return { ok: true as const, minutes: Math.round(sectionSec / 60), section: section ? SECTION_LABEL[section] : null };
 }
