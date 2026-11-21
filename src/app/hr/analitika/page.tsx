@@ -89,7 +89,7 @@ async function DepartmentTab() {
                   )}
                   {r.weakest.length > 0 && (
                     <span>
-                      zaif: {r.weakest.map((c) => `${c.code} (${(c.avgLevel as number).toFixed(1)}/${c.target})`).join(", ")}
+                      zaif: {r.weakest.map((c) => `${c.name} (${c.code}) ${(c.avgLevel as number).toFixed(1)}/${c.target}`).join(", ")}
                     </span>
                   )}
                 </div>
@@ -198,7 +198,7 @@ async function EmployeesTab() {
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {p.changes.map((c) => (
                         <Pill key={c.code} tone={c.to > (c.from as number) ? "ok" : "warn"}>
-                          {c.code}: {c.from} → {c.to}
+                          {c.name} ({c.code}): {c.from} → {c.to}
                         </Pill>
                       ))}
                     </div>

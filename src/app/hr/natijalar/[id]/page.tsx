@@ -17,6 +17,7 @@ import { ContextForm } from "./context-form";
 import { AutoRefresh } from "./auto-refresh";
 import { aiConfigured } from "@/lib/ai/client";
 import type { StoredAnalysis } from "@/lib/ai/schemas";
+import { codeExpander, expandCodesDeep } from "@/lib/competency-names";
 import { ArrowUp, Check, ChevronLeft, ChevronRight, CircleCheck, Flag, Hourglass, ShieldAlert } from "lucide-react";
 
 export const metadata: Metadata = { title: "Nomzod natijasi" };
@@ -114,7 +115,10 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
     (r) => `${r.c.name} — ${r.c.target - (r.level ?? 0) > 1 ? "4" : "2"} haftalik maqsadli mashq va mentor`,
   );
 
-  const analysis = (result.analysis ?? null) as StoredAnalysis | null;
+  // Matnlardagi kodlarni (V1, S4 …) to'liq nomga yoyamiz — eski tahlillar ham shu bilan to'g'rilanadi.
+  const expandCodes = codeExpander(assessment.position.competencies);
+  const rawAnalysis = (result.analysis ?? null) as StoredAnalysis | null;
+  const analysis = rawAnalysis ? expandCodesDeep(rawAnalysis, expandCodes) : null;
   const ungradedOpen = ordered.filter(
     (r) => r.question.type === "OPEN" && r.scoreSource !== "human" && r.scoreSource !== "ai" && !r.reviewed,
   ).length;
@@ -379,7 +383,7 @@ export default async function ResultPage({ params, searchParams }: PageProps<"/h
                                     baholovchiga ko'rsatma urinishi
                                   </span>}
                                 </div>
-                                <p className="mt-1">{r.rationale}</p>
+                                <p className="mt-1">{expandCodes(r.rationale)}</p>
                               </div>
                             )}
                             <p className="text-[13px] text-tx2">

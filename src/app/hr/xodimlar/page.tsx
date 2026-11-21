@@ -89,7 +89,7 @@ export default async function EmployeesPage() {
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {gaps.map((g) => (
                     <Pill key={g.id} tone="warn">
-                      {g.competency.code} · {g.level}/{g.competency.target}
+                      {g.competency.name} ({g.competency.code}) · {g.level}/{g.competency.target}
                     </Pill>
                   ))}
                 </div>

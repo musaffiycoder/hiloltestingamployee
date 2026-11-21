@@ -4,6 +4,7 @@ import { computeAttempt } from "@/lib/attempt";
 import { levelName } from "@/lib/labels";
 import { PASS_RATIO, type VerdictKey } from "@/lib/scoring";
 import type { StoredAnalysis } from "@/lib/ai/schemas";
+import { codeExpander, expandCodesDeep } from "@/lib/competency-names";
 
 type Opt = string | { text: string; points?: number; flag?: boolean };
 const optText = (o: Opt) => (typeof o === "string" ? o : o.text);
@@ -154,7 +155,9 @@ export async function loadReport(attemptId: string): Promise<ReportData | null> 
       paste: attempt.signals.filter((s) => s.type === "paste").length,
     },
     hrContext: result.hrContext,
-    analysis: (result.analysis ?? null) as StoredAnalysis | null,
+    analysis: result.analysis
+      ? expandCodesDeep(result.analysis as StoredAnalysis, codeExpander(assessment.position.competencies))
+      : null,
     analysisModel: result.analysisModel,
     analysisAt: result.analysisAt,
   };
