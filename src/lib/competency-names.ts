@@ -72,8 +72,9 @@ export function codeExpander(comps: CompName[]): (text: string) => string {
       let end = start + code.length;
       const c = info.get(code.toUpperCase())!;
       const before = text.slice(Math.max(0, start - 160), start);
-      // Kod emas, boshqa narsa: «AWS S3», «Amazon S3».
-      if (/(aws|amazon)\s*$/i.test(before)) continue;
+      // Kod emas, Amazon S3 xizmati: «AWS S3», «prod S3 bucket», «S3 xarajati», «S3 CORS».
+      if (/(aws|amazon|prod)\s*$/i.test(before)) continue;
+      if (/^\s*(xarajat|bucket|cors|storage|saqla|obyekt|object|fayl|so['ʻʼ’]rov)/iu.test(text.slice(end))) continue;
       // Nom (yoki uning boshi) kod oldida allaqachon yozilgan: «Backend arxitekturasi (H1)».
       if (endsWithNamePrefix(before, c.words)) continue;
 
