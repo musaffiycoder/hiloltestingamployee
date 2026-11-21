@@ -35,6 +35,8 @@ assert.equal(x("HV12, S10, S4a"), "HV12, S10, S4a");
 assert.equal(x("AWS S3 bucket"), "AWS S3 bucket");
 assert.equal(x("S3 xarajati (savol 26)"), "S3 xarajati (savol 26)");
 assert.equal(x("prod S3 bucket'da"), "prod S3 bucket'da");
+assert.equal(x("KRITIK S3 «Muammoni tahlil qilish va yechim topish» 2.5"), "KRITIK Muammoni tahlil qilish va yechim topish (S3) 2.5");
+assert.equal(x("S4 «muhim» deb"), "Muddat va ustuvorliklarni boshqarish (S4) «muhim» deb");
 assert.equal(x("S3 da 0/3"), "Muammoni tahlil qilish va yechim topish (S3) da 0/3");
 // ro'yxatda yo'q kod tegilmaydi
 assert.equal(x("H9 past"), "H9 past");

@@ -522,23 +522,30 @@ export function ReportDocument({ r }: { r: ReportData }) {
           <View style={s.card}>
             <View style={[s.row, { borderBottomWidth: 0.5, borderBottomColor: C.line, paddingBottom: 3 }]}>
               <Text style={{ width: 22, fontWeight: 700 }}>№</Text>
-              <Text style={{ width: 28, fontWeight: 700 }}>Komp.</Text>
               <Text style={{ width: 24, fontWeight: 700 }}>Dar.</Text>
               <Text style={{ flex: 1, fontWeight: 700 }}>Savol</Text>
               <Text style={{ width: 40, textAlign: "right", fontWeight: 700 }}>Ball</Text>
               <Text style={{ width: 34, textAlign: "right", fontWeight: 700 }}>Vaqt</Text>
             </View>
-            {r.questions.map((q) => {
+            {r.questions.map((q, i) => {
               const sc = q.score;
               const col = sc === null ? C.tx2 : sc >= 0.7 ? C.ok : sc >= 0.4 ? C.warn : C.bad;
+              // Savollar kompetensiya bo'yicha tartiblangan — har guruh boshida to'liq nomi.
+              const groupStart = i === 0 || r.questions[i - 1].comp !== q.comp;
               return (
-                <View key={q.n} style={[s.row, { paddingVertical: 3, borderBottomWidth: 0.5, borderBottomColor: "#EFE8DA" }]} wrap={false}>
-                  <Text style={{ width: 22 }}>{q.n}</Text>
-                  <Text style={{ width: 28 }}>{q.comp}</Text>
-                  <Text style={{ width: 24 }}>{q.level}</Text>
-                  <Text style={{ flex: 1, fontSize: 8.5 }}>{q.stem.length > 120 ? q.stem.slice(0, 117) + "..." : q.stem}</Text>
-                  <Text style={{ width: 40, textAlign: "right", color: col, fontWeight: 600 }}>{sc === null ? "—" : `${Math.round(sc * 100)}%`}</Text>
-                  <Text style={{ width: 34, textAlign: "right", color: C.tx2 }}>{q.timeSec}s</Text>
+                <View key={q.n} wrap={false}>
+                  {groupStart && (
+                    <Text style={{ marginTop: i === 0 ? 4 : 8, marginBottom: 2, fontWeight: 700, color: C.brd, fontSize: 9 }}>
+                      {q.compName} ({q.comp})
+                    </Text>
+                  )}
+                  <View style={[s.row, { paddingVertical: 3, borderBottomWidth: 0.5, borderBottomColor: "#EFE8DA" }]}>
+                    <Text style={{ width: 22 }}>{q.n}</Text>
+                    <Text style={{ width: 24 }}>{q.level}</Text>
+                    <Text style={{ flex: 1, fontSize: 8.5 }}>{q.stem.length > 120 ? q.stem.slice(0, 117) + "..." : q.stem}</Text>
+                    <Text style={{ width: 40, textAlign: "right", color: col, fontWeight: 600 }}>{sc === null ? "—" : `${Math.round(sc * 100)}%`}</Text>
+                    <Text style={{ width: 34, textAlign: "right", color: C.tx2 }}>{q.timeSec}s</Text>
+                  </View>
                 </View>
               );
             })}

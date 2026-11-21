@@ -38,6 +38,7 @@ export type ReportData = {
   questions: {
     n: number;
     comp: string;
+    compName: string;
     level: number;
     type: string;
     stem: string;
@@ -109,6 +110,7 @@ export async function loadReport(attemptId: string): Promise<ReportData | null> 
     return {
       n: i + 1,
       comp: q.competency.code,
+      compName: q.competency.name,
       level: q.level,
       type: q.type,
       stem: q.stem,

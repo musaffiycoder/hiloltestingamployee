@@ -81,7 +81,12 @@ export function codeExpander(comps: CompName[]): (text: string) => string {
       let replacement: string;
       const rest = text.slice(end);
       const prefix = trailingNamePrefix(rest, c.words);
-      if (prefix) {
+      // Kod ortidan nom qo'shtirnoqda: «S3 «Mas'uliyat va …»» — nom bir marta qoladi.
+      const quoted = rest.match(/^\s*[«"“]([^»"”]{1,160})[»"”]/u);
+      if (quoted && norm(quoted[1].trim().split(/\s+/)[0] ?? "") === c.first) {
+        end += quoted[0].length;
+        replacement = `${c.name} (${code})`;
+      } else if (prefix) {
         // «H1 Backend arxitekturasi» → «Backend arxitekturasi va sifatli kod yozish (H1)»
         end += prefix.length;
         replacement = `${c.name} (${code})`;
