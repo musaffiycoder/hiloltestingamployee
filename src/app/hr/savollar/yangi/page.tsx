@@ -32,7 +32,7 @@ export default async function NewQuestionPage({ searchParams }: PageProps<"/hr/s
           options: [0, 1, 2, 3].map(() => ({ text: "", correct: false, points: 3, flag: false })),
           rubric: ["", ""],
           explanation: "",
-          timeLimitSec: 90,
+          timeLimitSec: 210,
           status: "DRAFT",
         }}
       />

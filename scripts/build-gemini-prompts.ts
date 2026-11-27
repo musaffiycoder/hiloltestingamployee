@@ -230,7 +230,8 @@ const POSITION_NOTES: Record<string, string> = {
 };
 
 /** Vaqt formatga qarab (sekund). */
-const TIME: Record<Fmt, number> = { KNOW: 90, CALC: 150, DIAG: 180, TRADEOFF: 120, CASE: 420, PRODUCE: 480, OCALC: 420 };
+// Standart vaqt: test savoliga 210 s (3,5 daqiqa), yozma topshiriqqa 480 s (8 daqiqa).
+const TIME: Record<Fmt, number> = { KNOW: 210, CALC: 210, DIAG: 210, TRADEOFF: 210, CASE: 480, PRODUCE: 480, OCALC: 480 };
 const timeOf = (s: Slot) => TIME[s.format ?? "KNOW"];
 
 function build(pos: Pos, num: number, onlySlots?: ReturnType<typeof slotsFor>, existing: string[] = []): string {
@@ -392,13 +393,13 @@ Jami turlar: ${Object.entries(typeCounts).map(([k, v]) => `${k} ${v}`).join(" ·
 Faqat bitta JSON massiv qaytar. Markdown, izoh, kirish so'zi yozma. "format" maydonini ham qo'sh. Har element:
 
 MCQ_SINGLE — bitta to'g'ri javob, 4 ta variant:
-{"position":"${pos.id}","competency":"H1","level":3,"type":"MCQ_SINGLE","format":"CALC","stem":"...","options":["...","...","...","..."],"correct":2,"explanation":"...","timeLimitSec":150}
+{"position":"${pos.id}","competency":"H1","level":3,"type":"MCQ_SINGLE","format":"CALC","stem":"...","options":["...","...","...","..."],"correct":2,"explanation":"...","timeLimitSec":210}
 
 MCQ_MULTI — 2 yoki 3 ta to'g'ri javob, 5 yoki 6 ta variant; "correct" — indekslar massivi; nechta javob kerakligini savolda ayt:
-{"position":"${pos.id}","competency":"H2","level":4,"type":"MCQ_MULTI","format":"DIAG","stem":"...","options":["...","...","...","...","..."],"correct":[0,3],"explanation":"...","timeLimitSec":180}
+{"position":"${pos.id}","competency":"H2","level":4,"type":"MCQ_MULTI","format":"DIAG","stem":"...","options":["...","...","...","...","..."],"correct":[0,3],"explanation":"...","timeLimitSec":210}
 
 SITUATIONAL — har variantga 1–5 ball, 4 ta variant, ballar turlicha:
-{"position":"${pos.id}","competency":"S2","level":4,"type":"SITUATIONAL","format":"TRADEOFF","stem":"...","options":[{"text":"...","points":5},{"text":"...","points":3},{"text":"...","points":4},{"text":"...","points":2}],"explanation":"...","timeLimitSec":120}
+{"position":"${pos.id}","competency":"S2","level":4,"type":"SITUATIONAL","format":"TRADEOFF","stem":"...","options":[{"text":"...","points":5},{"text":"...","points":3},{"text":"...","points":4},{"text":"...","points":2}],"explanation":"...","timeLimitSec":210}
 
 OPEN — erkin javob; AI va inson rubrika bo'yicha baholaydi:
 {"position":"${pos.id}","competency":"H1","level":4,"type":"OPEN","format":"PRODUCE","stem":"... (material + aniq topshiriq + hajm)","rubric":["...","...","...","..."],"explanation":"... (namunaviy kuchli javob qisqacha va tuzoq)","timeLimitSec":480}

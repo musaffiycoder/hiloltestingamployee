@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { PrismaClient, type Prisma } from "@prisma/client";
 import { parseImportJson, toDbShape, validateQuestion } from "../src/lib/question-schema";
+import { standardTimeSec } from "../src/lib/sections";
 
 for (const line of readFileSync(resolve(__dirname, "../.env"), "utf8").split("\n")) {
   const m = line.match(/^([A-Z0-9_]+)="?(.*?)"?$/);
@@ -42,7 +43,7 @@ const prisma = new PrismaClient();
         answerKey: shape.answerKey as Prisma.InputJsonValue | undefined,
         rubric: shape.rubric as Prisma.InputJsonValue | undefined,
         explanation: q.explanation,
-        timeLimitSec: q.timeLimitSec ?? (q.type === "OPEN" ? 240 : 90),
+        timeLimitSec: standardTimeSec(q.type),
         aiAllowed: q.competency.startsWith("H") && /AI|prompt/i.test(q.stem),
         status: q.status ?? status,
       },

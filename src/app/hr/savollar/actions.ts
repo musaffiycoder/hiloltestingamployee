@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
+import { standardTimeSec } from "@/lib/sections";
 import { requireUser, requireWriter } from "@/lib/auth";
 import { analyzeBatch, analyzeQuestion, type Warning } from "@/lib/question-quality";
 import {
@@ -93,7 +94,8 @@ export async function commitImport(text: string, status: "ACTIVE" | "DRAFT", ski
         answerKey: shape.answerKey as Prisma.InputJsonValue | undefined,
         rubric: shape.rubric as Prisma.InputJsonValue | undefined,
         explanation: q.explanation,
-        timeLimitSec: q.timeLimitSec ?? (q.type === "OPEN" ? 240 : 90),
+        // Import qilingan savolga doim standart vaqt qo'yiladi (Gemini bergan vaqt e'tiborga olinmaydi).
+        timeLimitSec: standardTimeSec(q.type),
         aiAllowed: q.competency.startsWith("H") && /AI|prompt/i.test(q.stem),
         status: q.status ?? status,
       };
@@ -133,7 +135,7 @@ export async function saveQuestion(input: unknown) {
     answerKey: (shape.answerKey ?? undefined) as Prisma.InputJsonValue | undefined,
     rubric: (shape.rubric ?? undefined) as Prisma.InputJsonValue | undefined,
     explanation: q.explanation || null,
-    timeLimitSec: q.timeLimitSec ?? 90,
+    timeLimitSec: q.timeLimitSec ?? standardTimeSec(q.type),
     status: p.data.status,
   };
 

@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { analyzeQuestion } from "@/lib/question-quality";
+import { STANDARD_TIME_SEC, standardTimeSec } from "@/lib/sections";
 import { deleteQuestion, saveQuestion } from "./actions";
 import { Check, Flag, Info, Plus, TriangleAlert, X } from "lucide-react";
 import { Ico } from "@/components/ui";
@@ -171,6 +172,8 @@ export function QuestionForm({ positions, initial }: { positions: PositionOpt[];
                   type: t,
                   options: t === "OPEN" ? s.options : s.options.length >= 3 ? s.options : [blankOpt(), blankOpt(), blankOpt(), blankOpt()],
                   rubric: s.rubric.length ? s.rubric : ["", ""],
+                  // Vaqt standart qiymatda bo'lsa, tur o'zgarganda yangi turning standart vaqtiga o'tadi.
+                  timeLimitSec: Object.values(STANDARD_TIME_SEC).includes(s.timeLimitSec) ? standardTimeSec(t) : s.timeLimitSec,
                 }));
               }}
               className={`${inputCls} text-brd`}
@@ -188,7 +191,7 @@ export function QuestionForm({ positions, initial }: { positions: PositionOpt[];
               min={15}
               max={900}
               value={f.timeLimitSec}
-              onChange={(e) => set("timeLimitSec", Number(e.target.value) || 90)}
+              onChange={(e) => set("timeLimitSec", Number(e.target.value) || standardTimeSec(f.type))}
               className={inputCls}
             />
           </label>

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { sectionOf, timingOf } from "../src/lib/sections";
+import { sectionOf, standardTimeSec, timingOf } from "../src/lib/sections";
 import { sectionEstimate } from "../src/lib/test-config-math";
 
 const t0 = new Date("2026-10-28T10:00:00Z");
@@ -9,6 +9,11 @@ const base = { startedAt: t0, timeLimitSec: null, closedTimeSec: 60 * 60, openTi
 assert.equal(sectionOf("OPEN"), "open");
 assert.equal(sectionOf("MCQ_SINGLE"), "closed");
 assert.equal(sectionOf("SITUATIONAL"), "closed");
+
+// standart vaqt: test savoli 3,5 daqiqa, yozma 8 daqiqa
+assert.equal(standardTimeSec("MCQ_SINGLE"), 210);
+assert.equal(standardTimeSec("SITUATIONAL"), 210);
+assert.equal(standardTimeSec("OPEN"), 480);
 
 // test bo'limi davom etmoqda
 let t = timingOf(base, 0, at(10));

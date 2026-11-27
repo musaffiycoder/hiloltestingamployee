@@ -27,7 +27,7 @@ Daraja shkalasi: 1 Boshlang'ich, 2 Rivojlanayotgan, 3 Yaxshi, 4 Professional, 5 
 
 CHIQISH FORMATI (JSON massiv):
 [
-  {"position":"backend","competency":"H2","level":3,"type":"MCQ_SINGLE","stem":"Savol matni","options":["A","B","C","D"],"correct":1,"explanation":"Nega aynan shu javob to'g'ri","timeLimitSec":60},
+  {"position":"backend","competency":"H2","level":3,"type":"MCQ_SINGLE","stem":"Savol matni","options":["A","B","C","D"],"correct":1,"explanation":"Nega aynan shu javob to'g'ri","timeLimitSec":210},
   {"position":"backend","competency":"H2","level":4,"type":"MCQ_MULTI","stem":"...","options":["...","...","...","...","..."],"correct":[0,3]},
   {"position":"backend","competency":"S2","level":4,"type":"SITUATIONAL","stem":"Vaziyat tavsifi","options":[{"text":"...","points":5},{"text":"...","points":3},{"text":"...","points":2},{"text":"...","points":1,"flag":true}]},
   {"position":"backend","competency":"H5","level":4,"type":"OPEN","stem":"...","rubric":["baholash bandi 1","baholash bandi 2","baholash bandi 3"]}

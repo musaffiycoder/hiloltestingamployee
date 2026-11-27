@@ -7,6 +7,10 @@ export const SECTION_LABEL: Record<Section, string> = { closed: "Test savollari"
 
 export const sectionOf = (type: string): Section => (type === "OPEN" ? "open" : "closed");
 
+/** Standart vaqt (2026-11-27, hamma lavozimlar): test savoliga 3,5 daqiqa, yozma topshiriqqa 8 daqiqa. */
+export const STANDARD_TIME_SEC: Record<Section, number> = { closed: 210, open: 480 };
+export const standardTimeSec = (type: string): number => STANDARD_TIME_SEC[sectionOf(type)];
+
 type AttemptTimes = {
   startedAt: Date;
   timeLimitSec: number | null;
