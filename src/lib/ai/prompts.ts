@@ -134,6 +134,19 @@ const LEARNING_FOCUS: Record<string, string> = {
     "EPUB 3 standarti va EPUBCheck, HTML/CSS asoslari, Sigil/Calibre, Word uslublari bilan professional formatlash, lotin/kirill/arab yozuvi bilan ishlash, App Store Connect va Google Play Console'da in-app mahsulot va narx boshqaruvi, mualliflik huquqi asoslari, kontent reyestri va hisobot (Excel/Sheets), sifat nazorati. Amaliy: murakkab kitobni EPUB'ga o'tkazib validator xatolarisiz topshirish, narx o'zgarishi jarayonini checklist bilan yuritish.",
   support:
     "Mijozlarni qo'llab-quvvatlash standartlari (xushmuomala va aniq yozma muloqot, de-eskalatsiya), muammoni aniqlashtirish va takrorlash bosqichlarini yig'ish, bug report yozish (takrorlash bosqichlari, kutilgan/amaldagi natija), murojaatlarni tasniflash va ustuvorlash, bilimlar bazasi yuritish, maxfiylik va axborot xavfsizligi, mobil va veb ilovalar asoslari, AI bilan javob loyihasi va tekshiruv. Amaliy: haqiqiy murojaatlardan eskalatsiya shabloni va bilimlar bazasi maqolalari yozish.",
+  mahsulot_muhandisi:
+    "Ikki yo'nalish. Frontend: Flutter/Dart (rasmiy docs va codelabs), state management (Riverpod/Bloc), API va offline sinxronizatsiya, Flutter DevTools va unumdorlik, widget/integration test, App Store Connect va Google Play Console release jarayoni. Mahsulot va loyiha: Agile/Scrum (Scrum Guide, Atlassian Agile Coach), sprint rejasi va kritik yo'l, User Story, Acceptance Criteria va PRD yozish, smoke test, bug report va sifat ko'rsatkichlari. Umumiy: AI'ga kod, hujjat va test yozdirib natijasini tekshirish (code review, AI javobidagi xato va uydirmani topish). Amaliy: bitta kichik funksiyani PRD va AC'dan boshlab o'zi (AI bilan) implementatsiya qilib, release checklist bilan chiqarish; o'z kodini boshqa dasturchiga review qildirish.",
+};
+
+/** Lavozimning o'ziga xos jihati: AI tahlilni qanday tuzishi kerakligi (faqat kerak bo'lgan lavozimlar uchun). */
+const ROLE_CONTEXT: Record<string, string> = {
+  mahsulot_muhandisi: `Mahsulot muhandisi (Product Engineer) bitta odamda ikki rolni birlashtiradi: loyiha va mahsulot boshqaruvi (PM ishi) hamda frontend (Flutter) dasturlash. Kodning katta qismini AI yozadi; bu odam talabni aniqlaydi, AI natijasini tekshiradi va funksiyani release'gacha o'zi olib boradi. U jamoani boshqarmaydi, shuning uchun tavsiyalarni odamlarni boshqarishga qaratma.
+Tahlilda:
+1) Kompetensiyalarni uch guruhda ko'r. PM tomoni: «Sprint, vazifa va muddatlarni boshqarish», «Dastur yaratish jarayoni va sifat nazorati», «Talab va hujjatlashtirish». Frontend tomoni: «Flutter, Dart va mobil ilova arxitekturasi», «API, integratsiyalar va state management», «Testing va do'konlarga release». Umumiy: soft kompetensiyalar, «AI vositalari va AI ishini tekshirish», qadriyatlar. Qaysi tomon kuchli, qaysi biri talabdan past ekanini aniq ayt; executiveSummary va overallNarrative'da shu muvozanatni yoz.
+2) Bir tomon kuchli, ikkinchisi past bo'lsa, buning rolga ta'sirini roleRisks'da ko'rsat: talab va AC zaif bo'lsa, noto'g'ri narsa tez quriladi; arxitektura va API zaif bo'lsa, AI yozgan kod texnik qarz va production xatosiga aylanadi.
+3) Bu odam o'z ishini ko'pincha o'zi tekshiradi. Shuning uchun sifat nazorati, test va AI ishini tekshirish natijalariga alohida e'tibor ber va xulosani shu bilan bog'la.
+4) Savollar frontend va PM banklaridan olingan. Savol matnida «PM sifatida» yoki «dasturchi sifatida» deyilishi rolning o'sha tomonini o'lchaydi; buni nomuvofiqlik deb hisoblama.
+5) developmentPlan'da kamida bitta band past chiqqan tomonni (PM yoki frontend) kuchaytirishga, bittasi ikkalasini birlashtirgan amaliy topshiriqqa qaratilsin.`,
 };
 
 export function analysisPrompt(a: AnalysisInput): { system: string; user: string } {
@@ -213,6 +226,11 @@ BO'LIMLAR:
 
   lines.push(`HOLATI: ${isEmployee ? "xodim" : "nomzod"}`);
   lines.push(`LAVOZIM: ${a.positionTitle}`);
+  if (a.positionCode && ROLE_CONTEXT[a.positionCode]) {
+    lines.push("");
+    lines.push("LAVOZIM XUSUSIYATI (tahlilni shunga moslab tuz):");
+    lines.push(ROLE_CONTEXT[a.positionCode]);
+  }
   if (a.positionCode && LEARNING_FOCUS[a.positionCode]) {
     lines.push("");
     lines.push("LAVOZIM BO'YICHA O'RGANISH YO'NALISHLARI (tavsiyalar shu sohaga mos bo'lsin):");
