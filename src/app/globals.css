@@ -145,8 +145,8 @@ h3 {
 }
 
 ::selection {
-  background: var(--br);
-  color: #1a0c02;
+  background: color-mix(in srgb, var(--ok) 28%, transparent);
+  color: inherit;
 }
 
 /* Bosish effekti (iOS) */
